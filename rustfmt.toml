@@ -1,0 +1,20 @@
+# Stable configuration
+edition = "2021"
+newline_style = "Unix"
+
+# Width and alignment
+max_width = 90
+hard_tabs = false
+tab_spaces = 4
+
+# Imports
+reorder_imports = true
+reorder_modules = true
+
+# Misc
+chain_width = 60
+fn_params_layout = "Compressed"
+match_block_trailing_comma = true
+merge_derives = true
+use_field_init_shorthand = true
+use_try_shorthand = true
