@@ -8,6 +8,9 @@ pub fn setup(log_level: &LevelFilter) -> Result<(), LogError> {
         return Ok(());
     }
 
+    let file_name = xailyser_common::logging::generate_file_name("XAILYSER");
+    let file = fern::log_file(file_name).map_err(LogError::IOError)?;
+
     fern::Dispatch::new()
         .level(*log_level)
         .format(move |out, message, record| {
@@ -19,7 +22,7 @@ pub fn setup(log_level: &LevelFilter) -> Result<(), LogError> {
 
             out.finish(format_args!("{}", formatted))
         })
-        .chain(std::io::stdout())
+        .chain(file)
         .apply()
         .map_err(LogError::SetLoggerError)
 }
