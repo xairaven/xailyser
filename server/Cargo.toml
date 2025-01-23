@@ -14,7 +14,10 @@ license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
+chrono = "0.4.39"
 crossbeam = "0.8.4"
+fern = "0.7.1"
+log = "0.4.25"
 pnet = "0.35.0"
 thiserror = "2.0.11"
 toml = "0.8.19"
