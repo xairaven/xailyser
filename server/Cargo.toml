@@ -14,6 +14,8 @@ license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
+xailyser-common = { path = "../common" }
+
 chrono = "0.4.39"
 crossbeam = "0.8.4"
 fern = "0.7.1"

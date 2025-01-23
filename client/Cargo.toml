@@ -14,3 +14,4 @@ license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
+xailyser-common = { path = "../common" }
