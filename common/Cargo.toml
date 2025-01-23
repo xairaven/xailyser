@@ -14,5 +14,6 @@ license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
+chrono = "0.4.39"
 log = "0.4.25"
 thiserror = "2.0.11"
