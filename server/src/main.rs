@@ -12,6 +12,3 @@ fn main() {
 }
 
 mod logging;
-mod errors {
-    pub mod log;
-}

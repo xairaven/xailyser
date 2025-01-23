@@ -1,6 +1,6 @@
-use crate::errors::log::LogError;
 use chrono::Local;
 use log::LevelFilter;
+use xailyser_common::logging::error::LogError;
 
 pub fn setup(log_level: LevelFilter) -> Result<(), LogError> {
     if log_level == LevelFilter::Off {
