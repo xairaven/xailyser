@@ -1,3 +1,9 @@
+// Project lints
+#![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
+#![deny(clippy::panic)]
+#![deny(unsafe_code)]
+
 fn main() {
     let level_filter = log::LevelFilter::Info;
 
