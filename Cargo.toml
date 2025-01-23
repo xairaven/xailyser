@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "client",
+    "server"
+]
+
+[profile.release]
+lto = true
+opt-level = 3
+panic = "abort"
+strip = "symbols"
