@@ -1,0 +1,18 @@
+[package]
+name = "xailyser-common"
+version = "0.0.1"
+authors = ["Alex Kovalov <alexkovalevkpi@gmail.com>"]
+
+edition = "2021"
+rust-version = "1.84"
+
+categories = ["network-programming"]
+keywords = ["networking", "routers", "monitoring"]
+
+readme = "../README.md"
+license = "GPL-3"
+repository = "https://github.com/xairaven/xailyser"
+
+[dependencies]
+log = "0.4.25"
+thiserror = "2.0.11"

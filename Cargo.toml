@@ -3,7 +3,9 @@ resolver = "2"
 
 members = [
     "client",
-    "server"
+    "server",
+
+    "common",
 ]
 
 [profile.release]
