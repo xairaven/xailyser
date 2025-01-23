@@ -14,3 +14,8 @@ license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
+crossbeam = "0.8.4"
+pnet = "0.35.0"
+thiserror = "2.0.11"
+toml = "0.8.19"
+tungstenite = "0.26.1"
