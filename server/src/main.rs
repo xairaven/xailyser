@@ -8,13 +8,13 @@ fn main() {
             if let Some(additional_info) = err.additional_info() {
                 message.push_str(&format!(" Additional_info: {additional_info}"));
             }
-            println!("{}", message);
+            eprintln!("{}", message);
             std::process::exit(1);
         },
     };
 
     logging::setup(&config.log_level().unwrap_or_else(|err| {
-        println!("{}", err);
+        eprintln!("Error: {}", err);
         std::process::exit(1);
     }))
     .unwrap_or_else(|err| {
@@ -22,10 +22,19 @@ fn main() {
         if let Some(additional_info) = err.additional_info() {
             message.push_str(&format!(" Additional_info: {additional_info}"));
         }
-        println!("{}", message);
+        eprintln!("Error: {}", message);
         std::process::exit(1);
     });
+
+    log::info!("Config loaded.");
+    log::info!("Logger initialized.");
+
+    core::start(config);
 }
 
 mod config;
+mod core;
 mod logging;
+mod websocket {
+    pub mod thread;
+}

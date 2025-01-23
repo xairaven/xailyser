@@ -5,17 +5,21 @@ use std::str::FromStr;
 use thiserror::Error;
 
 const CONFIG_FILENAME: &str = "config.toml";
+
 const DEFAULT_LOG_LEVEL: &str = "info";
+const DEFAULT_PORT: u16 = 8080;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub log_level: Option<String>,
+    pub log_level: String,
+    pub port: u16,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            log_level: Some(DEFAULT_LOG_LEVEL.to_string()),
+            log_level: DEFAULT_LOG_LEVEL.to_string(),
+            port: DEFAULT_PORT,
         }
     }
 }
@@ -44,8 +48,7 @@ impl Config {
 
 impl Config {
     pub fn log_level(&self) -> Result<LevelFilter, ConfigError> {
-        LevelFilter::from_str(&self.log_level.clone().unwrap_or_default())
-            .map_err(|_| WrongLogLevel)
+        LevelFilter::from_str(&self.log_level).map_err(|_| WrongLogLevel)
     }
 }
 
