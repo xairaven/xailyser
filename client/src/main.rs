@@ -27,7 +27,16 @@ fn main() {
         println!("{}", message);
         std::process::exit(1);
     });
+
+    log::info!("Config loaded.");
+    log::info!("Logger initialized.");
+
+    core::start(config)
 }
 
+mod app;
 mod config;
+mod context;
+mod core;
 mod logging;
+mod ui;
