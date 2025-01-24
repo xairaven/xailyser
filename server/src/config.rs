@@ -1,4 +1,3 @@
-use crate::config::ConfigError::BadLogLevel;
 use log::LevelFilter;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
@@ -66,7 +65,8 @@ struct ConfigDto {
 impl ConfigDto {
     pub fn to_config(&self) -> Result<Config, ConfigError> {
         let config = Config {
-            log_level: LevelFilter::from_str(&self.log_level).map_err(|_| BadLogLevel)?,
+            log_level: LevelFilter::from_str(&self.log_level)
+                .map_err(|_| ConfigError::BadLogLevel)?,
             port: self.port,
         };
 
