@@ -31,12 +31,18 @@ fn main() {
     log::info!("Config loaded.");
     log::info!("Logger initialized.");
 
-    core::start(config)
+    ui::start(&config).unwrap_or_else(|err| {
+        log::error!("{}", err);
+        std::process::exit(1);
+    });
 }
 
 mod app;
 mod config;
 mod context;
-mod core;
 mod logging;
+mod websocket {
+    pub mod core;
+    pub mod thread;
+}
 mod ui;

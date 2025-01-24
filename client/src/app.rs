@@ -1,12 +1,16 @@
 use crate::context::Context;
-use crate::ui::Resolution;
+use crate::ui;
+use crate::ui::windows::Window;
 use egui::ThemePreference;
+use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
 
 #[derive(Default)]
 pub struct App {
-    pub resolution: Resolution,
+    pub context: Arc<Mutex<Context>>,
+    pub net_thread: Option<JoinHandle<()>>,
 
-    pub context: Context,
+    pub sub_windows: Vec<Box<dyn Window>>,
 }
 
 impl App {
@@ -20,7 +24,7 @@ impl App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Hello World!");
+            ui::windows::main::show(self, ui);
         });
     }
 }
