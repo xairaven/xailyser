@@ -1,26 +1,35 @@
-use crate::config::ConfigError::WrongLogLevel;
+use crate::config::ConfigError::BadLogLevel;
 use log::LevelFilter;
-use serde::{Deserialize, Serialize};
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize, Serializer};
 use std::str::FromStr;
 use thiserror::Error;
 
 const CONFIG_FILENAME: &str = "config.toml";
 
-const DEFAULT_LOG_LEVEL: &str = "info";
-const DEFAULT_PORT: u16 = 8080;
-
-#[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub log_level: String,
+    pub log_level: LevelFilter,
     pub port: u16,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            log_level: DEFAULT_LOG_LEVEL.to_string(),
-            port: DEFAULT_PORT,
+            log_level: LevelFilter::Info,
+            port: 8080,
         }
+    }
+}
+
+impl Serialize for Config {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Config", 2)?;
+        state.serialize_field("log_level", &self.log_level.to_string())?;
+        state.serialize_field("port", &self.port)?;
+        state.end()
     }
 }
 
@@ -33,8 +42,10 @@ impl Config {
             return Ok(config);
         }
 
-        toml::from_str(&data.unwrap_or_default())
-            .map_err(ConfigError::TomlDeserializationError)
+        let dto: Result<ConfigDto, ConfigError> =
+            toml::from_str(&data.unwrap_or_default())
+                .map_err(ConfigError::TomlDeserializationError);
+        dto?.to_config()
     }
 
     pub fn save_to_file(&self) -> Result<(), ConfigError> {
@@ -46,9 +57,20 @@ impl Config {
     }
 }
 
-impl Config {
-    pub fn log_level(&self) -> Result<LevelFilter, ConfigError> {
-        LevelFilter::from_str(&self.log_level).map_err(|_| WrongLogLevel)
+#[derive(Deserialize)]
+struct ConfigDto {
+    log_level: String,
+    port: u16,
+}
+
+impl ConfigDto {
+    pub fn to_config(&self) -> Result<Config, ConfigError> {
+        let config = Config {
+            log_level: LevelFilter::from_str(&self.log_level).map_err(|_| BadLogLevel)?,
+            port: self.port,
+        };
+
+        Ok(config)
     }
 }
 
@@ -63,8 +85,8 @@ pub enum ConfigError {
     #[error("TOML Deserialization Error.")]
     TomlDeserializationError(#[from] toml::de::Error),
 
-    #[error("Wrong log level.")]
-    WrongLogLevel,
+    #[error("Bad log level.")]
+    BadLogLevel,
 }
 
 impl ConfigError {

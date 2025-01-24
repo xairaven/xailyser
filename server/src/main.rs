@@ -19,11 +19,7 @@ fn main() {
         },
     };
 
-    logging::setup(&config.log_level().unwrap_or_else(|err| {
-        eprintln!("Error: {}", err);
-        std::process::exit(1);
-    }))
-    .unwrap_or_else(|err| {
+    logging::setup(&config.log_level).unwrap_or_else(|err| {
         let mut message = format!("Logger initialization failed. Error: {err}.");
         if let Some(additional_info) = err.additional_info() {
             message.push_str(&format!(" Additional_info: {additional_info}"));
