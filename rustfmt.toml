@@ -1,6 +1,5 @@
 # Stable configuration
 edition = "2021"
-newline_style = "Unix"
 
 # Width and alignment
 max_width = 90
