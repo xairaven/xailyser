@@ -66,7 +66,7 @@ impl ConfigDto {
     pub fn to_config(&self) -> Result<Config, ConfigError> {
         let config = Config {
             log_level: LevelFilter::from_str(&self.log_level)
-                .map_err(|_| ConfigError::BadLogLevel)?,
+                .map_err(|_| ConfigError::UnknownLogLevel)?,
             port: self.port,
         };
 
@@ -85,8 +85,8 @@ pub enum ConfigError {
     #[error("TOML Deserialization Error.")]
     TomlDeserializationError(#[from] toml::de::Error),
 
-    #[error("Bad log level.")]
-    BadLogLevel,
+    #[error("Unknown log level.")]
+    UnknownLogLevel,
 }
 
 impl ConfigError {
