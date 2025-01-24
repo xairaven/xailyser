@@ -1,4 +1,5 @@
 use directories::ProjectDirs;
+use egui::ThemePreference;
 use log::LevelFilter;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
@@ -11,12 +12,14 @@ const CONFIG_FILENAME: &str = "config.toml";
 
 pub struct Config {
     pub log_level: LevelFilter,
+    pub theme: ThemePreference,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             log_level: LevelFilter::Info,
+            theme: ThemePreference::Dark,
         }
     }
 }
@@ -26,25 +29,37 @@ impl Serialize for Config {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("Config", 1)?;
+        let mut state = serializer.serialize_struct("Config", 2)?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
+
+        let theme = match self.theme {
+            ThemePreference::Dark => "dark",
+            ThemePreference::Light => "light",
+            ThemePreference::System => "system",
+        };
+        state.serialize_field("theme", theme)?;
         state.end()
     }
 }
 
 impl Config {
     pub fn from_file() -> Result<Self, ConfigError> {
-        let data = fs::read_to_string(CONFIG_FILENAME);
-        if data.is_err() {
-            let config = Config::default();
-            config.save_to_file()?;
-            return Ok(config);
-        }
+        match Self::get_config_path() {
+            Ok(path) => {
+                let data = fs::read_to_string(path);
+                if data.is_err() {
+                    let config = Config::default();
+                    config.save_to_file()?;
+                    return Ok(config);
+                }
 
-        let dto: Result<ConfigDto, ConfigError> =
-            toml::from_str(&data.unwrap_or_default())
-                .map_err(ConfigError::TomlDeserializationError);
-        dto?.to_config()
+                let dto: Result<ConfigDto, ConfigError> =
+                    toml::from_str(&data.unwrap_or_default())
+                        .map_err(ConfigError::TomlDeserializationError);
+                dto?.to_config()
+            },
+            Err(_) => Ok(Config::default()),
+        }
     }
 
     pub fn save_to_file(&self) -> Result<(), ConfigError> {
@@ -77,13 +92,25 @@ impl Config {
 #[derive(Deserialize)]
 struct ConfigDto {
     log_level: String,
+    theme: String,
 }
 
 impl ConfigDto {
     pub fn to_config(&self) -> Result<Config, ConfigError> {
+        let theme_string = self.theme.trim().to_ascii_lowercase();
+
         let config = Config {
             log_level: LevelFilter::from_str(&self.log_level)
-                .map_err(|_| ConfigError::BadLogLevel)?,
+                .map_err(|_| ConfigError::UnknownLogLevel)?,
+            theme: if theme_string == "dark" {
+                ThemePreference::Dark
+            } else if theme_string == "light" {
+                ThemePreference::Light
+            } else if theme_string == "system" {
+                ThemePreference::System
+            } else {
+                return Err(ConfigError::UnknownTheme);
+            },
         };
 
         Ok(config)
@@ -101,8 +128,11 @@ pub enum ConfigError {
     #[error("TOML Deserialization Error.")]
     TomlDeserializationError(#[from] toml::de::Error),
 
-    #[error("Bad log level.")]
-    BadLogLevel,
+    #[error("Unknown log level.")]
+    UnknownLogLevel,
+
+    #[error("Unknown theme.")]
+    UnknownTheme,
 }
 
 impl ConfigError {
