@@ -11,6 +11,7 @@ pub fn start(config: Config) {
         log::error!("{}", err);
         std::process::exit(1);
     });
+    log::info!("Listening on {}", address);
 
     let mut handles = Vec::new();
     for stream in server.incoming() {
