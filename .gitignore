@@ -1,3 +1,6 @@
+# Any logs
+*.log
+
 # Possible libs folder
 lib/
 
