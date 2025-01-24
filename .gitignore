@@ -1,3 +1,6 @@
+# Server config
+config.toml
+
 # Any logs
 *.log
 
