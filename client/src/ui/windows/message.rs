@@ -1,7 +1,5 @@
-use crate::context::Context;
 use crate::ui::windows::Window;
 use egui::{Id, WidgetText};
-use std::sync::{Arc, Mutex};
 
 pub struct MessageWindow {
     id: i64,
@@ -34,7 +32,7 @@ impl Default for MessageWindow {
 }
 
 impl Window for MessageWindow {
-    fn show(&mut self, ui: &egui::Ui, _ctx: Arc<Mutex<Context>>) {
+    fn show(&mut self, ui: &egui::Ui) {
         egui::Window::new(&self.name)
             .id(Id::new(self.id))
             .open(&mut self.is_open)

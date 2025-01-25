@@ -1,13 +1,10 @@
-use crate::context::Context;
 use crate::ui;
 use crate::ui::windows::Window;
 use egui::ThemePreference;
-use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 #[derive(Default)]
 pub struct App {
-    pub context: Arc<Mutex<Context>>,
     pub net_thread: Option<JoinHandle<()>>,
 
     pub sub_windows: Vec<Box<dyn Window>>,

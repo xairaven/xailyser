@@ -1,6 +1,10 @@
 use crate::ui::windows::Window;
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use std::net::SocketAddr;
+use std::sync::{LazyLock, Mutex};
+
+pub static CONTEXT: LazyLock<Mutex<Context>> =
+    LazyLock::new(|| Mutex::new(Context::default()));
 
 pub struct Context {
     pub address: Option<SocketAddr>,

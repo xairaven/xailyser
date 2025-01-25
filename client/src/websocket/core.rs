@@ -1,14 +1,13 @@
-use crate::context::Context;
+use crate::context::CONTEXT;
 use crate::websocket;
 use std::net::SocketAddr;
 use std::ops::Deref;
-use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
 
-pub fn connect(context: Arc<Mutex<Context>>) -> Result<JoinHandle<()>, NetError> {
-    let address = context
+pub fn connect() -> Result<JoinHandle<()>, NetError> {
+    let address = CONTEXT
         .try_lock()
         .map_err(|_| NetError::ContextLocked)?
         .deref()
@@ -23,7 +22,7 @@ pub fn connect(context: Arc<Mutex<Context>>) -> Result<JoinHandle<()>, NetError>
     log::info!("Connected! Status: {}", response.status());
 
     let handle = thread::spawn(move || {
-        websocket::thread::start(socket, context);
+        websocket::thread::start(socket);
     });
 
     Ok(handle)

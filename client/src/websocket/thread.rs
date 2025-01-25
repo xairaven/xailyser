@@ -1,12 +1,8 @@
-use crate::context::Context;
 use std::net::TcpStream;
-use std::sync::{Arc, Mutex};
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Error, WebSocket};
 
-pub fn start(
-    mut websocket: WebSocket<MaybeTlsStream<TcpStream>>, _context: Arc<Mutex<Context>>,
-) {
+pub fn start(mut websocket: WebSocket<MaybeTlsStream<TcpStream>>) {
     loop {
         let msg = match websocket.read() {
             Ok(value) => value,
