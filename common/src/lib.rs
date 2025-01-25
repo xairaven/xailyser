@@ -4,4 +4,5 @@
 #![deny(clippy::panic)]
 #![deny(unsafe_code)]
 
+pub mod commands;
 pub mod logging;
