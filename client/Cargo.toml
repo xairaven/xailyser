@@ -26,7 +26,7 @@ eframe = { version = "0.30.0", default-features = false, features = [
 ] }
 fern = "0.7.1"
 log = "0.4.25"
-rand = "0.8.5"
+rand = "0.9.0"
 serde = { version = "1.0.217", features = ["derive"] }
 thiserror = "2.0.11"
 toml = "0.8.19"
