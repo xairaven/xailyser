@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::websocket;
+use crate::net;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use std::thread;
 
@@ -16,9 +16,19 @@ pub fn start(config: Config) {
     let mut handles = Vec::new();
     for stream in server.incoming() {
         match stream {
-            Ok(stream) => {
+            Ok(tcp_stream) => {
                 let handle = thread::spawn(move || {
-                    websocket::thread::start(stream);
+                    let ws_stream = match tungstenite::accept(tcp_stream) {
+                        Ok(value) => {
+                            log::info!("WebSocket connection established!");
+                            value
+                        },
+                        Err(err) => {
+                            log::error!("{}", err);
+                            return;
+                        },
+                    };
+                    net::handle_messages(ws_stream);
                 });
                 handles.push(handle);
             },

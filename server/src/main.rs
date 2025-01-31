@@ -37,6 +37,4 @@ fn main() {
 mod config;
 mod core;
 mod logging;
-mod websocket {
-    pub mod thread;
-}
+mod net;

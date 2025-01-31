@@ -1,27 +1,19 @@
 use std::net::TcpStream;
-use tungstenite::Error;
+use tungstenite::WebSocket;
 
-pub fn start(stream: TcpStream) {
-    let mut websocket = match tungstenite::accept(stream) {
-        Ok(value) => {
-            log::info!("WebSocket connection established!");
-            value
-        },
-        Err(err) => {
-            log::error!("{}", err);
-            return;
-        },
-    };
+type WSStream = WebSocket<TcpStream>;
 
+pub fn handle_messages(mut stream: WSStream) {
     loop {
-        let msg = match websocket.read() {
+        let msg = match stream.read() {
             Ok(value) => value,
             Err(err) => match err {
-                Error::ConnectionClosed | Error::AlreadyClosed => {
+                tungstenite::Error::ConnectionClosed
+                | tungstenite::Error::AlreadyClosed => {
                     log::warn!("Connection closed without alerting about it.");
                     return;
                 },
-                Error::Io(err) => {
+                tungstenite::Error::Io(err) => {
                     log::warn!("{}", err);
                     return;
                 },
