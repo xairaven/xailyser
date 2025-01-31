@@ -37,12 +37,8 @@ fn main() {
     });
 }
 
-mod app;
 mod config;
 mod context;
 mod logging;
-mod websocket {
-    pub mod core;
-    pub mod thread;
-}
+mod net;
 mod ui;

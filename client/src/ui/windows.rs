@@ -3,5 +3,4 @@ pub trait Window: Send + Sync {
     fn is_closed(&self) -> bool;
 }
 
-pub mod main;
 pub mod message;

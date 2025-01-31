@@ -1,5 +1,5 @@
-use crate::app::App;
 use crate::config::Config;
+use app::App;
 
 const WINDOW_TITLE: &str = "Xailyser";
 const WINDOW_WIDTH: f32 = 900.0;
@@ -30,4 +30,9 @@ pub fn start(config: &Config) -> eframe::Result {
     )
 }
 
-pub mod windows;
+mod app;
+pub(crate) mod components {
+    pub(crate) mod auth;
+}
+pub(crate) mod root;
+pub(crate) mod windows;
