@@ -1,7 +1,7 @@
 use crate::context::CONTEXT;
 use crate::net;
 use crate::ui::windows::message::MessageWindow;
-use egui::{Grid, TextEdit};
+use egui::{Grid, RichText, TextEdit};
 use std::net::{IpAddr, SocketAddr};
 use std::thread::JoinHandle;
 use thiserror::Error;
@@ -29,7 +29,11 @@ impl AuthComponent {
                 ui.add_space(window_height / 6.0);
 
                 ui.vertical_centered_justified(|ui| {
-                    ui.heading("Authentication");
+                    ui.label(
+                        RichText::new("Login")
+                            .color(egui::Color32::WHITE)
+                            .size(26.0),
+                    );
                 });
 
                 ui.add_space(window_height / 6.0);
@@ -38,21 +42,21 @@ impl AuthComponent {
                     .num_columns(2)
                     .spacing([20.0, 20.0])
                     .show(ui, |ui| {
-                        ui.label("IP");
+                        ui.label(RichText::new("IP:").color(egui::Color32::WHITE));
                         ui.add(
                             TextEdit::singleline(&mut self.ip_text_field)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
-                        ui.label("Port");
+                        ui.label(RichText::new("Port:").color(egui::Color32::WHITE));
                         ui.add(
                             TextEdit::singleline(&mut self.port_text_field)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
-                        ui.label("Password");
+                        ui.label(RichText::new("Password:").color(egui::Color32::WHITE));
                         ui.add(
                             TextEdit::singleline(&mut self.password_text_field)
                                 .password(true)
@@ -64,7 +68,7 @@ impl AuthComponent {
                 ui.add_space(window_height / 4.0);
 
                 ui.vertical_centered_justified(|ui| {
-                    if ui.button("Connect").clicked() {
+                    if ui.button("CONNECT").clicked() {
                         match self.get_address() {
                             Ok(address) => {
                                 self.try_connect(
