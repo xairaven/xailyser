@@ -17,14 +17,15 @@ pub fn start(config: Config) {
     for stream in server.incoming() {
         match stream {
             Ok(tcp_stream) => {
+                let encrypted_password = config.password.clone();
                 let handle = thread::spawn(move || {
-                    let ws_stream = match tungstenite::accept(tcp_stream) {
+                    let ws_stream = match net::connect(tcp_stream, encrypted_password) {
                         Ok(value) => {
-                            log::info!("WebSocket connection established!");
+                            log::info!("Websocket connection established.");
                             value
                         },
                         Err(err) => {
-                            log::error!("{}", err);
+                            log::info!("{}", err);
                             return;
                         },
                     };
