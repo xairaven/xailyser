@@ -59,7 +59,7 @@ impl AuthComponent {
                 {
                     match self.get_address() {
                         Ok(address) => {
-                            self.try_connect(address);
+                            self.try_connect(address, &self.password_text_field.clone());
                         },
                         Err(err) => {
                             if let Ok(guard) = CONTEXT.try_lock() {
@@ -73,8 +73,8 @@ impl AuthComponent {
         });
     }
 
-    fn try_connect(&mut self, address: SocketAddr) {
-        match net::connect(address) {
+    fn try_connect(&mut self, address: SocketAddr, password: &str) {
+        match net::connect(address, password) {
             Ok(handle) => {
                 self.net_thread = Some(handle);
                 self.authenticated = true;

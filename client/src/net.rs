@@ -1,14 +1,23 @@
+use http::Uri;
 use std::net::{SocketAddr, TcpStream};
 use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tungstenite::stream::MaybeTlsStream;
-use tungstenite::WebSocket;
+use tungstenite::{ClientRequestBuilder, WebSocket};
+use xailyser_common::auth::AUTH_HEADER;
+use xailyser_common::cryptography::encrypt_password;
 
 type WSStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
-pub fn connect(address: SocketAddr) -> Result<JoinHandle<()>, NetError> {
-    let request = format!("ws://{}:{}/socket", address.ip(), address.port());
+pub fn connect(address: SocketAddr, password: &str) -> Result<JoinHandle<()>, NetError> {
+    let uri: Uri = format!("ws://{}:{}/socket", address.ip(), address.port())
+        .parse()
+        .map_err(|_| NetError::FailedParseUri)?;
+    let hashed_password = encrypt_password(password);
+    let request =
+        ClientRequestBuilder::new(uri).with_header(AUTH_HEADER, hashed_password);
+
     let (stream, response) = match tungstenite::connect(request) {
         Ok((stream, response)) => (stream, response),
         Err(err) => return Err(NetError::ConnectionFailed(err)),
@@ -58,12 +67,16 @@ pub fn handle_messages(mut stream: WSStream) {
 pub enum NetError {
     #[error("Failed to connect")]
     ConnectionFailed(tungstenite::Error),
+
+    #[error("Failed to parse Uri. Verify IP address & port")]
+    FailedParseUri,
 }
 
 impl NetError {
     pub fn additional_info(&self) -> Option<String> {
         match self {
             NetError::ConnectionFailed(err) => Some(err.to_string()),
+            _ => None,
         }
     }
 }
