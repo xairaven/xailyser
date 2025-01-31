@@ -1,7 +1,7 @@
 use crate::context::CONTEXT;
 use crate::net;
 use crate::ui::windows::message::MessageWindow;
-use egui::{Button, Grid, TextEdit};
+use egui::{Grid, TextEdit};
 use std::net::{IpAddr, SocketAddr};
 use std::thread::JoinHandle;
 use thiserror::Error;
@@ -22,53 +22,65 @@ impl AuthComponent {
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
-        ui.vertical_centered_justified(|ui| {
-            ui.heading("Authentication");
-        });
-
-        let available_size = ui.available_size();
-
-        ui.add_space(available_size.y / 3.0);
+        let window_height = ui.available_size().y;
 
         ui.columns(3, |columns| {
             columns[1].vertical_centered(|ui| {
-                Grid::new("AuthentificationFields")
+                ui.add_space(window_height / 6.0);
+
+                ui.vertical_centered_justified(|ui| {
+                    ui.heading("Authentication");
+                });
+
+                ui.add_space(window_height / 6.0);
+
+                Grid::new("AuthenticationFields")
                     .num_columns(2)
+                    .spacing([20.0, 20.0])
                     .show(ui, |ui| {
                         ui.label("IP");
-                        ui.add(TextEdit::singleline(&mut self.ip_text_field));
+                        ui.add(
+                            TextEdit::singleline(&mut self.ip_text_field)
+                                .desired_width(f32::INFINITY),
+                        );
                         ui.end_row();
 
                         ui.label("Port");
-                        ui.add(TextEdit::singleline(&mut self.port_text_field));
+                        ui.add(
+                            TextEdit::singleline(&mut self.port_text_field)
+                                .desired_width(f32::INFINITY),
+                        );
                         ui.end_row();
 
                         ui.label("Password");
                         ui.add(
                             TextEdit::singleline(&mut self.password_text_field)
-                                .password(true),
+                                .password(true)
+                                .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
                     });
 
-                ui.add_space(available_size.y / 5.0);
+                ui.add_space(window_height / 4.0);
 
-                if ui
-                    .add_sized([available_size.x / 5.0, 20.0], Button::new("Connect"))
-                    .clicked()
-                {
-                    match self.get_address() {
-                        Ok(address) => {
-                            self.try_connect(address, &self.password_text_field.clone());
-                        },
-                        Err(err) => {
-                            if let Ok(guard) = CONTEXT.try_lock() {
-                                let window = MessageWindow::error(&err.to_string());
-                                let _ = guard.windows_tx.send(Box::new(window));
-                            }
-                        },
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button("Connect").clicked() {
+                        match self.get_address() {
+                            Ok(address) => {
+                                self.try_connect(
+                                    address,
+                                    &self.password_text_field.clone(),
+                                );
+                            },
+                            Err(err) => {
+                                if let Ok(guard) = CONTEXT.try_lock() {
+                                    let window = MessageWindow::error(&err.to_string());
+                                    let _ = guard.windows_tx.send(Box::new(window));
+                                }
+                            },
+                        }
                     }
-                }
+                });
             });
         });
     }
