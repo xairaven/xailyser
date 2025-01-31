@@ -3,6 +3,8 @@ use log::Record;
 use std::fmt::Arguments;
 use thiserror::Error;
 
+pub const DEFAULT_FORMAT: &str = "[%Y-%m-%D %H:%M %LEVEL] %MESSAGE";
+
 #[derive(Error, Debug)]
 pub enum LogError {
     #[error("IO Error.")]
