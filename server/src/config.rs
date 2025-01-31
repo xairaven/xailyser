@@ -3,11 +3,13 @@ use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 use std::str::FromStr;
 use thiserror::Error;
+use xailyser_common::cryptography::encrypt_password;
 
 const CONFIG_FILENAME: &str = "config.toml";
 
 pub struct Config {
     pub log_level: LevelFilter,
+    pub password: String,
     pub port: u16,
 }
 
@@ -15,6 +17,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             log_level: LevelFilter::Info,
+            password: String::new(),
             port: 8080,
         }
     }
@@ -27,6 +30,7 @@ impl Serialize for Config {
     {
         let mut state = serializer.serialize_struct("Config", 2)?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
+        state.serialize_field("password", &self.password)?;
         state.serialize_field("port", &self.port)?;
         state.end()
     }
@@ -41,10 +45,11 @@ impl Config {
             return Ok(config);
         }
 
-        let dto: Result<ConfigDto, ConfigError> =
-            toml::from_str(&data.unwrap_or_default())
-                .map_err(ConfigError::TomlDeserializationError);
-        dto?.to_config()
+        let mut dto: ConfigDto = toml::from_str(&data.unwrap_or_default())
+            .map_err(ConfigError::TomlDeserializationError)?;
+        dto.password = encrypt_password(&dto.password);
+
+        dto.into_config()
     }
 
     pub fn save_to_file(&self) -> Result<(), ConfigError> {
@@ -59,14 +64,16 @@ impl Config {
 #[derive(Deserialize)]
 struct ConfigDto {
     log_level: String,
+    password: String,
     port: u16,
 }
 
 impl ConfigDto {
-    pub fn to_config(&self) -> Result<Config, ConfigError> {
+    pub fn into_config(self) -> Result<Config, ConfigError> {
         let config = Config {
             log_level: LevelFilter::from_str(&self.log_level)
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
+            password: self.password,
             port: self.port,
         };
 
