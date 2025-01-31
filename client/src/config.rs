@@ -7,10 +7,12 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::{env, fs};
 use thiserror::Error;
+use xailyser_common::logging;
 
 const CONFIG_FILENAME: &str = "config.toml";
 
 pub struct Config {
+    pub log_format: String,
     pub log_level: LevelFilter,
     pub theme: ThemePreference,
 }
@@ -18,6 +20,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
             theme: ThemePreference::Dark,
         }
@@ -29,7 +32,8 @@ impl Serialize for Config {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("Config", 2)?;
+        let mut state = serializer.serialize_struct("Config", 3)?;
+        state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
 
         let theme = match self.theme {
@@ -56,7 +60,7 @@ impl Config {
                 let dto: Result<ConfigDto, ConfigError> =
                     toml::from_str(&data.unwrap_or_default())
                         .map_err(ConfigError::TomlDeserializationError);
-                dto?.to_config()
+                dto?.into_config()
             },
             Err(_) => Ok(Config::default()),
         }
@@ -91,15 +95,17 @@ impl Config {
 
 #[derive(Deserialize)]
 struct ConfigDto {
+    log_format: String,
     log_level: String,
     theme: String,
 }
 
 impl ConfigDto {
-    pub fn to_config(&self) -> Result<Config, ConfigError> {
+    pub fn into_config(self) -> Result<Config, ConfigError> {
         let theme_string = self.theme.trim().to_ascii_lowercase();
 
         let config = Config {
+            log_format: self.log_format,
             log_level: LevelFilter::from_str(&self.log_level)
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
             theme: if theme_string == "dark" {
