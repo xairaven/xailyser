@@ -38,4 +38,5 @@ mod config;
 mod context;
 mod core;
 mod logging;
+mod net;
 mod ws;

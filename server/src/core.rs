@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::context::Context;
+use crate::net::NetThreadHandler;
 use crate::ws::ConnectionThread;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use std::sync::atomic::AtomicBool;
@@ -26,6 +27,18 @@ pub fn start(config: Config) {
         std::process::exit(1);
     }
 
+    let net_shutdown_flag = Arc::clone(&shutdown_flag);
+    let net_context = Arc::clone(&context);
+    let net_thread_handle = thread::spawn(move || {
+        log::info!("Net capture thread started.");
+        let result = NetThreadHandler::new(net_context, net_shutdown_flag).start();
+
+        if let Err(err) = result {
+            log::error!("{}. Shutdown server.", err);
+            std::process::exit(1);
+        }
+    });
+
     let server = TcpListener::bind(address).unwrap_or_else(|err| {
         log::error!("{}", err);
         std::process::exit(1);
@@ -36,7 +49,7 @@ pub fn start(config: Config) {
     });
     log::info!("Listening on {}", address);
 
-    let mut handles = Vec::new();
+    let mut connection_thread_handles = Vec::new();
     loop {
         if shutdown_flag.load(Ordering::Acquire) {
             log::info!("Shutting down. Stop listening...");
@@ -55,7 +68,7 @@ pub fn start(config: Config) {
                         log::error!("{}. Terminated connection.", err);
                     }
                 });
-                handles.push(handle);
+                connection_thread_handles.push(handle);
             },
             Err(ref err) if err.kind() == std::io::ErrorKind::WouldBlock => {
                 thread::sleep(std::time::Duration::from_millis(50));
@@ -67,10 +80,13 @@ pub fn start(config: Config) {
         }
     }
 
-    for handle in handles {
+    for handle in connection_thread_handles {
         if let Err(err) = handle.join() {
-            eprintln!("Failed to join handle: {:?}", err);
+            eprintln!("Failed to join connection thread handle: {:?}", err);
         }
+    }
+    if let Err(err) = net_thread_handle.join() {
+        eprintln!("Failed to join net-capture thread handle: {:?}", err);
     }
     log::info!("Shutdown complete");
 }
