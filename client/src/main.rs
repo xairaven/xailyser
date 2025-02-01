@@ -40,5 +40,5 @@ fn main() {
 mod config;
 mod context;
 mod logging;
-mod net;
 mod ui;
+mod ws;

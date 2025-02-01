@@ -4,7 +4,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
 use tungstenite::stream::MaybeTlsStream;
-use tungstenite::{ClientRequestBuilder, WebSocket};
+use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
 use xailyser_common::auth::AUTH_HEADER;
 use xailyser_common::cryptography::encrypt_password;
 
@@ -55,6 +55,10 @@ pub fn handle_messages(mut stream: WSStream) {
 
         if msg.is_close() {
             return;
+        }
+
+        if msg.is_ping() {
+            let _ = stream.send(Message::Pong(Bytes::new()));
         }
 
         if msg.is_binary() || msg.is_text() {

@@ -1,6 +1,6 @@
 use crate::context::CONTEXT;
-use crate::net;
 use crate::ui::windows::message::MessageWindow;
+use crate::ws;
 use egui::{Grid, RichText, TextEdit};
 use std::net::{IpAddr, SocketAddr};
 use std::thread::JoinHandle;
@@ -90,7 +90,7 @@ impl AuthRoot {
     }
 
     fn try_connect(&mut self, address: SocketAddr, password: &str) {
-        match net::connect(address, password) {
+        match ws::connect(address, password) {
             Ok(handle) => {
                 self.net_thread = Some(handle);
                 self.authenticated = true;
