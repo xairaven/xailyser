@@ -1,14 +1,21 @@
 use crate::config::Config;
-use crate::ws;
+use crate::ws::ConnectionThread;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use std::thread;
 
 const ADDRESS: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 
 pub fn start(config: Config) {
-    let (shutdown_tx, shutdown_rx) = crossbeam::channel::bounded::<()>(5);
-    if ctrlc::set_handler(move || {
-        let _ = shutdown_tx.try_send(());
+    let shutdown_flag = Arc::new(AtomicBool::new(false));
+
+    if ctrlc::set_handler({
+        let shutdown_flag = Arc::clone(&shutdown_flag);
+        move || {
+            shutdown_flag.store(true, Ordering::Release);
+        }
     })
     .is_err()
     {
@@ -29,7 +36,7 @@ pub fn start(config: Config) {
 
     let mut handles = Vec::new();
     loop {
-        if shutdown_rx.try_recv().is_ok() {
+        if shutdown_flag.load(Ordering::Acquire) {
             log::info!("Shutting down. Stop listening...");
             break;
         }
@@ -37,19 +44,10 @@ pub fn start(config: Config) {
         match server.accept() {
             Ok((tcp_stream, _)) => {
                 let encrypted_password = config.password.clone();
-                let shutdown_rx = shutdown_rx.clone();
+                let shutdown_flag = Arc::clone(&shutdown_flag);
                 let handle = thread::spawn(move || {
-                    let ws_stream = match ws::connect(tcp_stream, encrypted_password) {
-                        Ok(value) => {
-                            log::info!("Websocket connection established.");
-                            value
-                        },
-                        Err(err) => {
-                            log::info!("{}", err);
-                            return;
-                        },
-                    };
-                    ws::handle_messages(ws_stream, shutdown_rx);
+                    ConnectionThread::new(shutdown_flag)
+                        .start(tcp_stream, encrypted_password);
                 });
                 handles.push(handle);
             },
