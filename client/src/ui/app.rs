@@ -1,12 +1,12 @@
 use crate::context::CONTEXT;
-use crate::ui::components::auth::AuthComponent;
+use crate::ui::auth::AuthRoot;
 use crate::ui::root::UiRoot;
 use crate::ui::windows::Window;
 use egui::ThemePreference;
 
 #[derive(Default)]
 pub struct App {
-    auth_component: AuthComponent,
+    auth_root: AuthRoot,
     root: UiRoot,
 
     sub_windows: Vec<Box<dyn Window>>,
@@ -24,15 +24,15 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             // If not authenticated, showing `auth` window.
-            if !self.auth_component.authenticated() {
-                self.auth_component.show(ui);
+            if !self.auth_root.authenticated() {
+                self.auth_root.show(ui);
             }
 
             // If authenticated after showing auth component, then showing UI root.
-            if self.auth_component.authenticated() {
+            if self.auth_root.authenticated() {
                 // Passing net thread to the root component
-                if self.auth_component.net_thread.is_some() {
-                    self.root.net_thread = self.auth_component.net_thread.take();
+                if self.auth_root.net_thread.is_some() {
+                    self.root.net_thread = self.auth_root.net_thread.take();
                 }
 
                 // Showing the root window.

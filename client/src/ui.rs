@@ -31,8 +31,7 @@ pub fn start(config: &Config) -> eframe::Result {
 }
 
 mod app;
-pub(crate) mod components {
-    pub(crate) mod auth;
-}
+
+pub(crate) mod auth;
 pub(crate) mod root;
 pub(crate) mod windows;
