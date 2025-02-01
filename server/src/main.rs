@@ -37,4 +37,4 @@ fn main() {
 mod config;
 mod core;
 mod logging;
-mod net;
+mod ws;

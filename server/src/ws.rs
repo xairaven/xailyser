@@ -1,7 +1,11 @@
+use crossbeam::channel::Receiver;
 use std::net::TcpStream;
+use std::thread;
 use thiserror::Error;
 use tungstenite::handshake::server::{Request, Response};
 use tungstenite::http::{HeaderValue, StatusCode};
+use tungstenite::protocol::frame::coding::CloseCode;
+use tungstenite::protocol::CloseFrame;
 use tungstenite::WebSocket;
 use xailyser_common::auth;
 
@@ -45,8 +49,8 @@ pub fn connect(
         .map_err(|_| NetError::AuthFailed)
 }
 
-pub fn handle_messages(mut stream: WSStream) {
-    loop {
+pub fn handle_messages(mut stream: WSStream, shutdown_rx: Receiver<()>) {
+    while shutdown_rx.try_recv().is_err() {
         let msg = match stream.read() {
             Ok(value) => value,
             Err(err) => match err {
@@ -54,6 +58,12 @@ pub fn handle_messages(mut stream: WSStream) {
                 | tungstenite::Error::AlreadyClosed => {
                     log::warn!("Connection closed without alerting about it.");
                     return;
+                },
+                tungstenite::Error::Io(err)
+                    if err.kind() == std::io::ErrorKind::WouldBlock =>
+                {
+                    thread::sleep(std::time::Duration::from_millis(50));
+                    continue;
                 },
                 tungstenite::Error::Io(err) => {
                     log::warn!("{}", err);
@@ -74,6 +84,11 @@ pub fn handle_messages(mut stream: WSStream) {
             todo!()
         }
     }
+
+    let _ = stream.close(Some(CloseFrame {
+        code: CloseCode::Normal,
+        reason: Default::default(),
+    }));
 }
 
 #[derive(Debug, Error)]
