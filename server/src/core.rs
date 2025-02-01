@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::context::Context;
 use crate::net::NetThreadHandler;
-use crate::ws::ConnectionThread;
+use crate::ws::ConnectionThreadHandler;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
@@ -61,8 +61,8 @@ pub fn start(config: Config) {
                 let shutdown_flag = Arc::clone(&shutdown_flag);
                 let context = Arc::clone(&context);
                 let handle = thread::spawn(move || {
-                    let result =
-                        ConnectionThread::new(context, shutdown_flag).start(tcp_stream);
+                    let result = ConnectionThreadHandler::new(context, shutdown_flag)
+                        .start(tcp_stream);
 
                     if let Err(err) = result {
                         log::error!("{}. Terminated connection.", err);

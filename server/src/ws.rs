@@ -12,14 +12,14 @@ use tungstenite::protocol::CloseFrame;
 use tungstenite::WebSocket;
 use xailyser_common::auth;
 
-pub struct ConnectionThread {
+pub struct ConnectionThreadHandler {
     context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
 }
 
 type WSStream = WebSocket<TcpStream>;
 
-impl ConnectionThread {
+impl ConnectionThreadHandler {
     pub fn new(context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>) -> Self {
         Self {
             context,
