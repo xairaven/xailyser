@@ -1,5 +1,5 @@
 use crate::context::Context;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use thiserror::Error;
 
@@ -17,6 +17,10 @@ impl NetThreadHandler {
     }
 
     pub fn start(&self) -> Result<(), NetError> {
+        while !self.shutdown_flag.load(Ordering::Acquire) {
+            // Do smth
+        }
+
         Ok(())
     }
 }
