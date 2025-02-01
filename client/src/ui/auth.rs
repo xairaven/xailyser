@@ -1,22 +1,37 @@
-use crate::context::CONTEXT;
 use crate::ui::windows::message::MessageWindow;
+use crate::ui::windows::Window;
 use crate::ws;
+use crossbeam::channel::Sender;
 use egui::{Grid, RichText, TextEdit};
 use std::net::{IpAddr, SocketAddr};
 use std::thread::JoinHandle;
 use thiserror::Error;
 
-#[derive(Default)]
 pub struct AuthRoot {
-    authenticated: bool,
     pub net_thread: Option<JoinHandle<()>>,
+
+    authenticated: bool,
 
     ip_text_field: String,
     port_text_field: String,
     password_text_field: String,
+
+    windows_tx: Sender<Box<dyn Window>>,
 }
 
 impl AuthRoot {
+    pub fn new(windows_tx: Sender<Box<dyn Window>>) -> Self {
+        Self {
+            windows_tx,
+
+            net_thread: None,
+            authenticated: false,
+            ip_text_field: Default::default(),
+            port_text_field: Default::default(),
+            password_text_field: Default::default(),
+        }
+    }
+
     pub fn authenticated(&self) -> bool {
         self.authenticated
     }
@@ -77,10 +92,8 @@ impl AuthRoot {
                                 );
                             },
                             Err(err) => {
-                                if let Ok(guard) = CONTEXT.try_lock() {
-                                    let window = MessageWindow::error(&err.to_string());
-                                    let _ = guard.windows_tx.send(Box::new(window));
-                                }
+                                let window = MessageWindow::error(&err.to_string());
+                                let _ = self.windows_tx.send(Box::new(window));
                             },
                         }
                     }
@@ -101,10 +114,8 @@ impl AuthRoot {
                     Some(info) => format!("{}.\n{}", err, info),
                 };
 
-                if let Ok(guard) = CONTEXT.try_lock() {
-                    let window = MessageWindow::error(&message);
-                    let _ = guard.windows_tx.send(Box::new(window));
-                }
+                let window = MessageWindow::error(&message);
+                let _ = self.windows_tx.send(Box::new(window));
             },
         }
     }

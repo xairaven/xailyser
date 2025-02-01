@@ -1,11 +1,12 @@
 use crate::ui::components::settings::SettingsComponent;
 use crate::ui::components::status::StatusComponent;
 use crate::ui::components::Tab;
+use crate::ui::windows::Window;
+use crossbeam::channel::Sender;
 use egui::{CentralPanel, SidePanel};
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 
-#[derive(Default)]
 pub struct UiRoot {
     pub net_thread: Option<JoinHandle<()>>,
 
@@ -13,9 +14,22 @@ pub struct UiRoot {
 
     status_component: StatusComponent,
     settings_component: SettingsComponent,
+
+    windows_tx: Sender<Box<dyn Window>>,
 }
 
 impl UiRoot {
+    pub fn new(windows_tx: Sender<Box<dyn Window>>) -> Self {
+        Self {
+            windows_tx,
+
+            net_thread: Default::default(),
+            tab_current: Default::default(),
+            status_component: Default::default(),
+            settings_component: Default::default(),
+        }
+    }
+
     pub fn show(&mut self, ui: &mut egui::Ui) {
         SidePanel::left("MENU_PANEL")
             .resizable(false)

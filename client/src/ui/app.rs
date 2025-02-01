@@ -1,22 +1,33 @@
-use crate::context::CONTEXT;
 use crate::ui::auth::AuthRoot;
 use crate::ui::root::UiRoot;
 use crate::ui::windows::Window;
+use crossbeam::channel::{unbounded, Receiver};
 use egui::ThemePreference;
 
-#[derive(Default)]
 pub struct App {
     auth_root: AuthRoot,
     root: UiRoot,
 
     sub_windows: Vec<Box<dyn Window>>,
+
+    windows_rx: Receiver<Box<dyn Window>>,
 }
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>, theme: ThemePreference) -> Self {
         cc.egui_ctx
             .options_mut(|options| options.theme_preference = theme);
-        Default::default()
+
+        let (windows_tx, windows_rx) = unbounded::<Box<dyn Window>>();
+
+        Self {
+            windows_rx,
+
+            auth_root: AuthRoot::new(windows_tx.clone()),
+            root: UiRoot::new(windows_tx.clone()),
+
+            sub_windows: Vec::new(),
+        }
     }
 }
 
@@ -40,10 +51,8 @@ impl eframe::App for App {
             }
 
             // Getting sub-windows from the channels (in context).
-            if let Ok(guard) = CONTEXT.try_lock() {
-                if let Ok(sub_window) = guard.windows_rx.try_recv() {
-                    self.sub_windows.push(sub_window);
-                }
+            if let Ok(sub_window) = self.windows_rx.try_recv() {
+                self.sub_windows.push(sub_window);
             }
 
             // Showing sub-windows.
