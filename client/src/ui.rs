@@ -32,9 +32,7 @@ pub fn start(config: &Config) -> eframe::Result {
 
 mod app;
 
-pub(crate) mod auth;
-pub(crate) mod components {
-    pub mod menu;
-}
-pub(crate) mod root;
-pub(crate) mod windows;
+pub mod auth;
+pub mod components;
+pub mod root;
+pub mod windows;
