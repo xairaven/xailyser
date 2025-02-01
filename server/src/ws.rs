@@ -1,6 +1,8 @@
+use crate::context;
+use crate::context::Context;
 use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use thiserror::Error;
 use tungstenite::handshake::server::{Request, Response};
@@ -11,29 +13,47 @@ use tungstenite::WebSocket;
 use xailyser_common::auth;
 
 pub struct ConnectionThread {
+    context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
 }
 
 type WSStream = WebSocket<TcpStream>;
 
 impl ConnectionThread {
-    pub fn new(shutdown_flag: Arc<AtomicBool>) -> Self {
-        Self { shutdown_flag }
+    pub fn new(context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>) -> Self {
+        Self {
+            context,
+            shutdown_flag,
+        }
     }
 
-    pub fn start(&self, tcp_stream: TcpStream, password: String) {
+    pub fn start(&self, tcp_stream: TcpStream) -> Result<(), WsError> {
+        let mut password: Option<String> = None;
+        for _ in 1..=context::MAX_LOCK_RETRY_ATTEMPTS {
+            if let Ok(context) = self.context.try_lock() {
+                password = Some(context.config.password.clone());
+                break;
+            } else {
+                thread::sleep(context::RETRY_LOCK_DELAY);
+            }
+        }
+        let password = match password {
+            Some(value) => value,
+            None => {
+                return Err(WsError::ContextLockError);
+            },
+        };
+
         let ws_stream = match self.connect(tcp_stream, password) {
             Ok(value) => {
                 log::info!("Websocket connection established.");
                 value
             },
-            Err(err) => {
-                log::info!("{}", err);
-                return;
-            },
+            Err(err) => return Err(err),
         };
 
         self.handle_messages(ws_stream);
+        Ok(())
     }
 
     fn connect(
@@ -129,9 +149,12 @@ impl ConnectionThread {
 
 #[derive(Debug, Error)]
 pub enum WsError {
-    #[error("Authentication failed.")]
+    #[error("Authentication failed")]
     AuthFailed,
 
-    #[error("Invalid password header.")]
+    #[error("Invalid password header")]
     InvalidPasswordHeader,
+
+    #[error("Failed to lock the context")]
+    ContextLockError,
 }
