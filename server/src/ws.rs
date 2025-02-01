@@ -38,7 +38,7 @@ impl ConnectionThread {
 
     fn connect(
         &self, tcp_stream: TcpStream, server_password: String,
-    ) -> Result<WSStream, NetError> {
+    ) -> Result<WSStream, WsError> {
         if let Ok(peer_addr) = &tcp_stream.peer_addr() {
             log::info!(
                 "Received a new handshake from {}:{}",
@@ -50,7 +50,7 @@ impl ConnectionThread {
         }
 
         let server_password_header = HeaderValue::from_str(server_password.as_str())
-            .map_err(|_| NetError::InvalidPasswordHeader)?;
+            .map_err(|_| WsError::InvalidPasswordHeader)?;
         let check_authentication = |req: &Request, response: Response| {
             if let Some(given_password) = req.headers().get(auth::AUTH_HEADER) {
                 if given_password.eq(&server_password_header) {
@@ -71,7 +71,7 @@ impl ConnectionThread {
             }
         };
         tungstenite::accept_hdr(tcp_stream, check_authentication)
-            .map_err(|_| NetError::AuthFailed)
+            .map_err(|_| WsError::AuthFailed)
     }
 
     fn handle_messages(&self, mut stream: WSStream) {
@@ -128,7 +128,7 @@ impl ConnectionThread {
 }
 
 #[derive(Debug, Error)]
-pub enum NetError {
+pub enum WsError {
     #[error("Authentication failed.")]
     AuthFailed,
 
