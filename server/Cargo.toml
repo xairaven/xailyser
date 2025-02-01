@@ -16,12 +16,14 @@ repository = "https://github.com/xairaven/xailyser"
 [dependencies]
 xailyser-common = { path = "../common" }
 
+bytes = "1.9.0"
 crossbeam = "0.8.4"
 ctrlc = "3.4.5"
 fern = "0.7.1"
 log = "0.4.25"
 pnet = "0.35.0"
 serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.138"
 thiserror = "2.0.11"
 toml = "0.8.19"
 tungstenite = "0.26.1"
