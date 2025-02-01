@@ -29,6 +29,8 @@ http = "1.2.0"
 log = "0.4.25"
 rand = "0.9.0"
 serde = { version = "1.0.217", features = ["derive"] }
+strum = "0.26.3"
+strum_macros = "0.26.4"
 thiserror = "2.0.11"
 toml = "0.8.19"
 tungstenite = "0.26.1"
