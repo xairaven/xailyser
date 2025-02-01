@@ -7,3 +7,4 @@
 pub mod auth;
 pub mod cryptography;
 pub mod logging;
+pub mod messages;
