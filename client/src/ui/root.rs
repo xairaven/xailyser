@@ -1,4 +1,4 @@
-use crate::ui::components::settings::Settings;
+use crate::ui::components::menu::Menu;
 use egui::{CentralPanel, SidePanel};
 use std::thread::JoinHandle;
 
@@ -6,7 +6,7 @@ use std::thread::JoinHandle;
 pub struct UiRoot {
     pub net_thread: Option<JoinHandle<()>>,
 
-    settings_block: Settings,
+    menu: Menu,
 }
 
 impl UiRoot {
@@ -16,7 +16,7 @@ impl UiRoot {
             .min_width(ui.available_width() * 0.25)
             .show_separator_line(true)
             .show_inside(ui, |ui| {
-                self.settings_block.show(ui);
+                self.menu.show(ui);
             });
 
         CentralPanel::default().show_inside(ui, |ui| {

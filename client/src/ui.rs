@@ -34,7 +34,7 @@ mod app;
 
 pub(crate) mod auth;
 pub(crate) mod components {
-    pub mod settings;
+    pub mod menu;
 }
 pub(crate) mod root;
 pub(crate) mod windows;

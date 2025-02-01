@@ -1,9 +1,9 @@
 #[derive(Default)]
-pub struct Settings;
+pub struct Menu;
 
 const DEFAULT_SPACE: f32 = 10.0;
 
-impl Settings {
+impl Menu {
     pub fn show(&self, ui: &mut egui::Ui) {
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.vertical_centered_justified(|ui| {
