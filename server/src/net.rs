@@ -1,32 +1,19 @@
-use crate::context::Context;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use thiserror::Error;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
-pub struct NetThreadHandler {
-    context: Arc<Mutex<Context>>,
+pub struct PacketSniffer {
     shutdown_flag: Arc<AtomicBool>,
 }
 
-impl NetThreadHandler {
-    pub fn new(context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>) -> Self {
-        Self {
-            context,
-            shutdown_flag,
-        }
+// TODO
+impl PacketSniffer {
+    pub fn new(shutdown_flag: Arc<AtomicBool>) -> Self {
+        Self { shutdown_flag }
     }
 
-    pub fn start(&self) -> Result<(), NetError> {
-        while !self.shutdown_flag.load(Ordering::Acquire) {
-            // Do smth
-        }
-
-        Ok(())
+    pub fn start(&self) {
+        // while !self.shutdown_flag.load(Ordering::Acquire) {
+        //
+        // }
     }
-}
-
-#[derive(Debug, Error)]
-pub enum NetError {
-    #[error("Failed to lock the context")]
-    ContextLockError,
 }

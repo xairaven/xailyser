@@ -1,9 +1,10 @@
-use crate::context;
 use crate::context::Context;
+use crate::tcp;
 use bytes::Bytes;
+use crossbeam::channel::{Receiver, Sender};
 use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::thread;
 use thiserror::Error;
 use tungstenite::handshake::server::{Request, Response};
@@ -14,39 +15,19 @@ use tungstenite::{Message, Utf8Bytes, WebSocket};
 use xailyser_common::auth;
 use xailyser_common::messages::{ClientRequest, ServerError, ServerResponse};
 
-pub struct ConnectionThreadHandler {
-    context: Arc<Mutex<Context>>,
+pub struct WsHandler {
     shutdown_flag: Arc<AtomicBool>,
 }
 
 type WSStream = WebSocket<TcpStream>;
 
-impl ConnectionThreadHandler {
-    pub fn new(context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>) -> Self {
-        Self {
-            context,
-            shutdown_flag,
-        }
+impl WsHandler {
+    pub fn new(shutdown_flag: Arc<AtomicBool>) -> Self {
+        Self { shutdown_flag }
     }
 
-    pub fn start(&self, tcp_stream: TcpStream) -> Result<(), WsError> {
-        let mut password: Option<String> = None;
-        for _ in 1..=context::MAX_LOCK_RETRY_ATTEMPTS {
-            if let Ok(context) = self.context.try_lock() {
-                password = Some(context.config.password.clone());
-                break;
-            } else {
-                thread::sleep(context::RETRY_LOCK_DELAY);
-            }
-        }
-        let password = match password {
-            Some(value) => value,
-            None => {
-                return Err(WsError::ContextLockError);
-            },
-        };
-
-        let ws_stream = match self.connect(tcp_stream, password) {
+    pub fn start(&self, tcp_stream: TcpStream, context: Context) -> Result<(), WsError> {
+        let ws_stream = match self.connect(tcp_stream, context.password) {
             Ok(value) => {
                 log::info!("Websocket connection established.");
                 value
@@ -54,7 +35,11 @@ impl ConnectionThreadHandler {
             Err(err) => return Err(err),
         };
 
-        self.handle_messages(ws_stream);
+        self.send_receive_messages(
+            ws_stream,
+            context.client_request_tx,
+            context.server_response_rx,
+        );
         Ok(())
     }
 
@@ -96,71 +81,18 @@ impl ConnectionThreadHandler {
             .map_err(|_| WsError::AuthFailed)
     }
 
-    fn handle_messages(&self, mut stream: WSStream) {
+    fn send_receive_messages(
+        &self, mut stream: WSStream, client_request_tx: Sender<ClientRequest>,
+        server_response_rx: Receiver<ServerResponse>,
+    ) {
         while !self.shutdown_flag.load(Ordering::Acquire) {
-            let msg = match stream.read() {
-                Ok(value) => value,
-                Err(err) => match err {
-                    tungstenite::Error::ConnectionClosed
-                    | tungstenite::Error::AlreadyClosed => {
-                        log::warn!("Connection closed without alerting about it.");
-                        return;
-                    },
-                    tungstenite::Error::Io(err)
-                        if err.kind() == std::io::ErrorKind::WouldBlock =>
-                    {
-                        thread::sleep(std::time::Duration::from_millis(50));
-                        continue;
-                    },
-                    tungstenite::Error::Io(err) => {
-                        log::warn!("{}", err);
-                        return;
-                    },
-                    _ => {
-                        log::error!("{}", err);
-                        continue;
-                    },
-                },
-            };
-
-            if msg.is_close() {
+            if self
+                .receive_messages(&mut stream, &client_request_tx)
+                .is_err()
+            {
                 return;
             }
-
-            if msg.is_ping() {
-                let _ = stream.send(Message::Pong(Bytes::new()));
-            }
-
-            if msg.is_empty() || msg.is_binary() {
-                let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
-                if let Ok(text) = serde_json::to_string(&message) {
-                    let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
-                }
-            }
-
-            if msg.is_text() {
-                let deserialized: Result<ClientRequest, serde_json::Error> =
-                    serde_json::from_str(&msg.to_string());
-                if let Ok(message) = deserialized {
-                    match message {
-                        ClientRequest::RequestInterfaces => {
-                            todo!()
-                        },
-                        ClientRequest::SetInterface(_) => {
-                            todo!()
-                        },
-                        ClientRequest::ChangePassword(_) => {
-                            todo!()
-                        },
-                    }
-                } else {
-                    let message =
-                        ServerResponse::Error(ServerError::InvalidMessageFormat);
-                    if let Ok(text) = serde_json::to_string(&message) {
-                        let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
-                    }
-                }
-            }
+            self.send_messages(&mut stream, &server_response_rx);
         }
 
         if let Ok(address) = stream.get_ref().peer_addr() {
@@ -178,6 +110,80 @@ impl ConnectionThreadHandler {
             reason: Default::default(),
         }));
     }
+
+    fn receive_messages(
+        &self, stream: &mut WSStream, client_request_tx: &Sender<ClientRequest>,
+    ) -> Result<(), tungstenite::Error> {
+        let msg = match stream.read() {
+            Ok(value) => value,
+            Err(err) => {
+                return match err {
+                    tungstenite::Error::ConnectionClosed
+                    | tungstenite::Error::AlreadyClosed => {
+                        log::warn!("Connection closed without alerting about it.");
+                        Err(err)
+                    },
+                    tungstenite::Error::Io(err)
+                        if err.kind() == std::io::ErrorKind::WouldBlock =>
+                    {
+                        thread::sleep(tcp::WOULD_BLOCK_SLEEP_DELAY);
+                        Ok(())
+                    },
+                    tungstenite::Error::Io(err) => {
+                        log::warn!("{}", err);
+                        Err(tungstenite::Error::Io(err))
+                    },
+                    _ => {
+                        log::error!("{}", err);
+                        Ok(())
+                    },
+                }
+            },
+        };
+
+        if msg.is_close() {
+            log::info!("Client closed connection.");
+            return Err(tungstenite::Error::ConnectionClosed);
+        }
+
+        if msg.is_ping() {
+            let _ = stream.send(Message::Pong(Bytes::new()));
+        }
+
+        if msg.is_empty() || msg.is_binary() {
+            let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
+            if let Ok(text) = serde_json::to_string(&message) {
+                let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
+            }
+        }
+
+        if msg.is_text() {
+            let deserialized: Result<ClientRequest, serde_json::Error> =
+                serde_json::from_str(&msg.to_string());
+            if let Ok(message) = deserialized {
+                let _ = client_request_tx.try_send(message);
+            } else {
+                let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
+                if let Ok(text) = serde_json::to_string(&message) {
+                    let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn send_messages(
+        &self, stream: &mut WSStream, server_response_rx: &Receiver<ServerResponse>,
+    ) {
+        if let Ok(message) = server_response_rx.try_recv() {
+            if let Ok(serialized) = serde_json::to_string(&message) {
+                let _ = stream.send(Message::text(serialized));
+            } else {
+                log::error!("Can't serialize message! {:#?}", message);
+            }
+        }
+    }
 }
 
 #[derive(Debug, Error)]
@@ -187,7 +193,4 @@ pub enum WsError {
 
     #[error("Invalid password header")]
     InvalidPasswordHeader,
-
-    #[error("Failed to lock the context")]
-    ContextLockError,
 }
