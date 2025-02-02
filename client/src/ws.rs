@@ -9,27 +9,27 @@ use xailyser_common::auth::AUTH_HEADER;
 use xailyser_common::cryptography::encrypt_password;
 use xailyser_common::messages::{ClientRequest, ServerResponse};
 
-type WSStream = WebSocket<MaybeTlsStream<TcpStream>>;
+type WsStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
-pub fn connect(address: SocketAddr, password: &str) -> Result<WSStream, NetError> {
+pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError> {
     let uri: Uri = format!("ws://{}:{}/socket", address.ip(), address.port())
         .parse()
-        .map_err(|_| NetError::FailedParseUri)?;
+        .map_err(|_| WsError::FailedParseUri)?;
     let hashed_password = encrypt_password(password);
     let request =
         ClientRequestBuilder::new(uri).with_header(AUTH_HEADER, hashed_password);
 
-    let (stream, response) = match tungstenite::connect(request) {
-        Ok((stream, response)) => (stream, response),
-        Err(err) => return Err(NetError::ConnectionFailed(err)),
+    let stream = match tungstenite::connect(request) {
+        Ok((stream, _)) => stream,
+        Err(err) => return Err(WsError::ConnectionFailed(err)),
     };
-    log::info!("Connected! Status: {}", response.status());
+    log::info!("WS-Stream: Connected to {}.", address);
 
     Ok(stream)
 }
 
 pub fn send_receive_messages(
-    mut stream: WSStream, ws_tx: Sender<ServerResponse>, ui_rx: Receiver<ClientRequest>,
+    mut stream: WsStream, ws_tx: Sender<ServerResponse>, ui_rx: Receiver<ClientRequest>,
 ) {
     loop {
         if receive_messages(&mut stream, &ws_tx).is_err() {
@@ -40,7 +40,7 @@ pub fn send_receive_messages(
 }
 
 fn receive_messages(
-    stream: &mut WSStream, ws_tx: &Sender<ServerResponse>,
+    stream: &mut WsStream, ws_tx: &Sender<ServerResponse>,
 ) -> Result<(), tungstenite::Error> {
     let msg = match stream.read() {
         Ok(value) => value,
@@ -48,7 +48,7 @@ fn receive_messages(
             return match err {
                 tungstenite::Error::ConnectionClosed
                 | tungstenite::Error::AlreadyClosed => {
-                    log::warn!("Connection closed without alerting about it.");
+                    log::warn!("WS-Stream: Connection closed without alerting about it.");
                     Err(err)
                 },
                 tungstenite::Error::Io(err)
@@ -58,11 +58,11 @@ fn receive_messages(
                     Ok(())
                 },
                 tungstenite::Error::Io(err) => {
-                    log::warn!("{}", err);
+                    log::warn!("WS-Stream: {}", err);
                     Err(tungstenite::Error::Io(err))
                 },
                 _ => {
-                    log::error!("{}", err);
+                    log::error!("WS-Stream: {}", err);
                     Ok(())
                 },
             }
@@ -70,43 +70,51 @@ fn receive_messages(
     };
 
     if msg.is_close() {
-        log::info!("Server closed connection.");
+        log::info!("WS-Stream: Server closed connection.");
         return Err(tungstenite::Error::ConnectionClosed);
     }
 
     if msg.is_ping() {
-        let _ = stream.send(Message::Pong(Bytes::new()));
+        if let Err(err) = stream.send(Message::Pong(Bytes::new())) {
+            log::error!("WS-Stream: Can't send message. Error: {}", err);
+        }
     }
 
     if msg.is_empty() || msg.is_binary() {
-        log::warn!("Received empty or binary message. Please, check server stability");
+        log::warn!("WS-Stream: Received empty or binary message.");
     }
 
     if msg.is_text() {
         let deserialized: Result<ServerResponse, serde_json::Error> =
             serde_json::from_str(&msg.to_string());
         if let Ok(message) = deserialized {
-            let _ = ws_tx.try_send(message);
+            if let Err(err) = ws_tx.try_send(message) {
+                log::error!("WS Channel: Can't send message. Error: {}", err);
+            }
         } else {
-            log::warn!("Can't deserialize message. Please, check server stability");
+            log::warn!("Serde: can't deserialize message! {:#?}", msg);
         }
     }
 
     Ok(())
 }
 
-fn send_messages(stream: &mut WSStream, ui_rx: &Receiver<ClientRequest>) {
+fn send_messages(stream: &mut WsStream, ui_rx: &Receiver<ClientRequest>) {
     if let Ok(message) = ui_rx.try_recv() {
         if let Ok(serialized) = serde_json::to_string(&message) {
-            let _ = stream.send(Message::text(serialized));
+            if let Err(err) = stream.send(Message::text(serialized)) {
+                log::error!("WS-Stream: Can't send message. Error: {}", err);
+            } else {
+                log::info!("WS-Stream (Client -> Server): Sent reboot command.");
+            }
         } else {
-            log::error!("Can't serialize message! {:#?}", message);
+            log::error!("Serde: Can't serialize message! {:#?}", message);
         }
     }
 }
 
 #[derive(Debug, Error)]
-pub enum NetError {
+pub enum WsError {
     #[error("Failed to connect")]
     ConnectionFailed(tungstenite::Error),
 
@@ -114,10 +122,10 @@ pub enum NetError {
     FailedParseUri,
 }
 
-impl NetError {
+impl WsError {
     pub fn additional_info(&self) -> Option<String> {
         match self {
-            NetError::ConnectionFailed(err) => Some(err.to_string()),
+            WsError::ConnectionFailed(err) => Some(err.to_string()),
             _ => None,
         }
     }
