@@ -1,17 +1,17 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ClientToServerMessage {
-    RequestInterfaces,      // Request a list of available ethernet interfaces
-    SetInterface(String),   // Request to set an interface
-    ChangePassword(String), // Request to change a password to another (not encrypted)
+pub enum ClientRequest {
+    RequestInterfaces,      // List of available ethernet interfaces
+    SetInterface(String),   // Set an ethernet interface
+    ChangePassword(String), // Change a password to another (not encrypted)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ServerToClientMessage {
-    InterfacesList(Vec<String>), // Reply: Available ethernet interfaces
-    SetInterfaceResult(Result<(), ServerError>), // Reply: Is interface set?
-    ChangePasswordResult(Result<(), ServerError>), // Reply: Is password changed?
+pub enum ServerResponse {
+    InterfacesList(Vec<String>), // Available ethernet interfaces
+    SetInterfaceResult(Result<(), ServerError>), // Is interface set by request?
+    ChangePasswordResult(Result<(), ServerError>), // Is password changed by request?
 
     Error(ServerError), // Generic Error.
 }

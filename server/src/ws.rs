@@ -12,9 +12,7 @@ use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::protocol::CloseFrame;
 use tungstenite::{Message, Utf8Bytes, WebSocket};
 use xailyser_common::auth;
-use xailyser_common::messages::{
-    ClientToServerMessage, ServerError, ServerToClientMessage,
-};
+use xailyser_common::messages::{ClientRequest, ServerError, ServerResponse};
 
 pub struct ConnectionThreadHandler {
     context: Arc<Mutex<Context>>,
@@ -134,31 +132,30 @@ impl ConnectionThreadHandler {
             }
 
             if msg.is_empty() || msg.is_binary() {
-                let message =
-                    ServerToClientMessage::Error(ServerError::InvalidMessageFormat);
+                let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
                 if let Ok(text) = serde_json::to_string(&message) {
                     let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
                 }
             }
 
             if msg.is_text() {
-                let deserialized: Result<ClientToServerMessage, serde_json::Error> =
+                let deserialized: Result<ClientRequest, serde_json::Error> =
                     serde_json::from_str(&msg.to_string());
                 if let Ok(message) = deserialized {
                     match message {
-                        ClientToServerMessage::RequestInterfaces => {
+                        ClientRequest::RequestInterfaces => {
                             todo!()
                         },
-                        ClientToServerMessage::SetInterface(_) => {
+                        ClientRequest::SetInterface(_) => {
                             todo!()
                         },
-                        ClientToServerMessage::ChangePassword(_) => {
+                        ClientRequest::ChangePassword(_) => {
                             todo!()
                         },
                     }
                 } else {
                     let message =
-                        ServerToClientMessage::Error(ServerError::InvalidMessageFormat);
+                        ServerResponse::Error(ServerError::InvalidMessageFormat);
                     if let Ok(text) = serde_json::to_string(&message) {
                         let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
                     }
