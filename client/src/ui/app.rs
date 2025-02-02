@@ -1,16 +1,18 @@
+use crate::context::Context;
 use crate::ui::auth::AuthRoot;
 use crate::ui::root::UiRoot;
 use crate::ui::windows::Window;
-use crossbeam::channel::{unbounded, Receiver};
 use egui::ThemePreference;
+use xailyser_common::messages::ServerResponse;
 
+#[derive(Default)]
 pub struct App {
+    context: Context,
+
     auth_root: AuthRoot,
     root: UiRoot,
 
     sub_windows: Vec<Box<dyn Window>>,
-
-    windows_rx: Receiver<Box<dyn Window>>,
 }
 
 impl App {
@@ -18,16 +20,7 @@ impl App {
         cc.egui_ctx
             .options_mut(|options| options.theme_preference = theme);
 
-        let (windows_tx, windows_rx) = unbounded::<Box<dyn Window>>();
-
-        Self {
-            windows_rx,
-
-            auth_root: AuthRoot::new(windows_tx.clone()),
-            root: UiRoot::new(windows_tx.clone()),
-
-            sub_windows: Vec::new(),
-        }
+        Default::default()
     }
 }
 
@@ -36,7 +29,7 @@ impl eframe::App for App {
         egui::CentralPanel::default().show(ctx, |ui| {
             // If not authenticated, showing `auth` window.
             if !self.auth_root.authenticated() {
-                self.auth_root.show(ui);
+                self.auth_root.show(ui, &mut self.context);
             }
 
             // If authenticated after showing auth component, then showing UI root.
@@ -47,17 +40,19 @@ impl eframe::App for App {
                 }
 
                 // Showing the root window.
-                self.root.show(ui);
+                self.root.show(ui, &mut self.context);
             }
 
             // Getting sub-windows from the channels (in context).
-            if let Ok(sub_window) = self.windows_rx.try_recv() {
+            if let Ok(sub_window) = self.context.windows_rx.try_recv() {
                 self.sub_windows.push(sub_window);
             }
 
             // Showing sub-windows.
             self.show_opened_sub_windows(ui);
         });
+
+        self.process_server_responses();
     }
 }
 
@@ -76,5 +71,25 @@ impl App {
         closed_windows.iter().for_each(|index| {
             self.sub_windows.remove(*index);
         });
+    }
+
+    fn process_server_responses(&self) {
+        match self.context.ws_rx.try_recv() {
+            Ok(ServerResponse::InterfacesList(_)) => {
+                todo!()
+            },
+            Ok(ServerResponse::SetInterfaceResult(_)) => {
+                todo!()
+            },
+            Ok(ServerResponse::ChangePasswordResult(_)) => {
+                todo!()
+            },
+            Ok(ServerResponse::Error(_)) => {
+                todo!()
+            },
+            _ => {},
+        }
+
+        // self.windows_tx.try_send()
     }
 }

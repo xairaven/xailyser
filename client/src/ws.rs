@@ -1,16 +1,16 @@
+use crossbeam::channel::{Receiver, Sender};
 use http::Uri;
 use std::net::{SocketAddr, TcpStream};
-use std::thread;
-use std::thread::JoinHandle;
 use thiserror::Error;
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
 use xailyser_common::auth::AUTH_HEADER;
 use xailyser_common::cryptography::encrypt_password;
+use xailyser_common::messages::{ClientRequest, ServerResponse};
 
 type WSStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
-pub fn connect(address: SocketAddr, password: &str) -> Result<JoinHandle<()>, NetError> {
+pub fn connect(address: SocketAddr, password: &str) -> Result<WSStream, NetError> {
     let uri: Uri = format!("ws://{}:{}/socket", address.ip(), address.port())
         .parse()
         .map_err(|_| NetError::FailedParseUri)?;
@@ -24,45 +24,76 @@ pub fn connect(address: SocketAddr, password: &str) -> Result<JoinHandle<()>, Ne
     };
     log::info!("Connected! Status: {}", response.status());
 
-    let handle = thread::spawn(move || {
-        handle_messages(stream);
-    });
-
-    Ok(handle)
+    Ok(stream)
 }
 
-// TODO
-pub fn handle_messages(mut stream: WSStream) {
+pub fn send_receive_messages(
+    mut stream: WSStream, ws_tx: Sender<ServerResponse>, ui_rx: Receiver<ClientRequest>,
+) {
     loop {
-        let msg = match stream.read() {
-            Ok(value) => value,
-            Err(err) => match err {
+        if receive_messages(&mut stream, &ws_tx).is_err() {
+            return;
+        }
+        send_messages(&mut stream, &ui_rx);
+    }
+}
+
+fn receive_messages(
+    stream: &mut WSStream, ws_tx: &Sender<ServerResponse>,
+) -> Result<(), tungstenite::Error> {
+    let msg = match stream.read() {
+        Ok(value) => value,
+        Err(err) => {
+            return match err {
                 tungstenite::Error::ConnectionClosed
                 | tungstenite::Error::AlreadyClosed => {
                     log::warn!("Connection closed without alerting about it.");
-                    return;
+                    Err(err)
                 },
                 tungstenite::Error::Io(err) => {
                     log::warn!("{}", err);
-                    return;
+                    Err(tungstenite::Error::Io(err))
                 },
                 _ => {
                     log::error!("{}", err);
-                    continue;
+                    Ok(())
                 },
-            },
-        };
+            }
+        },
+    };
 
-        if msg.is_close() {
-            return;
+    if msg.is_close() {
+        log::info!("Server closed connection.");
+        return Err(tungstenite::Error::ConnectionClosed);
+    }
+
+    if msg.is_ping() {
+        let _ = stream.send(Message::Pong(Bytes::new()));
+    }
+
+    if msg.is_empty() || msg.is_binary() {
+        log::warn!("Received empty or binary message. Please, check server stability");
+    }
+
+    if msg.is_text() {
+        let deserialized: Result<ServerResponse, serde_json::Error> =
+            serde_json::from_str(&msg.to_string());
+        if let Ok(message) = deserialized {
+            let _ = ws_tx.try_send(message);
+        } else {
+            log::warn!("Can't deserialize message. Please, check server stability");
         }
+    }
 
-        if msg.is_ping() {
-            let _ = stream.send(Message::Pong(Bytes::new()));
-        }
+    Ok(())
+}
 
-        if msg.is_binary() || msg.is_text() {
-            log::info!("Text received: {}", msg);
+fn send_messages(stream: &mut WSStream, ui_rx: &Receiver<ClientRequest>) {
+    if let Ok(message) = ui_rx.try_recv() {
+        if let Ok(serialized) = serde_json::to_string(&message) {
+            let _ = stream.send(Message::text(serialized));
+        } else {
+            log::error!("Can't serialize message! {:#?}", message);
         }
     }
 }

@@ -38,6 +38,7 @@ fn main() {
 }
 
 mod config;
+mod context;
 mod logging;
 mod ui;
 mod ws;

@@ -1,12 +1,13 @@
+use crate::context::Context;
 use crate::ui::windows::message::MessageWindow;
-use crate::ui::windows::Window;
 use crate::ws;
-use crossbeam::channel::Sender;
 use egui::{Grid, RichText, TextEdit};
 use std::net::{IpAddr, SocketAddr};
+use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
 
+#[derive(Default)]
 pub struct AuthRoot {
     pub net_thread: Option<JoinHandle<()>>,
 
@@ -15,28 +16,14 @@ pub struct AuthRoot {
     ip_text_field: String,
     port_text_field: String,
     password_text_field: String,
-
-    windows_tx: Sender<Box<dyn Window>>,
 }
 
 impl AuthRoot {
-    pub fn new(windows_tx: Sender<Box<dyn Window>>) -> Self {
-        Self {
-            windows_tx,
-
-            net_thread: None,
-            authenticated: false,
-            ip_text_field: Default::default(),
-            port_text_field: Default::default(),
-            password_text_field: Default::default(),
-        }
-    }
-
     pub fn authenticated(&self) -> bool {
         self.authenticated
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui) {
+    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let window_height = ui.available_size().y;
 
         ui.columns(3, |columns| {
@@ -87,13 +74,14 @@ impl AuthRoot {
                         match self.get_address() {
                             Ok(address) => {
                                 self.try_connect(
+                                    ctx,
                                     address,
                                     &self.password_text_field.clone(),
                                 );
                             },
                             Err(err) => {
                                 let window = MessageWindow::error(&err.to_string());
-                                let _ = self.windows_tx.send(Box::new(window));
+                                let _ = ctx.windows_tx.send(Box::new(window));
                             },
                         }
                     }
@@ -102,9 +90,15 @@ impl AuthRoot {
         });
     }
 
-    fn try_connect(&mut self, address: SocketAddr, password: &str) {
+    fn try_connect(&mut self, ctx: &Context, address: SocketAddr, password: &str) {
         match ws::connect(address, password) {
-            Ok(handle) => {
+            Ok(stream) => {
+                let ws_tx = ctx.ws_tx.clone();
+                let ui_rx = ctx.ui_rx.clone();
+                let handle = thread::spawn(move || {
+                    ws::send_receive_messages(stream, ws_tx, ui_rx);
+                });
+
                 self.net_thread = Some(handle);
                 self.authenticated = true;
             },
@@ -115,7 +109,7 @@ impl AuthRoot {
                 };
 
                 let window = MessageWindow::error(&message);
-                let _ = self.windows_tx.send(Box::new(window));
+                let _ = ctx.windows_tx.send(Box::new(window));
             },
         }
     }
