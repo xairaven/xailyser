@@ -1,6 +1,7 @@
 use crossbeam::channel::{Receiver, Sender};
 use http::Uri;
 use std::net::{SocketAddr, TcpStream};
+use std::thread;
 use thiserror::Error;
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
@@ -49,6 +50,12 @@ fn receive_messages(
                 | tungstenite::Error::AlreadyClosed => {
                     log::warn!("Connection closed without alerting about it.");
                     Err(err)
+                },
+                tungstenite::Error::Io(err)
+                    if err.kind() == std::io::ErrorKind::WouldBlock =>
+                {
+                    thread::sleep(std::time::Duration::from_millis(50));
+                    Ok(())
                 },
                 tungstenite::Error::Io(err) => {
                     log::warn!("{}", err);
