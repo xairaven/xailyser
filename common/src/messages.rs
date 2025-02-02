@@ -24,5 +24,6 @@ pub enum ServerError {
 
     InvalidInterface,
     FailedToChangePassword,
-    FailedToReboot,
+
+    RebootFailure(String),
 }
