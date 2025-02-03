@@ -34,7 +34,11 @@ pub fn start(config: &Config) -> eframe::Result {
 mod app;
 
 pub mod auth;
-pub mod components;
+pub mod components {
+    pub mod settings;
+    pub mod status;
+}
+pub mod menu;
 pub mod root;
 pub mod styles;
 pub mod windows;
