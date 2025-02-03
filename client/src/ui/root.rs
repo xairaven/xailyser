@@ -17,7 +17,7 @@ pub struct UiRoot {
 }
 
 impl UiRoot {
-    pub fn show(&mut self, ui: &mut egui::Ui, _ctx: &mut Context) {
+    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         SidePanel::left("MENU_PANEL")
             .resizable(false)
             .min_width(ui.available_width() * 0.25)
@@ -41,10 +41,10 @@ impl UiRoot {
 
         CentralPanel::default().show_inside(ui, |ui| match self.tab_current {
             Tab::Status => {
-                self.status_component.show(ui);
+                self.status_component.show(ui, ctx);
             },
             Tab::Settings => {
-                self.settings_component.show(ui);
+                self.settings_component.show(ui, ctx);
             },
             Tab::Exit => {
                 todo!()
