@@ -7,7 +7,7 @@ use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
 use xailyser_common::auth::AUTH_HEADER;
 use xailyser_common::cryptography::encrypt_password;
-use xailyser_common::messages::{ClientRequest, ServerResponse};
+use xailyser_common::messages::{ClientRequest, ServerResponse, CONNECTION_TIMEOUT};
 
 type WsStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
@@ -19,10 +19,16 @@ pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError>
     let request =
         ClientRequestBuilder::new(uri).with_header(AUTH_HEADER, hashed_password);
 
-    let stream = match tungstenite::connect(request) {
+    let mut stream = match tungstenite::connect(request) {
         Ok((stream, _)) => stream,
         Err(err) => return Err(WsError::ConnectionFailed(err)),
     };
+    match stream.get_mut() {
+        MaybeTlsStream::Plain(stream) => stream
+            .set_read_timeout(Some(CONNECTION_TIMEOUT))
+            .map_err(WsError::BadReadTimeoutDuration),
+        _ => return Err(WsError::UnknownStreamType),
+    }?;
     log::info!("WS-Stream: Connected to {}.", address);
 
     Ok(stream)
@@ -52,9 +58,10 @@ fn receive_messages(
                     Err(err)
                 },
                 tungstenite::Error::Io(err)
-                    if err.kind() == std::io::ErrorKind::WouldBlock =>
+                    if err.kind() == std::io::ErrorKind::WouldBlock
+                        || err.kind() == std::io::ErrorKind::TimedOut =>
                 {
-                    thread::sleep(std::time::Duration::from_millis(50));
+                    thread::sleep(CONNECTION_TIMEOUT);
                     Ok(())
                 },
                 tungstenite::Error::Io(err) => {
@@ -120,12 +127,19 @@ pub enum WsError {
 
     #[error("Failed to parse Uri. Verify IP address & port")]
     FailedParseUri,
+
+    #[error("Bad read timeout duration")]
+    BadReadTimeoutDuration(std::io::Error),
+
+    #[error("Unknown TLS stream type")]
+    UnknownStreamType,
 }
 
 impl WsError {
     pub fn additional_info(&self) -> Option<String> {
         match self {
             WsError::ConnectionFailed(err) => Some(err.to_string()),
+            WsError::BadReadTimeoutDuration(err) => Some(err.to_string()),
             _ => None,
         }
     }
