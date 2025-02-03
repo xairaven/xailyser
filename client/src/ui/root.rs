@@ -63,6 +63,9 @@ impl UiRoot {
             Tab::Settings => {
                 self.settings_component.show(ui, ctx);
             },
+            Tab::About => {
+                todo!()
+            },
             Tab::Exit => {
                 todo!()
             },
