@@ -25,7 +25,7 @@ impl SettingsComponent {
         ui.add_space(SPACE);
 
         Grid::new("Settings.Grid")
-            .num_columns(3)
+            .num_columns(4)
             .spacing(SPACING)
             .show(ui, |ui| {
                 self.reboot_view(ui, ctx);
@@ -76,6 +76,11 @@ impl SettingsComponent {
                 self.reboot_requested = false;
             }
         }
+
+        ui.label(
+            RichText::new("*")
+                .size(FONT_SIZE),
+        ).on_hover_text("After confirmation, you may not receive a message about the reboot.\nMonitor the server status.");
         ui.end_row();
     }
 }
