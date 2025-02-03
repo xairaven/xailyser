@@ -1,4 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
+
+pub const CONNECTION_TIMEOUT: Duration = Duration::from_millis(100);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ClientRequest {
