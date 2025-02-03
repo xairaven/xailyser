@@ -20,6 +20,7 @@ pub fn start(config: &Config) -> eframe::Result {
                     std::process::exit(1);
                 }),
             ),
+        centered: true,
         ..Default::default()
     };
 
