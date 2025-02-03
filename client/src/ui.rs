@@ -35,4 +35,5 @@ mod app;
 pub mod auth;
 pub mod components;
 pub mod root;
+pub mod styles;
 pub mod windows;

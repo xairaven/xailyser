@@ -1,15 +1,7 @@
 use crate::context::Context;
-use egui::{Grid, RichText, Vec2};
+use crate::ui::styles;
+use egui::{Grid, RichText};
 use xailyser_common::messages::ClientRequest;
-
-const FONT_SIZE: f32 = 16.0;
-const HEADING_FONT_SIZE: f32 = 26.0;
-
-const SPACE: f32 = 10.0;
-const SPACING: Vec2 = Vec2 { x: 10.0, y: 10.0 };
-
-const BUTTON_WIDTH: f32 = 70.0;
-const BUTTON_HEIGHT: f32 = 25.0;
 
 #[derive(Default)]
 pub struct SettingsComponent {
@@ -19,14 +11,18 @@ pub struct SettingsComponent {
 impl SettingsComponent {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.vertical_centered_justified(|ui| {
-            ui.label(RichText::new("Settings").size(HEADING_FONT_SIZE).strong());
+            ui.label(
+                RichText::new("Settings")
+                    .size(styles::COMPONENT_HEADING_FONT_SIZE)
+                    .strong(),
+            );
         });
 
-        ui.add_space(SPACE);
+        ui.add_space(styles::DEFAULT_SPACE);
 
         Grid::new("Settings.Grid")
             .num_columns(4)
-            .spacing(SPACING)
+            .spacing(styles::GRID_SPACING)
             .show(ui, |ui| {
                 self.reboot_view(ui, ctx);
             });
@@ -36,14 +32,16 @@ impl SettingsComponent {
         ui.label(
             RichText::new("Restart the server:")
                 .color(egui::Color32::WHITE)
-                .size(FONT_SIZE),
+                .size(styles::COMPONENT_FONT_SIZE),
         );
 
         if !self.reboot_requested {
             if ui
                 .add_sized(
-                    [BUTTON_WIDTH, BUTTON_HEIGHT],
-                    egui::Button::new(RichText::new("Apply").size(FONT_SIZE)),
+                    [styles::BUTTON_WIDTH, styles::BUTTON_HEIGHT],
+                    egui::Button::new(
+                        RichText::new("Apply").size(styles::COMPONENT_FONT_SIZE),
+                    ),
                 )
                 .clicked()
             {
@@ -52,8 +50,10 @@ impl SettingsComponent {
         } else {
             if ui
                 .add_sized(
-                    [BUTTON_WIDTH, BUTTON_HEIGHT],
-                    egui::Button::new(RichText::new("CONFIRM").size(FONT_SIZE)),
+                    [styles::BUTTON_WIDTH, styles::BUTTON_HEIGHT],
+                    egui::Button::new(
+                        RichText::new("CONFIRM").size(styles::COMPONENT_FONT_SIZE),
+                    ),
                 )
                 .clicked()
             {
@@ -68,8 +68,10 @@ impl SettingsComponent {
 
             if ui
                 .add_sized(
-                    [BUTTON_WIDTH, BUTTON_HEIGHT],
-                    egui::Button::new(RichText::new("Cancel").size(FONT_SIZE)),
+                    [styles::BUTTON_WIDTH, styles::BUTTON_HEIGHT],
+                    egui::Button::new(
+                        RichText::new("Cancel").size(styles::COMPONENT_FONT_SIZE),
+                    ),
                 )
                 .clicked()
             {
@@ -79,7 +81,7 @@ impl SettingsComponent {
 
         ui.label(
             RichText::new("*")
-                .size(FONT_SIZE),
+                .size(styles::COMPONENT_FONT_SIZE),
         ).on_hover_text("After confirmation, you may not receive a message about the reboot.\nMonitor the server status.");
         ui.end_row();
     }
