@@ -1,5 +1,4 @@
 use crate::context::Context;
-use crate::tcp;
 use bytes::Bytes;
 use crossbeam::channel::{Receiver, Sender};
 use std::net::TcpStream;
@@ -13,7 +12,9 @@ use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::protocol::CloseFrame;
 use tungstenite::{Message, Utf8Bytes, WebSocket};
 use xailyser_common::auth;
-use xailyser_common::messages::{ClientRequest, ServerError, ServerResponse};
+use xailyser_common::messages::{
+    ClientRequest, ServerError, ServerResponse, CONNECTION_TIMEOUT,
+};
 
 pub struct WsHandler {
     shutdown_flag: Arc<AtomicBool>,
@@ -126,7 +127,7 @@ impl WsHandler {
                     tungstenite::Error::Io(err)
                         if err.kind() == std::io::ErrorKind::WouldBlock =>
                     {
-                        thread::sleep(tcp::WOULD_BLOCK_SLEEP_DELAY);
+                        thread::sleep(CONNECTION_TIMEOUT);
                         Ok(())
                     },
                     tungstenite::Error::Io(err) => {
@@ -151,9 +152,12 @@ impl WsHandler {
         }
 
         if msg.is_empty() || msg.is_binary() {
+            log::warn!("Received empty or binary message.");
             let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
             if let Ok(text) = serde_json::to_string(&message) {
-                let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
+                if let Err(err) = stream.send(Message::Text(Utf8Bytes::from(text))) {
+                    log::error!("Failed to send error to client. Cause: {}", err);
+                }
             }
         }
 
@@ -161,7 +165,14 @@ impl WsHandler {
             let deserialized: Result<ClientRequest, serde_json::Error> =
                 serde_json::from_str(&msg.to_string());
             if let Ok(message) = deserialized {
-                let _ = client_request_tx.try_send(message);
+                log::info!(
+                    "Received message from client: {:#?}. IP: {}",
+                    message,
+                    stream.get_ref().peer_addr()?
+                );
+                if let Err(err) = client_request_tx.try_send(message) {
+                    log::error!("Failed to pass command to the Processor: {}", err);
+                }
             } else {
                 let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
                 if let Ok(text) = serde_json::to_string(&message) {

@@ -1,3 +1,4 @@
+use crate::commands;
 use crate::config::Config;
 use crate::context::Context;
 use crate::net::PacketSniffer;
@@ -9,7 +10,7 @@ use std::thread;
 use std::time::Duration;
 use xailyser_common::messages::ClientRequest;
 
-pub const ORDERING_SLEEP_DELAY: Duration = Duration::from_millis(10);
+pub const ORDERING_SLEEP_DELAY: Duration = Duration::from_millis(100);
 
 pub fn start(config: Config) {
     let context = Context::new(&config);
@@ -57,7 +58,10 @@ pub fn start(config: Config) {
                     todo!()
                 },
                 ClientRequest::Reboot => {
-                    todo!()
+                    log::info!("Reboot requested.");
+                    let response = commands::spawn_new_process();
+                    let _ = context.server_response_tx.try_send(response);
+                    shutdown_flag.store(true, Ordering::Release);
                 },
             }
         } else {

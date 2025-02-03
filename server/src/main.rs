@@ -34,6 +34,7 @@ fn main() {
     core::start(config);
 }
 
+mod commands;
 mod config;
 mod context;
 mod core;

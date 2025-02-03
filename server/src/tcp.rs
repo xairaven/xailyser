@@ -5,12 +5,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use std::time::Duration;
 use thiserror::Error;
+use xailyser_common::messages::CONNECTION_TIMEOUT;
 
 const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const APPROXIMATE_MAX_CONNECTIONS: usize = 5;
-pub const WOULD_BLOCK_SLEEP_DELAY: Duration = Duration::from_millis(10);
 
 pub struct TcpHandler {
     runtime_context: Context,
@@ -68,8 +67,11 @@ impl TcpHandler {
 
                     ws_handles.push(handle);
                 },
-                Err(ref err) if err.kind() == std::io::ErrorKind::WouldBlock => {
-                    thread::sleep(WOULD_BLOCK_SLEEP_DELAY);
+                Err(ref err)
+                    if err.kind() == std::io::ErrorKind::WouldBlock
+                        || err.kind() == std::io::ErrorKind::TimedOut =>
+                {
+                    thread::sleep(CONNECTION_TIMEOUT);
                     continue;
                 },
                 Err(err) => {
