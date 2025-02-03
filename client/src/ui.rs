@@ -1,16 +1,16 @@
 use crate::config::Config;
 use app::App;
 
+pub const MIN_WINDOW_WIDTH: f32 = 900.0;
+pub const MIN_WINDOW_HEIGHT: f32 = 550.0;
 const WINDOW_TITLE: &str = "Xailyser";
-const WINDOW_WIDTH: f32 = 900.0;
-const WINDOW_HEIGHT: f32 = 550.0;
 
 pub fn start(config: &Config) -> eframe::Result {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title(WINDOW_TITLE)
-            .with_inner_size([WINDOW_WIDTH, WINDOW_HEIGHT])
-            .with_min_inner_size([WINDOW_WIDTH, WINDOW_HEIGHT])
+            .with_inner_size([MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT])
+            .with_min_inner_size([MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT])
             .with_icon(
                 eframe::icon_data::from_png_bytes(
                     &include_bytes!("../assets/icon-64.png")[..],

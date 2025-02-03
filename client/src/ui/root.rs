@@ -1,4 +1,5 @@
 use crate::context::Context;
+use crate::ui;
 use crate::ui::components::settings::SettingsComponent;
 use crate::ui::components::status::StatusComponent;
 use crate::ui::components::Tab;
@@ -20,7 +21,7 @@ impl UiRoot {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         SidePanel::left("MENU_PANEL")
             .resizable(false)
-            .min_width(ui.available_width() * 0.25)
+            .min_width(ui::MIN_WINDOW_WIDTH * 0.25)
             .show_separator_line(true)
             .show_inside(ui, |ui| {
                 ui.vertical_centered_justified(|ui| {
