@@ -1,28 +1,13 @@
 use crate::context::Context;
+use crate::ui::components::root;
 use crate::ui::styles;
+use crate::ui::tabs::Tab;
 use egui::RichText;
 use strum::IntoEnumIterator;
-use strum_macros::{Display, EnumIter};
-
-#[derive(Default, Display, EnumIter)]
-pub enum Tab {
-    #[default]
-    #[strum(to_string = "🏠 Status")]
-    Status,
-
-    #[strum(to_string = "⚙ Settings")]
-    Settings,
-
-    #[strum(to_string = "ℹ About")]
-    About,
-
-    #[strum(to_string = "🗙 Exit")]
-    Exit,
-}
 
 #[derive(Default)]
 pub struct Menu {
-    pub tab_current: Tab,
+    pub active_tab: Tab,
 }
 
 impl Menu {
@@ -41,10 +26,7 @@ impl Menu {
             for tab in Tab::iter() {
                 if ui
                     .add_sized(
-                        [
-                            crate::ui::root::MENU_PANEL_MIN_WIDTH - 10.0,
-                            styles::BUTTON_HEIGHT,
-                        ],
+                        [root::MENU_PANEL_MIN_WIDTH - 10.0, styles::BUTTON_HEIGHT],
                         egui::Button::new(
                             RichText::new(format!("{}", tab))
                                 .size(styles::COMPONENT_FONT_SIZE),
@@ -52,7 +34,7 @@ impl Menu {
                     )
                     .clicked()
                 {
-                    self.tab_current = tab;
+                    self.active_tab = tab;
                 }
                 ui.add_space(2.0);
             }

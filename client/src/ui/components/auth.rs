@@ -8,7 +8,7 @@ use std::thread::JoinHandle;
 use thiserror::Error;
 
 #[derive(Default)]
-pub struct AuthRoot {
+pub struct AuthComponent {
     pub net_thread: Option<JoinHandle<()>>,
 
     authenticated: bool,
@@ -18,7 +18,7 @@ pub struct AuthRoot {
     password_text_field: String,
 }
 
-impl AuthRoot {
+impl AuthComponent {
     pub fn authenticated(&self) -> bool {
         self.authenticated
     }

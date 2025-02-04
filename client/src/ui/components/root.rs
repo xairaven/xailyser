@@ -1,24 +1,22 @@
 use crate::context::Context;
 use crate::ui;
-use crate::ui::components::settings::SettingsComponent;
-use crate::ui::components::status::StatusComponent;
-use crate::ui::menu::{Menu, Tab};
+use crate::ui::components::menu::Menu;
+use crate::ui::tabs::settings::SettingsTab;
+use crate::ui::tabs::status::StatusTab;
+use crate::ui::tabs::Tab;
 use egui::{CentralPanel, SidePanel};
-use std::thread::JoinHandle;
 
 pub const MENU_PANEL_MIN_WIDTH: f32 = ui::MIN_WINDOW_WIDTH * 0.25;
 
 #[derive(Default)]
-pub struct UiRoot {
-    pub net_thread: Option<JoinHandle<()>>,
-
+pub struct RootComponent {
     menu: Menu,
 
-    status_component: StatusComponent,
-    settings_component: SettingsComponent,
+    status_tab: StatusTab,
+    settings_tab: SettingsTab,
 }
 
-impl UiRoot {
+impl RootComponent {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         SidePanel::left("MENU_PANEL")
             .resizable(false)
@@ -28,12 +26,12 @@ impl UiRoot {
                 self.menu.show(ui, ctx);
             });
 
-        CentralPanel::default().show_inside(ui, |ui| match self.menu.tab_current {
+        CentralPanel::default().show_inside(ui, |ui| match self.menu.active_tab {
             Tab::Status => {
-                self.status_component.show(ui, ctx);
+                self.status_tab.show(ui, ctx);
             },
             Tab::Settings => {
-                self.settings_component.show(ui, ctx);
+                self.settings_tab.show(ui, ctx);
             },
             Tab::About => {
                 todo!()

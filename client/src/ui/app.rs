@@ -1,18 +1,21 @@
 use crate::context::Context;
-use crate::ui::auth::AuthRoot;
-use crate::ui::root::UiRoot;
+use crate::ui::components::auth::AuthComponent;
+use crate::ui::components::root::RootComponent;
 use crate::ui::themes::ThemePreference;
 use crate::ui::windows::Window;
 use egui_aesthetix::Aesthetix;
 use std::rc::Rc;
+use std::thread::JoinHandle;
 use xailyser_common::messages::ServerResponse;
 
 pub struct App {
     active_theme: Rc<dyn Aesthetix>,
     context: Context,
 
-    auth_root: AuthRoot,
-    root: UiRoot,
+    auth_component: AuthComponent,
+    root_component: RootComponent,
+
+    net_thread: Option<JoinHandle<()>>,
 
     sub_windows: Vec<Box<dyn Window>>,
 }
@@ -25,9 +28,14 @@ impl App {
 
         Self {
             active_theme: theme,
+
             context: Context::default(),
-            auth_root: Default::default(),
-            root: Default::default(),
+
+            net_thread: None,
+
+            auth_component: Default::default(),
+            root_component: Default::default(),
+
             sub_windows: vec![],
         }
     }
@@ -37,19 +45,19 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             // If not authenticated, showing `auth` window.
-            if !self.auth_root.authenticated() {
-                self.auth_root.show(ui, &mut self.context);
+            if !self.auth_component.authenticated() {
+                self.auth_component.show(ui, &mut self.context);
             }
 
             // If authenticated after showing auth component, then showing UI root.
-            if self.auth_root.authenticated() {
-                // Passing net thread to the root component
-                if self.auth_root.net_thread.is_some() {
-                    self.root.net_thread = self.auth_root.net_thread.take();
+            if self.auth_component.authenticated() {
+                // Taking net-thread join handle from the auth component
+                if self.auth_component.net_thread.is_some() {
+                    self.net_thread = self.auth_component.net_thread.take();
                 }
 
-                // Showing the root window.
-                self.root.show(ui, &mut self.context);
+                // Showing the root component.
+                self.root_component.show(ui, &mut self.context);
             }
 
             // Getting sub-windows from the channels (in context).

@@ -4,11 +4,11 @@ use egui::{Grid, RichText};
 use xailyser_common::messages::ClientRequest;
 
 #[derive(Default)]
-pub struct SettingsComponent {
+pub struct SettingsTab {
     reboot_requested: bool, // To show confirmation
 }
 
-impl SettingsComponent {
+impl SettingsTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.vertical_centered_justified(|ui| {
             ui.label(

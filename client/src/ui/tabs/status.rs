@@ -3,9 +3,9 @@ use crate::ui::styles;
 use egui::RichText;
 
 #[derive(Default)]
-pub struct StatusComponent;
+pub struct StatusTab;
 
-impl StatusComponent {
+impl StatusTab {
     pub fn show(&mut self, ui: &mut egui::Ui, _ctx: &mut Context) {
         ui.vertical_centered_justified(|ui| {
             ui.label(
