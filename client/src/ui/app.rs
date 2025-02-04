@@ -3,13 +3,10 @@ use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
 use crate::ui::themes::ThemePreference;
 use crate::ui::windows::Window;
-use egui_aesthetix::Aesthetix;
-use std::rc::Rc;
 use std::thread::JoinHandle;
 use xailyser_common::messages::ServerResponse;
 
 pub struct App {
-    active_theme: Rc<dyn Aesthetix>,
     context: Context,
 
     auth_component: AuthComponent,
@@ -22,14 +19,13 @@ pub struct App {
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>, theme: ThemePreference) -> Self {
-        let theme = theme.into_aesthetix_theme();
+        let context = Context::new(theme);
 
-        cc.egui_ctx.set_style(theme.custom_style());
+        cc.egui_ctx
+            .set_style(context.active_theme.into_aesthetix_theme().custom_style());
 
         Self {
-            active_theme: theme,
-
-            context: Context::default(),
+            context,
 
             net_thread: None,
 

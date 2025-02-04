@@ -42,6 +42,7 @@ impl AuthComponent {
 
                 Grid::new("AuthenticationFields")
                     .num_columns(2)
+                    .striped(false)
                     .spacing([20.0, 20.0])
                     .show(ui, |ui| {
                         ui.label(RichText::new("IP:").color(egui::Color32::WHITE));
@@ -67,7 +68,7 @@ impl AuthComponent {
                         ui.end_row();
                     });
 
-                ui.add_space(window_height / 4.0);
+                ui.add_space(window_height / 6.0);
 
                 ui.vertical_centered_justified(|ui| {
                     if ui.button("CONNECT").clicked() {

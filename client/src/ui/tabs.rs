@@ -1,6 +1,8 @@
 use strum_macros::{Display, EnumIter};
 
-#[derive(Default, Display, EnumIter)]
+#[derive(
+    Default, Copy, Clone, Display, EnumIter, PartialEq, Eq, PartialOrd, Ord, Debug,
+)]
 pub enum Tab {
     #[default]
     #[strum(to_string = "🏠 Status")]

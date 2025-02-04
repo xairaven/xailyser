@@ -35,10 +35,8 @@ mod app;
 
 pub mod components {
     pub mod auth;
-    pub mod menu;
     pub mod root;
 }
-pub mod styles;
 pub mod tabs;
 pub mod themes;
 pub mod windows;
