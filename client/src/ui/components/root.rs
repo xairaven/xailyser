@@ -1,5 +1,6 @@
 use crate::context::Context;
 use crate::ui;
+use crate::ui::tabs::about::AboutTab;
 use crate::ui::tabs::settings::SettingsTab;
 use crate::ui::tabs::status::StatusTab;
 use crate::ui::tabs::Tab;
@@ -14,6 +15,7 @@ pub struct RootComponent {
 
     status_tab: StatusTab,
     settings_tab: SettingsTab,
+    about_tab: AboutTab,
 }
 
 impl Default for RootComponent {
@@ -32,6 +34,7 @@ impl Default for RootComponent {
 
             status_tab: Default::default(),
             settings_tab: Default::default(),
+            about_tab: Default::default(),
         }
     }
 }
@@ -96,7 +99,7 @@ impl RootComponent {
                         self.settings_tab.show(ui, ctx);
                     },
                     Tab::About => {
-                        todo!()
+                        self.about_tab.show(ui, ctx);
                     },
                     Tab::Exit => {
                         todo!()
