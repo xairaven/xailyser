@@ -1,5 +1,5 @@
+use crate::ui::themes::ThemePreference;
 use directories::ProjectDirs;
-use egui::ThemePreference;
 use log::LevelFilter;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
@@ -22,7 +22,7 @@ impl Default for Config {
         Self {
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
-            theme: ThemePreference::Dark,
+            theme: ThemePreference::default(),
         }
     }
 }
@@ -35,13 +35,7 @@ impl Serialize for Config {
         let mut state = serializer.serialize_struct("Config", 3)?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
-
-        let theme = match self.theme {
-            ThemePreference::Dark => "dark",
-            ThemePreference::Light => "light",
-            ThemePreference::System => "system",
-        };
-        state.serialize_field("theme", theme)?;
+        state.serialize_field("theme", &self.theme.to_string())?;
         state.end()
     }
 }
@@ -102,21 +96,12 @@ struct ConfigDto {
 
 impl ConfigDto {
     pub fn into_config(self) -> Result<Config, ConfigError> {
-        let theme_string = self.theme.trim().to_ascii_lowercase();
-
         let config = Config {
-            log_format: self.log_format,
-            log_level: LevelFilter::from_str(&self.log_level)
+            log_format: self.log_format.trim().to_ascii_lowercase(),
+            log_level: LevelFilter::from_str(self.log_level.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
-            theme: if theme_string == "dark" {
-                ThemePreference::Dark
-            } else if theme_string == "light" {
-                ThemePreference::Light
-            } else if theme_string == "system" {
-                ThemePreference::System
-            } else {
-                return Err(ConfigError::UnknownTheme);
-            },
+            theme: ThemePreference::from_str(self.theme.to_ascii_lowercase().trim())
+                .map_err(|_| ConfigError::UnknownTheme)?,
         };
 
         Ok(config)

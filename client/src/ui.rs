@@ -41,4 +41,5 @@ pub mod components {
 pub mod menu;
 pub mod root;
 pub mod styles;
+pub mod themes;
 pub mod windows;

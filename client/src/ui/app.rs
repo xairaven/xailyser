@@ -1,12 +1,14 @@
 use crate::context::Context;
 use crate::ui::auth::AuthRoot;
 use crate::ui::root::UiRoot;
+use crate::ui::themes::ThemePreference;
 use crate::ui::windows::Window;
-use egui::ThemePreference;
+use egui_aesthetix::Aesthetix;
+use std::rc::Rc;
 use xailyser_common::messages::ServerResponse;
 
-#[derive(Default)]
 pub struct App {
+    active_theme: Rc<dyn Aesthetix>,
     context: Context,
 
     auth_root: AuthRoot,
@@ -17,10 +19,17 @@ pub struct App {
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>, theme: ThemePreference) -> Self {
-        cc.egui_ctx
-            .options_mut(|options| options.theme_preference = theme);
+        let theme = theme.into_aesthetix_theme();
 
-        Default::default()
+        cc.egui_ctx.set_style(theme.custom_style());
+
+        Self {
+            active_theme: theme,
+            context: Context::default(),
+            auth_root: Default::default(),
+            root: Default::default(),
+            sub_windows: vec![],
+        }
     }
 }
 
