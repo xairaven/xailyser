@@ -67,6 +67,13 @@ impl MessageModal {
             .with_width(300.0)
     }
 
+    pub fn info(message: &str) -> Self {
+        MessageModal::default()
+            .with_message(message)
+            .with_name("Info ℹ")
+            .with_width(300.0)
+    }
+
     pub fn with_name(mut self, name: &str) -> Self {
         self.name = name.to_string();
         self

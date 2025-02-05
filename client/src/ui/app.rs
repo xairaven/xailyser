@@ -113,14 +113,26 @@ impl App {
             Ok(Response::InterfacesList(_)) => {
                 todo!()
             },
-            Ok(Response::SetInterfaceResult(_)) => {
-                todo!()
+            Ok(Response::SetInterfaceResult(result)) => {
+                let modal = match result {
+                    Ok(_) => MessageModal::info("Successfully set interface!"),
+                    Err(err) => MessageModal::error(&err.to_string()),
+                };
+                let _ = self.context.modals_tx.try_send(Box::new(modal));
             },
-            Ok(Response::ChangePasswordResult(_)) => {
-                todo!()
+            Ok(Response::ChangePasswordResult(result)) => {
+                let modal = match result {
+                    Ok(_) => MessageModal::info("Successfully changed password!"),
+                    Err(err) => MessageModal::error(&err.to_string()),
+                };
+                let _ = self.context.modals_tx.try_send(Box::new(modal));
             },
-            Ok(Response::RebootResult(_)) => {
-                todo!()
+            Ok(Response::RebootResult(result)) => {
+                let modal = match result {
+                    Ok(_) => MessageModal::info("Successfully rebooted server!"),
+                    Err(err) => MessageModal::error(&err.to_string()),
+                };
+                let _ = self.context.modals_tx.try_send(Box::new(modal));
             },
             Ok(Response::Error(err)) => {
                 let modal = MessageModal::error(&err.to_string());
@@ -128,7 +140,5 @@ impl App {
             },
             Err(_) => {},
         }
-
-        // self.windows_tx.try_send()
     }
 }
