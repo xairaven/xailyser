@@ -34,7 +34,7 @@ impl AboutTab {
                 egui::RichText::new(format!("XAILYSER v{}", self.version)).size(30.0)
                     .color(theme.fg_success_text_color_visuals()),
             ));
-            ui.label("Client-server application for monitoring network traffic on a home network");
+            ui.label("Client-server analyser of network traffic on a home network");
 
             ui.add_space(20.0);
 
