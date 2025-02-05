@@ -2,6 +2,7 @@ use crate::commands::UiClientRequest;
 use crate::context::Context;
 use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
+use crate::ui::modals::message::MessageModal;
 use crate::ui::modals::Modal;
 use crate::ui::themes::ThemePreference;
 use std::sync::atomic::Ordering;
@@ -121,8 +122,9 @@ impl App {
             Ok(Response::RebootResult(_)) => {
                 todo!()
             },
-            Ok(Response::Error(_)) => {
-                todo!()
+            Ok(Response::Error(err)) => {
+                let modal = MessageModal::error(&err.to_string());
+                let _ = self.context.modals_tx.try_send(Box::new(modal));
             },
             Err(_) => {},
         }
