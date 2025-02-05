@@ -97,7 +97,7 @@ struct ConfigDto {
 impl ConfigDto {
     pub fn into_config(self) -> Result<Config, ConfigError> {
         let config = Config {
-            log_format: self.log_format.trim().to_ascii_lowercase(),
+            log_format: self.log_format.trim().to_string(),
             log_level: LevelFilter::from_str(self.log_level.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
             theme: ThemePreference::from_str(self.theme.to_ascii_lowercase().trim())
