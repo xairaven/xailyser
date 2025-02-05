@@ -1,4 +1,4 @@
-use crate::commands::UiCommand;
+use crate::commands::UiClientRequest;
 use crossbeam::channel::{Receiver, Sender};
 use http::Uri;
 use std::net::{SocketAddr, TcpStream};
@@ -10,7 +10,7 @@ use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
 use xailyser_common::auth::AUTH_HEADER;
 use xailyser_common::cryptography::encrypt_password;
-use xailyser_common::messages::{ServerResponse, CONNECTION_TIMEOUT};
+use xailyser_common::messages::{Response, CONNECTION_TIMEOUT};
 
 type WsStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
@@ -38,19 +38,19 @@ pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError>
 }
 
 pub fn send_receive_messages(
-    mut stream: WsStream, server_response_tx: Sender<ServerResponse>,
-    ui_commands_rx: Receiver<UiCommand>, shutdown_flag: Arc<AtomicBool>,
+    mut stream: WsStream, server_response_tx: Sender<Response>,
+    ui_client_requests_rx: Receiver<UiClientRequest>, shutdown_flag: Arc<AtomicBool>,
 ) {
     while !shutdown_flag.load(Ordering::Acquire) {
         if receive_messages(&mut stream, &server_response_tx).is_err() {
             return;
         }
-        send_messages(&mut stream, &ui_commands_rx);
+        send_messages(&mut stream, &ui_client_requests_rx);
     }
 }
 
 fn receive_messages(
-    stream: &mut WsStream, server_response_tx: &Sender<ServerResponse>,
+    stream: &mut WsStream, server_response_tx: &Sender<Response>,
 ) -> Result<(), tungstenite::Error> {
     let msg = match stream.read() {
         Ok(value) => value,
@@ -96,7 +96,7 @@ fn receive_messages(
     }
 
     if msg.is_text() {
-        let deserialized: Result<ServerResponse, serde_json::Error> =
+        let deserialized: Result<Response, serde_json::Error> =
             serde_json::from_str(&msg.to_string());
         if let Ok(message) = deserialized {
             if let Err(err) = server_response_tx.try_send(message) {
@@ -110,8 +110,10 @@ fn receive_messages(
     Ok(())
 }
 
-fn send_messages(stream: &mut WsStream, ui_commands_rx: &Receiver<UiCommand>) {
-    if let Ok(command) = ui_commands_rx.try_recv() {
+fn send_messages(
+    stream: &mut WsStream, ui_client_requests_rx: &Receiver<UiClientRequest>,
+) {
+    if let Ok(command) = ui_client_requests_rx.try_recv() {
         let message = match command.into_message() {
             Ok(value) => value,
             Err(_) => {

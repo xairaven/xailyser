@@ -4,7 +4,7 @@ use std::time::Duration;
 pub const CONNECTION_TIMEOUT: Duration = Duration::from_millis(100);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ClientRequest {
+pub enum Request {
     RequestInterfaces,      // List of available ethernet interfaces
     SetInterface(String),   // Set an ethernet interface
     ChangePassword(String), // Change a password to another (not encrypted)
@@ -12,7 +12,7 @@ pub enum ClientRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ServerResponse {
+pub enum Response {
     InterfacesList(Vec<String>), // Available ethernet interfaces
     SetInterfaceResult(Result<(), ServerError>), // Is interface set by request?
     ChangePasswordResult(Result<(), ServerError>), // Is password changed by request?

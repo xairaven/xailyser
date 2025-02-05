@@ -1,10 +1,10 @@
-use crate::commands::UiCommand;
+use crate::commands::UiClientRequest;
 use crate::ui::modals::Modal;
 use crate::ui::themes::ThemePreference;
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
-use xailyser_common::messages::ServerResponse;
+use xailyser_common::messages::Response;
 
 pub struct Context {
     pub active_theme: ThemePreference,
@@ -12,10 +12,10 @@ pub struct Context {
 
     pub modals_tx: Sender<Box<dyn Modal>>,
     pub modals_rx: Receiver<Box<dyn Modal>>,
-    pub server_response_tx: Sender<ServerResponse>,
-    pub server_response_rx: Receiver<ServerResponse>,
-    pub ui_commands_tx: Sender<UiCommand>,
-    pub ui_commands_rx: Receiver<UiCommand>,
+    pub server_response_tx: Sender<Response>,
+    pub server_response_rx: Receiver<Response>,
+    pub ui_client_requests_tx: Sender<UiClientRequest>,
+    pub ui_client_requests_rx: Receiver<UiClientRequest>,
 }
 
 impl Context {
@@ -31,8 +31,9 @@ impl Context {
 impl Default for Context {
     fn default() -> Self {
         let (modals_tx, modals_rx) = unbounded::<Box<dyn Modal>>();
-        let (server_response_tx, server_response_rx) = unbounded::<ServerResponse>();
-        let (ui_commands_tx, ui_commands_rx) = unbounded::<UiCommand>();
+        let (server_response_tx, server_response_rx) = unbounded::<Response>();
+        let (ui_client_requests_tx, ui_client_requests_rx) =
+            unbounded::<UiClientRequest>();
 
         Self {
             active_theme: ThemePreference::default(),
@@ -42,8 +43,8 @@ impl Default for Context {
             modals_rx,
             server_response_tx,
             server_response_rx,
-            ui_commands_tx,
-            ui_commands_rx,
+            ui_client_requests_tx,
+            ui_client_requests_rx,
         }
     }
 }

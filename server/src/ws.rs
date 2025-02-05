@@ -6,15 +6,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use thiserror::Error;
-use tungstenite::handshake::server::{Request, Response};
+use tungstenite::handshake::server;
 use tungstenite::http::{HeaderValue, StatusCode};
 use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::protocol::CloseFrame;
 use tungstenite::{Message, Utf8Bytes, WebSocket};
 use xailyser_common::auth;
-use xailyser_common::messages::{
-    ClientRequest, ServerError, ServerResponse, CONNECTION_TIMEOUT,
-};
+use xailyser_common::messages::{Request, Response, ServerError, CONNECTION_TIMEOUT};
 
 pub struct WsHandler {
     shutdown_flag: Arc<AtomicBool>,
@@ -59,19 +57,19 @@ impl WsHandler {
 
         let server_password_header = HeaderValue::from_str(server_password.as_str())
             .map_err(|_| WsError::InvalidPasswordHeader)?;
-        let check_authentication = |req: &Request, response: Response| {
+        let check_authentication = |req: &server::Request, response: server::Response| {
             if let Some(given_password) = req.headers().get(auth::AUTH_HEADER) {
                 if given_password.eq(&server_password_header) {
                     Ok(response)
                 } else {
-                    let response = Response::builder()
+                    let response = server::Response::builder()
                         .status(StatusCode::UNAUTHORIZED)
                         .body(Some(auth::errors::WRONG_PASSWORD_ERROR.to_string()))
                         .unwrap_or_default();
                     Err(response)
                 }
             } else {
-                let response = Response::builder()
+                let response = server::Response::builder()
                     .status(StatusCode::BAD_REQUEST)
                     .body(Some(auth::errors::HEADER_NOT_FOUND_ERROR.to_string()))
                     .unwrap_or_default();
@@ -83,8 +81,8 @@ impl WsHandler {
     }
 
     fn send_receive_messages(
-        &self, mut stream: WSStream, client_request_tx: Sender<ClientRequest>,
-        server_response_rx: Receiver<ServerResponse>,
+        &self, mut stream: WSStream, client_request_tx: Sender<Request>,
+        server_response_rx: Receiver<Response>,
     ) {
         while !self.shutdown_flag.load(Ordering::Acquire) {
             if self
@@ -113,7 +111,7 @@ impl WsHandler {
     }
 
     fn receive_messages(
-        &self, stream: &mut WSStream, client_request_tx: &Sender<ClientRequest>,
+        &self, stream: &mut WSStream, client_request_tx: &Sender<Request>,
     ) -> Result<(), tungstenite::Error> {
         let msg = match stream.read() {
             Ok(value) => value,
@@ -153,7 +151,7 @@ impl WsHandler {
 
         if msg.is_empty() || msg.is_binary() {
             log::warn!("Received empty or binary message.");
-            let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
+            let message = Response::Error(ServerError::InvalidMessageFormat);
             if let Ok(text) = serde_json::to_string(&message) {
                 if let Err(err) = stream.send(Message::Text(Utf8Bytes::from(text))) {
                     log::error!("Failed to send error to client. Cause: {}", err);
@@ -162,7 +160,7 @@ impl WsHandler {
         }
 
         if msg.is_text() {
-            let deserialized: Result<ClientRequest, serde_json::Error> =
+            let deserialized: Result<Request, serde_json::Error> =
                 serde_json::from_str(&msg.to_string());
             if let Ok(message) = deserialized {
                 log::info!(
@@ -174,7 +172,7 @@ impl WsHandler {
                     log::error!("Failed to pass command to the Processor: {}", err);
                 }
             } else {
-                let message = ServerResponse::Error(ServerError::InvalidMessageFormat);
+                let message = Response::Error(ServerError::InvalidMessageFormat);
                 if let Ok(text) = serde_json::to_string(&message) {
                     let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
                 }
@@ -185,7 +183,7 @@ impl WsHandler {
     }
 
     fn send_messages(
-        &self, stream: &mut WSStream, server_response_rx: &Receiver<ServerResponse>,
+        &self, stream: &mut WSStream, server_response_rx: &Receiver<Response>,
     ) {
         if let Ok(message) = server_response_rx.try_recv() {
             if let Ok(serialized) = serde_json::to_string(&message) {

@@ -96,13 +96,13 @@ impl AuthComponent {
         match ws::connect(address, password) {
             Ok(stream) => {
                 let server_response_tx = ctx.server_response_tx.clone();
-                let ui_commands_rx = ctx.ui_commands_rx.clone();
+                let ui_client_requests_rx = ctx.ui_client_requests_rx.clone();
                 let shutdown_flag = Arc::clone(&ctx.shutdown_flag);
                 let handle = thread::spawn(move || {
                     ws::send_receive_messages(
                         stream,
                         server_response_tx,
-                        ui_commands_rx,
+                        ui_client_requests_rx,
                         shutdown_flag,
                     );
                 });

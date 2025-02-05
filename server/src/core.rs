@@ -8,7 +8,7 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use xailyser_common::messages::ClientRequest;
+use xailyser_common::messages::Request;
 
 pub const ORDERING_SLEEP_DELAY: Duration = Duration::from_millis(100);
 
@@ -48,16 +48,16 @@ pub fn start(config: Config) {
     while !shutdown_flag.load(Ordering::Acquire) {
         if let Ok(request) = context.client_request_rx.try_recv() {
             match request {
-                ClientRequest::RequestInterfaces => {
+                Request::RequestInterfaces => {
                     todo!()
                 },
-                ClientRequest::SetInterface(_) => {
+                Request::SetInterface(_) => {
                     todo!()
                 },
-                ClientRequest::ChangePassword(_) => {
+                Request::ChangePassword(_) => {
                     todo!()
                 },
-                ClientRequest::Reboot => {
+                Request::Reboot => {
                     log::info!("Reboot requested.");
                     let response = commands::spawn_new_process();
                     let _ = context.server_response_tx.try_send(response);

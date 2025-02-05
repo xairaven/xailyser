@@ -1,4 +1,4 @@
-use crate::commands::UiCommand;
+use crate::commands::UiClientRequest;
 use crate::context::Context;
 use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
@@ -6,7 +6,7 @@ use crate::ui::modals::Modal;
 use crate::ui::themes::ThemePreference;
 use std::sync::atomic::Ordering;
 use std::thread::JoinHandle;
-use xailyser_common::messages::ServerResponse;
+use xailyser_common::messages::Response;
 
 pub struct App {
     context: Context,
@@ -73,8 +73,8 @@ impl eframe::App for App {
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
         if let Err(err) = self
             .context
-            .ui_commands_tx
-            .try_send(UiCommand::CloseConnection)
+            .ui_client_requests_tx
+            .try_send(UiClientRequest::CloseConnection)
         {
             log::error!("Failed to send command (Close connection): {}", err);
         }
@@ -107,19 +107,22 @@ impl App {
 
     fn process_server_responses(&self) {
         match self.context.server_response_rx.try_recv() {
-            Ok(ServerResponse::InterfacesList(_)) => {
+            Ok(Response::InterfacesList(_)) => {
                 todo!()
             },
-            Ok(ServerResponse::SetInterfaceResult(_)) => {
+            Ok(Response::SetInterfaceResult(_)) => {
                 todo!()
             },
-            Ok(ServerResponse::ChangePasswordResult(_)) => {
+            Ok(Response::ChangePasswordResult(_)) => {
                 todo!()
             },
-            Ok(ServerResponse::Error(_)) => {
+            Ok(Response::RebootResult(_)) => {
                 todo!()
             },
-            _ => {},
+            Ok(Response::Error(_)) => {
+                todo!()
+            },
+            Err(_) => {},
         }
 
         // self.windows_tx.try_send()

@@ -1,9 +1,9 @@
-use crate::commands::UiCommand;
+use crate::commands::UiClientRequest;
 use crate::context::Context;
 use crate::ui::themes::ThemePreference;
 use egui::Grid;
 use strum::IntoEnumIterator;
-use xailyser_common::messages::ClientRequest;
+use xailyser_common::messages::Request;
 
 #[derive(Default)]
 pub struct SettingsTab {
@@ -73,8 +73,8 @@ impl SettingsTab {
                 self.reboot_requested = false;
 
                 if let Err(err) = ctx
-                    .ui_commands_tx
-                    .try_send(UiCommand::ClientRequest(ClientRequest::Reboot))
+                    .ui_client_requests_tx
+                    .try_send(UiClientRequest::Request(Request::Reboot))
                 {
                     log::error!("Failed to send command (Reboot): {}", err);
                 } else {

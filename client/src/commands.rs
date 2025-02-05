@@ -1,30 +1,30 @@
 use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::protocol::CloseFrame;
 use tungstenite::{Bytes, Message};
-use xailyser_common::messages::ClientRequest;
+use xailyser_common::messages::Request;
 
 #[derive(Debug)]
-pub enum UiCommand {
-    ClientRequest(ClientRequest),
+pub enum UiClientRequest {
+    Request(Request),
     CloseConnection,
     Ping,
 }
 
-impl UiCommand {
+impl UiClientRequest {
     pub fn into_message(self) -> Result<Message, serde_json::Error> {
         match self {
-            UiCommand::ClientRequest(request) => {
+            UiClientRequest::Request(request) => {
                 let serialized = serde_json::to_string(&request)?;
                 Ok(Message::text(serialized))
             },
-            UiCommand::CloseConnection => {
+            UiClientRequest::CloseConnection => {
                 let message = Message::Close(Some(CloseFrame {
                     code: CloseCode::Normal,
                     reason: Default::default(),
                 }));
                 Ok(message)
             },
-            UiCommand::Ping => Ok(Message::Ping(Bytes::new())),
+            UiClientRequest::Ping => Ok(Message::Ping(Bytes::new())),
         }
     }
 }

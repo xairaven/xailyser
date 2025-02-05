@@ -1,6 +1,6 @@
-use xailyser_common::messages::{ServerError, ServerResponse};
+use xailyser_common::messages::{Response, ServerError};
 
-pub fn spawn_new_process() -> ServerResponse {
+pub fn spawn_new_process() -> Response {
     let args: Vec<String> = std::env::args().collect();
     log::info!("Restarting server.");
 
@@ -8,9 +8,9 @@ pub fn spawn_new_process() -> ServerResponse {
         .args(&args[1..])
         .spawn()
     {
-        Ok(_) => ServerResponse::RebootResult(Ok(())),
+        Ok(_) => Response::RebootResult(Ok(())),
         Err(err) => {
-            ServerResponse::RebootResult(Err(ServerError::RebootFailure(err.to_string())))
+            Response::RebootResult(Err(ServerError::RebootFailure(err.to_string())))
         },
     }
 }
