@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::str::FromStr;
 use strum_macros::EnumIter;
 
-#[derive(Default, Copy, Clone, EnumIter)]
+#[derive(Default, Copy, Clone, EnumIter, PartialEq, Eq, Ord, PartialOrd, Debug)]
 pub enum ThemePreference {
     StandardDark,
     StandardLight,
@@ -18,6 +18,18 @@ pub enum ThemePreference {
 }
 
 impl ThemePreference {
+    pub fn title(&self) -> &'static str {
+        match self {
+            ThemePreference::StandardDark => "Standard Dark",
+            ThemePreference::StandardLight => "Standard Light",
+            ThemePreference::CarlDark => "Carl Dark",
+            ThemePreference::NordDark => "Nord Dark",
+            ThemePreference::NordLight => "Nord Light",
+            ThemePreference::TokyoNight => "Tokyo Night",
+            ThemePreference::TokyoNightStorm => "Tokyo Night Storm",
+        }
+    }
+
     pub fn into_aesthetix_theme(self) -> Rc<dyn Aesthetix> {
         match self {
             ThemePreference::StandardDark => {

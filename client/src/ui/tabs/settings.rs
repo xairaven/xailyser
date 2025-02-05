@@ -1,5 +1,7 @@
 use crate::context::Context;
+use crate::ui::themes::ThemePreference;
 use egui::Grid;
+use strum::IntoEnumIterator;
 use xailyser_common::messages::ClientRequest;
 
 #[derive(Default)]
@@ -9,13 +11,53 @@ pub struct SettingsTab {
 
 impl SettingsTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        Grid::new("Settings.Grid").num_columns(4).show(ui, |ui| {
-            self.reboot_view(ui, ctx);
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.add_space(20.0);
+            ui.with_layout(
+                egui::Layout::top_down_justified(egui::Align::Center),
+                |ui| {
+                    Grid::new("Settings.Grid")
+                        .striped(false)
+                        .num_columns(4)
+                        .show(ui, |ui| {
+                            self.theme_view(ui, ctx);
+                            ui.end_row();
+
+                            self.reboot_view(ui, ctx);
+                            ui.end_row();
+                        });
+                },
+            );
         });
     }
 
+    fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.add(egui::Label::new(
+            egui::RichText::new("Theme:").size(16.0).strong(),
+        ));
+
+        egui::ComboBox::from_id_salt("Settings.Theme.ComboBox")
+            .width(200.0)
+            .selected_text(ctx.active_theme.title())
+            .show_ui(ui, |ui| {
+                for theme in ThemePreference::iter() {
+                    let res: egui::Response =
+                        ui.selectable_value(&mut ctx.active_theme, theme, theme.title());
+                    if res.changed() {
+                        log::info!("Theme changed to {}", theme.title());
+                        ui.ctx()
+                            .set_style(theme.into_aesthetix_theme().custom_style());
+                    }
+                }
+            });
+    }
+
     fn reboot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.label("Restart the server:");
+        ui.add(egui::Label::new(
+            egui::RichText::new("Restart the server:")
+                .size(16.0)
+                .strong(),
+        ));
 
         if !self.reboot_requested {
             if ui.button("Apply").clicked() {
