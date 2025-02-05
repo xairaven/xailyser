@@ -31,7 +31,8 @@ impl AboutTab {
         ui.add_space(computed_upper_center);
         ui.vertical_centered_justified(|ui| {
             ui.add(egui::Label::new(
-                egui::RichText::new(format!("XAILYSER v{}", self.version)).size(30.0)
+                egui::RichText::new(format!("XAILYSER v{}", self.version))
+                    .size(30.0)
                     .color(theme.fg_success_text_color_visuals()),
             ));
             ui.label("Client-server analyser of network traffic on a home network");

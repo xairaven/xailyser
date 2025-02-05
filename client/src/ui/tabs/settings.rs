@@ -11,6 +11,9 @@ pub struct SettingsTab {
 
 impl SettingsTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        const GRID_COLUMNS: usize = 4;
+        let available_width = ui.available_width();
+
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.add_space(20.0);
             ui.with_layout(
@@ -18,7 +21,8 @@ impl SettingsTab {
                 |ui| {
                     Grid::new("Settings.Grid")
                         .striped(false)
-                        .num_columns(4)
+                        .min_col_width(available_width / GRID_COLUMNS as f32)
+                        .num_columns(GRID_COLUMNS)
                         .show(ui, |ui| {
                             self.theme_view(ui, ctx);
                             ui.end_row();
@@ -57,7 +61,7 @@ impl SettingsTab {
             egui::RichText::new("Restart the server:")
                 .size(16.0)
                 .strong(),
-        ));
+        )).on_hover_text("After confirmation, you may not receive a message about the reboot.\nMonitor the server status.");
 
         if !self.reboot_requested {
             if ui.button("Apply").clicked() {
@@ -79,7 +83,6 @@ impl SettingsTab {
             }
         }
 
-        ui.label("*").on_hover_text("After confirmation, you may not receive a message about the reboot.\nMonitor the server status.");
         ui.end_row();
     }
 }
