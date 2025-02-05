@@ -80,31 +80,34 @@ impl RootComponent {
                     .inner_margin(theme.margin_style())
                     .fill(theme.bg_primary_color_visuals()),
             )
-            .show(ui.ctx(), |ui| {
-                ui.add_space(13.0);
-                ui.heading(
-                    egui::RichText::new(
-                        self.tabs
-                            .get(&self.active_tab)
-                            .unwrap_or(&String::from("Tab")),
-                    )
-                    .size(25.0),
-                );
-
-                match self.active_tab {
-                    Tab::Status => {
-                        self.status_tab.show(ui, ctx);
-                    },
-                    Tab::Settings => {
-                        self.settings_tab.show(ui, ctx);
-                    },
-                    Tab::About => {
-                        self.about_tab.show(ui, ctx);
-                    },
-                    Tab::Exit => {
-                        todo!()
-                    },
-                }
+            .show(ui.ctx(), |ui| match self.active_tab {
+                Tab::Status => {
+                    self.tab_heading(ui);
+                    self.status_tab.show(ui, ctx);
+                },
+                Tab::Settings => {
+                    self.tab_heading(ui);
+                    self.settings_tab.show(ui, ctx);
+                },
+                Tab::About => {
+                    self.tab_heading(ui);
+                    self.about_tab.show(ui, ctx);
+                },
+                Tab::Exit => {
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+                },
             });
+    }
+
+    fn tab_heading(&self, ui: &mut egui::Ui) {
+        ui.add_space(13.0);
+        ui.heading(
+            egui::RichText::new(
+                self.tabs
+                    .get(&self.active_tab)
+                    .unwrap_or(&String::from("Tab")),
+            )
+            .size(25.0),
+        );
     }
 }
