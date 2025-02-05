@@ -2,6 +2,7 @@
 name = "xailyser-server"
 version = "0.0.1"
 authors = ["Alex Kovalov <alexkovalevkpi@gmail.com>"]
+build = "build.rs"
 
 edition = "2021"
 rust-version = "1.84.1"
