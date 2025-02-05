@@ -1,5 +1,5 @@
 use crate::context::Context;
-use crate::ui::windows::message::MessageWindow;
+use crate::ui::modals::message::MessageModal;
 use crate::ws;
 use egui::{Grid, RichText, TextEdit};
 use std::net::{IpAddr, SocketAddr};
@@ -82,8 +82,8 @@ impl AuthComponent {
                                 );
                             },
                             Err(err) => {
-                                let window = MessageWindow::error(&err.to_string());
-                                let _ = ctx.windows_tx.send(Box::new(window));
+                                let modal = MessageModal::error(&err.to_string());
+                                let _ = ctx.modals_tx.send(Box::new(modal));
                             },
                         }
                     }
@@ -116,8 +116,8 @@ impl AuthComponent {
                     Some(info) => format!("{}.\n{}", err, info),
                 };
 
-                let window = MessageWindow::error(&message);
-                let _ = ctx.windows_tx.send(Box::new(window));
+                let modal = MessageModal::error(&message);
+                let _ = ctx.modals_tx.send(Box::new(modal));
             },
         }
     }

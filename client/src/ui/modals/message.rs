@@ -1,47 +1,57 @@
-use crate::ui::windows::Window;
+use crate::ui::modals::Modal;
 use egui::{Id, WidgetText};
 
-pub struct MessageWindow {
+pub struct MessageModal {
     id: i64,
     name: String,
     message: WidgetText,
 
     width: f32,
-    height: f32,
-
-    collapsible: bool,
 
     is_open: bool,
 }
 
-impl Default for MessageWindow {
+impl Default for MessageModal {
     fn default() -> Self {
         Self {
             id: rand::random(),
-            name: "Window".to_string(),
+            name: "Modal".to_string(),
             message: WidgetText::default(),
 
             is_open: true,
 
-            collapsible: true,
-
             width: 100.0,
-            height: 100.0,
         }
     }
 }
 
-impl Window for MessageWindow {
+impl Modal for MessageModal {
     fn show(&mut self, ui: &egui::Ui) {
-        egui::Window::new(&self.name)
-            .id(Id::new(self.id))
-            .open(&mut self.is_open)
-            .min_width(self.width)
-            .min_height(self.height)
-            .collapsible(self.collapsible)
-            .show(ui.ctx(), |ui| {
+        if self.is_open {
+            let modal = egui::Modal::new(Id::new(self.id)).show(ui.ctx(), |ui| {
+                ui.set_width(self.width);
+
+                ui.vertical_centered_justified(|ui| {
+                    ui.heading(&self.name);
+                });
+
+                ui.add_space(16.0);
+
                 ui.label(self.message.clone());
+
+                ui.add_space(16.0);
+
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button("Close").clicked() {
+                        self.close()
+                    }
+                });
             });
+
+            if modal.should_close() {
+                self.close()
+            }
+        }
     }
 
     fn is_closed(&self) -> bool {
@@ -49,14 +59,12 @@ impl Window for MessageWindow {
     }
 }
 
-impl MessageWindow {
+impl MessageModal {
     pub fn error(message: &str) -> Self {
-        MessageWindow::default()
+        MessageModal::default()
             .with_message(message)
             .with_name("Error ❎")
-            .with_height(500.0)
             .with_width(300.0)
-            .with_collapsible(false)
     }
 
     pub fn with_name(mut self, name: &str) -> Self {
@@ -74,13 +82,7 @@ impl MessageWindow {
         self
     }
 
-    pub fn with_height(mut self, height: f32) -> Self {
-        self.height = height;
-        self
-    }
-
-    pub fn with_collapsible(mut self, collapsible: bool) -> Self {
-        self.collapsible = collapsible;
-        self
+    fn close(&mut self) {
+        self.is_open = false;
     }
 }

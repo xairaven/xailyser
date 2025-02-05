@@ -2,8 +2,8 @@ use crate::commands::UiCommand;
 use crate::context::Context;
 use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
+use crate::ui::modals::Modal;
 use crate::ui::themes::ThemePreference;
-use crate::ui::windows::Window;
 use std::sync::atomic::Ordering;
 use std::thread::JoinHandle;
 use xailyser_common::messages::ServerResponse;
@@ -16,7 +16,7 @@ pub struct App {
 
     net_thread: Option<JoinHandle<()>>,
 
-    sub_windows: Vec<Box<dyn Window>>,
+    modals: Vec<Box<dyn Modal>>,
 }
 
 impl App {
@@ -34,7 +34,7 @@ impl App {
             auth_component: Default::default(),
             root_component: Default::default(),
 
-            sub_windows: vec![],
+            modals: vec![],
         }
     }
 }
@@ -58,13 +58,13 @@ impl eframe::App for App {
                 self.root_component.show(ui, &mut self.context);
             }
 
-            // Getting sub-windows from the channels (in context).
-            if let Ok(sub_window) = self.context.windows_rx.try_recv() {
-                self.sub_windows.push(sub_window);
+            // Getting modals from the channels (in context).
+            if let Ok(modal) = self.context.modals_rx.try_recv() {
+                self.modals.push(modal);
             }
 
-            // Showing sub-windows.
-            self.show_opened_sub_windows(ui);
+            // Showing modals.
+            self.show_opened_modals(ui);
         });
 
         self.process_server_responses();
@@ -89,19 +89,19 @@ impl eframe::App for App {
 }
 
 impl App {
-    fn show_opened_sub_windows(&mut self, ui: &egui::Ui) {
-        let mut closed_windows: Vec<usize> = vec![];
+    fn show_opened_modals(&mut self, ui: &egui::Ui) {
+        let mut closed_modals: Vec<usize> = vec![];
 
-        for (index, window) in self.sub_windows.iter_mut().enumerate() {
-            window.show(ui);
+        for (index, modal) in self.modals.iter_mut().enumerate() {
+            modal.show(ui);
 
-            if window.is_closed() {
-                closed_windows.push(index);
+            if modal.is_closed() {
+                closed_modals.push(index);
             }
         }
 
-        closed_windows.iter().for_each(|index| {
-            self.sub_windows.remove(*index);
+        closed_modals.iter().for_each(|index| {
+            self.modals.remove(*index);
         });
     }
 
