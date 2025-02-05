@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 use std::time::Duration;
 
 pub const CONNECTION_TIMEOUT: Duration = Duration::from_millis(100);
@@ -29,4 +30,23 @@ pub enum ServerError {
     FailedToChangePassword,
 
     RebootFailure(String),
+}
+
+impl Display for ServerError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let msg = match self {
+            ServerError::InvalidMessageFormat => {
+                "Invalid message format. Please, report this to developers.".to_string()
+            },
+            ServerError::InvalidInterface => "Invalid interface.".to_string(),
+            ServerError::FailedToChangePassword => {
+                "Failed to change password.".to_string()
+            },
+            ServerError::RebootFailure(err) => {
+                format!("Failed to reboot server. Error: {}", err)
+            },
+        };
+
+        write!(f, "{}", msg)
+    }
 }
