@@ -1,13 +1,16 @@
+use crate::commands::UiCommand;
 use crossbeam::channel::{Receiver, Sender};
 use http::Uri;
 use std::net::{SocketAddr, TcpStream};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread;
 use thiserror::Error;
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
 use xailyser_common::auth::AUTH_HEADER;
 use xailyser_common::cryptography::encrypt_password;
-use xailyser_common::messages::{ClientRequest, ServerResponse, CONNECTION_TIMEOUT};
+use xailyser_common::messages::{ServerResponse, CONNECTION_TIMEOUT};
 
 type WsStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
@@ -35,18 +38,19 @@ pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError>
 }
 
 pub fn send_receive_messages(
-    mut stream: WsStream, ws_tx: Sender<ServerResponse>, ui_rx: Receiver<ClientRequest>,
+    mut stream: WsStream, server_response_tx: Sender<ServerResponse>,
+    ui_commands_rx: Receiver<UiCommand>, shutdown_flag: Arc<AtomicBool>,
 ) {
-    loop {
-        if receive_messages(&mut stream, &ws_tx).is_err() {
+    while !shutdown_flag.load(Ordering::Acquire) {
+        if receive_messages(&mut stream, &server_response_tx).is_err() {
             return;
         }
-        send_messages(&mut stream, &ui_rx);
+        send_messages(&mut stream, &ui_commands_rx);
     }
 }
 
 fn receive_messages(
-    stream: &mut WsStream, ws_tx: &Sender<ServerResponse>,
+    stream: &mut WsStream, server_response_tx: &Sender<ServerResponse>,
 ) -> Result<(), tungstenite::Error> {
     let msg = match stream.read() {
         Ok(value) => value,
@@ -95,7 +99,7 @@ fn receive_messages(
         let deserialized: Result<ServerResponse, serde_json::Error> =
             serde_json::from_str(&msg.to_string());
         if let Ok(message) = deserialized {
-            if let Err(err) = ws_tx.try_send(message) {
+            if let Err(err) = server_response_tx.try_send(message) {
                 log::error!("WS Channel: Can't send message. Error: {}", err);
             }
         } else {
@@ -106,16 +110,20 @@ fn receive_messages(
     Ok(())
 }
 
-fn send_messages(stream: &mut WsStream, ui_rx: &Receiver<ClientRequest>) {
-    if let Ok(message) = ui_rx.try_recv() {
-        if let Ok(serialized) = serde_json::to_string(&message) {
-            if let Err(err) = stream.send(Message::text(serialized)) {
-                log::error!("WS-Stream: Can't send message. Error: {}", err);
-            } else {
-                log::info!("WS-Stream (Client -> Server): Sent reboot command.");
-            }
+fn send_messages(stream: &mut WsStream, ui_commands_rx: &Receiver<UiCommand>) {
+    if let Ok(command) = ui_commands_rx.try_recv() {
+        let message = match command.into_message() {
+            Ok(value) => value,
+            Err(_) => {
+                log::error!("Serde: Can't serialize message!");
+                return;
+            },
+        };
+
+        if let Err(err) = stream.send(message) {
+            log::error!("WS-Stream: Can't send message. Error: {}", err);
         } else {
-            log::error!("Serde: Can't serialize message! {:#?}", message);
+            log::debug!("WS-Stream (Client -> Server): Sent command.");
         }
     }
 }

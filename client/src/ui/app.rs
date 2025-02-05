@@ -1,8 +1,10 @@
+use crate::commands::UiCommand;
 use crate::context::Context;
 use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
 use crate::ui::themes::ThemePreference;
 use crate::ui::windows::Window;
+use std::sync::atomic::Ordering;
 use std::thread::JoinHandle;
 use xailyser_common::messages::ServerResponse;
 
@@ -67,6 +69,23 @@ impl eframe::App for App {
 
         self.process_server_responses();
     }
+
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        if let Err(err) = self
+            .context
+            .ui_commands_tx
+            .try_send(UiCommand::CloseConnection)
+        {
+            log::error!("Failed to send command (Close connection): {}", err);
+        }
+        self.context.shutdown_flag.store(true, Ordering::Release);
+
+        if let Some(handle) = self.net_thread.take() {
+            if handle.join().is_err() {
+                log::error!("Failed to join net-thread handle.");
+            }
+        }
+    }
 }
 
 impl App {
@@ -87,7 +106,7 @@ impl App {
     }
 
     fn process_server_responses(&self) {
-        match self.context.ws_rx.try_recv() {
+        match self.context.server_response_rx.try_recv() {
             Ok(ServerResponse::InterfacesList(_)) => {
                 todo!()
             },

@@ -3,6 +3,7 @@ use crate::ui::windows::message::MessageWindow;
 use crate::ws;
 use egui::{Grid, RichText, TextEdit};
 use std::net::{IpAddr, SocketAddr};
+use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
@@ -94,10 +95,16 @@ impl AuthComponent {
     fn try_connect(&mut self, ctx: &Context, address: SocketAddr, password: &str) {
         match ws::connect(address, password) {
             Ok(stream) => {
-                let ws_tx = ctx.ws_tx.clone();
-                let ui_rx = ctx.ui_rx.clone();
+                let server_response_tx = ctx.server_response_tx.clone();
+                let ui_commands_rx = ctx.ui_commands_rx.clone();
+                let shutdown_flag = Arc::clone(&ctx.shutdown_flag);
                 let handle = thread::spawn(move || {
-                    ws::send_receive_messages(stream, ws_tx, ui_rx);
+                    ws::send_receive_messages(
+                        stream,
+                        server_response_tx,
+                        ui_commands_rx,
+                        shutdown_flag,
+                    );
                 });
 
                 self.net_thread = Some(handle);

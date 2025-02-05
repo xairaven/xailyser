@@ -37,6 +37,7 @@ fn main() {
     });
 }
 
+mod commands;
 mod config;
 mod context;
 mod logging;

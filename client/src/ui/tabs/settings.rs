@@ -1,3 +1,4 @@
+use crate::commands::UiCommand;
 use crate::context::Context;
 use crate::ui::themes::ThemePreference;
 use egui::Grid;
@@ -71,7 +72,10 @@ impl SettingsTab {
             if ui.button("CONFIRM").clicked() {
                 self.reboot_requested = false;
 
-                if let Err(err) = ctx.ui_tx.try_send(ClientRequest::Reboot) {
+                if let Err(err) = ctx
+                    .ui_commands_tx
+                    .try_send(UiCommand::ClientRequest(ClientRequest::Reboot))
+                {
                     log::error!("Failed to send command (Reboot): {}", err);
                 } else {
                     log::info!("UI -> WS: Sent reboot command.");
