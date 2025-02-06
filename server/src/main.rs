@@ -34,11 +34,14 @@ fn main() {
     core::start(config);
 }
 
-mod commands;
 mod config;
 mod context;
 mod core;
 mod logging;
 mod net;
+mod request {
+    pub mod commands;
+    pub mod core;
+}
 mod tcp;
 mod ws;

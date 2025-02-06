@@ -1,25 +1,22 @@
-use crate::commands;
 use crate::config::Config;
 use crate::context::Context;
 use crate::net::PacketSniffer;
+use crate::request;
 use crate::tcp::TcpHandler;
-use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use xailyser_common::messages::Request;
 
 pub const ORDERING_SLEEP_DELAY: Duration = Duration::from_millis(100);
 
 pub fn start(config: Config) {
-    let context = Context::new(&config);
+    let mut context = Context::new(&config);
 
-    let shutdown_flag = Arc::new(AtomicBool::new(false));
+    let shutdown_flag_copy = Arc::clone(&context.shutdown_flag);
     if ctrlc::set_handler({
-        let shutdown_flag = Arc::clone(&shutdown_flag);
         move || {
-            shutdown_flag.store(true, Ordering::Release);
+            shutdown_flag_copy.store(true, Ordering::Release);
         }
     })
     .is_err()
@@ -28,13 +25,13 @@ pub fn start(config: Config) {
         std::process::exit(1);
     }
 
-    let shutdown_flag_copy = Arc::clone(&shutdown_flag);
+    let shutdown_flag_copy = Arc::clone(&context.shutdown_flag);
     let packet_sniffer_handle = thread::spawn(move || {
         log::info!("Packet sniffing thread started.");
         PacketSniffer::new(shutdown_flag_copy).start();
     });
 
-    let shutdown_flag_copy = Arc::clone(&shutdown_flag);
+    let shutdown_flag_copy = Arc::clone(&context.shutdown_flag);
     let runtime_context = context.clone();
     let tcp_thread_handle = thread::spawn(move || {
         log::info!("TCP Listening thread started.");
@@ -45,27 +42,9 @@ pub fn start(config: Config) {
         }
     });
 
-    while !shutdown_flag.load(Ordering::Acquire) {
+    while !context.shutdown_flag.load(Ordering::Acquire) {
         if let Ok(request) = context.client_request_rx.try_recv() {
-            match request {
-                Request::RequestInterfaces => {
-                    log::info!("Commands: Interfaces requested.");
-                    let response = commands::interfaces();
-                    let _ = context.server_response_tx.try_send(response);
-                },
-                Request::SetInterface(_) => {
-                    todo!()
-                },
-                Request::ChangePassword(_) => {
-                    todo!()
-                },
-                Request::Reboot => {
-                    log::info!("Commands: Reboot requested.");
-                    let response = commands::spawn_new_process();
-                    let _ = context.server_response_tx.try_send(response);
-                    shutdown_flag.store(true, Ordering::Release);
-                },
-            }
+            request::core::process(&mut context, request);
         } else {
             thread::sleep(ORDERING_SLEEP_DELAY);
         }
