@@ -11,7 +11,12 @@ pub fn process(ctx: &mut Context) {
         },
         Ok(Response::SetInterfaceResult(result)) => {
             let modal = match result {
-                Ok(_) => MessageModal::info("Successfully set interface!"),
+                Ok(interface) => {
+                    let modal =
+                        MessageModal::info(&format!("Interface set: {interface}!"));
+                    ctx.interface_active = Some(interface);
+                    modal
+                },
                 Err(err) => MessageModal::error(&err.to_string()),
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));

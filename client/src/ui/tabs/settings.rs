@@ -10,6 +10,7 @@ use xailyser_common::messages::Request;
 pub struct SettingsTab {
     reboot_requested: bool, // To show confirmation
 
+    interface_current: Option<String>,
     interfaces_last_request: Option<DateTime<Local>>, // For "Last Updated:"
 }
 
@@ -97,16 +98,55 @@ impl SettingsTab {
 
     fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.collapsing(RichText::new("Interfaces:").size(16.0).strong(), |ui| {
-            ui.horizontal(|ui| {
-                ui.label("Current:");
-                let interface =
-                    ctx.interface_active.clone().unwrap_or("None".to_string());
-                ui.label(RichText::new(interface).italics());
-            });
-
-            Grid::new("Settings.Interfaces.Request.Button")
-                .num_columns(2)
+            Grid::new("Settings.Interfaces.Status.Grid")
+                .striped(false)
+                .num_columns(3)
                 .show(ui, |ui| {
+                    ui.label("Active:");
+                    ui.label(
+                        RichText::new(
+                            ctx.interface_active.clone().unwrap_or("None".to_string()),
+                        )
+                        .strong(),
+                    );
+                    ui.end_row();
+
+                    if let Some(chosen) = &self.interface_current {
+                        ui.label("Chosen:");
+                        ui.label(RichText::new(chosen).italics());
+
+                        if ui.button("Apply").clicked() {
+                            if let Err(err) = ctx.ui_client_requests_tx.try_send(
+                                UiClientRequest::Request(Request::SetInterface(
+                                    chosen.clone(),
+                                )),
+                            ) {
+                                log::error!(
+                                    "Failed to send request (SetInterface): {}",
+                                    err
+                                );
+                            }
+                            self.interface_current = None;
+                        }
+
+                        if ui.button("Reset").clicked() {
+                            self.interface_current = None;
+                        }
+                        ui.end_row();
+                    }
+
+                    ui.end_row();
+                    ui.label("Last Request Update:\t");
+                    if let Some(time) = &self.interfaces_last_request {
+                        ui.colored_label(
+                            Color32::GREEN,
+                            time.format("%m/%d %H:%M:%S").to_string(),
+                        );
+                    } else {
+                        ui.colored_label(Color32::RED, "Never");
+                    }
+                    ui.end_row();
+
                     ui.label("Request List:");
                     if ui.button("Request").clicked() {
                         self.interfaces_last_request = Some(Local::now());
@@ -116,24 +156,14 @@ impl SettingsTab {
                     }
                 });
 
-            ui.horizontal(|ui| {
-                ui.label("Last Update:\t");
-                if let Some(time) = &self.interfaces_last_request {
-                    ui.colored_label(
-                        Color32::GREEN,
-                        time.format("%m/%d %H:%M:%S").to_string(),
-                    );
-                } else {
-                    ui.colored_label(Color32::RED, "Never");
-                }
-            });
+            ui.add_space(16.0);
 
             if !ctx.interfaces_available.is_empty() {
                 ui.label("Available Interfaces:");
                 ui.vertical_centered_justified(|ui| {
                     for interface in &ctx.interfaces_available {
                         if ui.button(RichText::new(interface).monospace()).clicked() {
-                            ctx.interface_active = Some(interface.to_string());
+                            self.interface_current = Some(interface.to_string());
                         }
                     }
                 });
