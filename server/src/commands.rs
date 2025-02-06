@@ -1,4 +1,19 @@
+use crate::net;
 use xailyser_common::messages::{Response, ServerError};
+
+pub fn interfaces() -> Response {
+    let interfaces = net::interface::usable_sorted()
+        .into_iter()
+        .map(|interface| {
+            #[cfg(target_os = "windows")]
+            return interface.description;
+
+            #[cfg(target_os = "linux")]
+            return interface.name;
+        })
+        .collect();
+    Response::InterfacesList(interfaces)
+}
 
 pub fn spawn_new_process() -> Response {
     let args: Vec<String> = std::env::args().collect();

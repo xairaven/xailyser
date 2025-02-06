@@ -1,14 +1,14 @@
+use crate::commands;
 use crate::config::Config;
 use crate::context::Context;
 use crate::net::PacketSniffer;
 use crate::tcp::TcpHandler;
-use crate::{commands, net};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use xailyser_common::messages::{Request, Response};
+use xailyser_common::messages::Request;
 
 pub const ORDERING_SLEEP_DELAY: Duration = Duration::from_millis(100);
 
@@ -49,11 +49,8 @@ pub fn start(config: Config) {
         if let Ok(request) = context.client_request_rx.try_recv() {
             match request {
                 Request::RequestInterfaces => {
-                    let interfaces = net::interface::usable_sorted()
-                        .into_iter()
-                        .map(|interface| interface.name)
-                        .collect();
-                    let response = Response::InterfacesList(interfaces);
+                    log::info!("Commands: Interfaces requested.");
+                    let response = commands::interfaces();
                     let _ = context.server_response_tx.try_send(response);
                 },
                 Request::SetInterface(_) => {
@@ -63,7 +60,7 @@ pub fn start(config: Config) {
                     todo!()
                 },
                 Request::Reboot => {
-                    log::info!("Reboot requested.");
+                    log::info!("Commands: Reboot requested.");
                     let response = commands::spawn_new_process();
                     let _ = context.server_response_tx.try_send(response);
                     shutdown_flag.store(true, Ordering::Release);
