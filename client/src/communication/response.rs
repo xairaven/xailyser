@@ -5,6 +5,8 @@ use xailyser_common::messages::Response;
 pub fn process(ctx: &mut Context) {
     match ctx.server_response_rx.try_recv() {
         Ok(Response::InterfacesList(list)) => {
+            let modal = MessageModal::info("Successfully got interfaces list!");
+            let _ = ctx.modals_tx.try_send(Box::new(modal));
             ctx.interfaces_available = list;
         },
         Ok(Response::SetInterfaceResult(result)) => {
