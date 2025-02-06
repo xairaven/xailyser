@@ -8,7 +8,9 @@ use xailyser_common::logging;
 
 const CONFIG_FILENAME: &str = "config.toml";
 
+#[derive(Clone)]
 pub struct Config {
+    pub interface: Option<String>,
     pub log_format: String,
     pub log_level: LevelFilter,
     pub password: String,
@@ -18,6 +20,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            interface: None,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
             password: String::new(),
@@ -31,7 +34,14 @@ impl Serialize for Config {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("Config", 4)?;
+        let mut state = serializer.serialize_struct("Config", 5)?;
+
+        if let Some(interface) = &self.interface {
+            state.serialize_field("interface", interface)?;
+        } else {
+            state.serialize_field("interface", "none")?;
+        }
+
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
         state.serialize_field("password", &self.password)?;
@@ -67,6 +77,7 @@ impl Config {
 
 #[derive(Deserialize)]
 struct ConfigDto {
+    interface: String,
     log_format: String,
     log_level: String,
     password: String,
@@ -75,7 +86,14 @@ struct ConfigDto {
 
 impl ConfigDto {
     pub fn into_config(self) -> Result<Config, ConfigError> {
+        let interface = if self.interface.trim().eq("none") {
+            None
+        } else {
+            Some(self.interface)
+        };
+
         let config = Config {
+            interface,
             log_format: self.log_format,
             log_level: LevelFilter::from_str(&self.log_level)
                 .map_err(|_| ConfigError::UnknownLogLevel)?,

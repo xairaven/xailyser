@@ -26,7 +26,7 @@ impl WsHandler {
     }
 
     pub fn start(&self, tcp_stream: TcpStream, context: Context) -> Result<(), WsError> {
-        let ws_stream = match self.connect(tcp_stream, context.password) {
+        let ws_stream = match self.connect(tcp_stream, context.config.password) {
             Ok(value) => {
                 log::info!("Websocket connection established.");
                 value

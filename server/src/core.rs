@@ -11,7 +11,7 @@ use std::time::Duration;
 pub const ORDERING_SLEEP_DELAY: Duration = Duration::from_millis(100);
 
 pub fn start(config: Config) {
-    let mut context = Context::new(&config);
+    let mut context = Context::new(config);
 
     let shutdown_flag_copy = Arc::clone(&context.shutdown_flag);
     if ctrlc::set_handler({

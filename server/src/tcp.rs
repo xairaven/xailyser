@@ -30,7 +30,7 @@ impl TcpHandler {
             return Ok(());
         }
 
-        let address = SocketAddr::new(LOCALHOST, self.runtime_context.port);
+        let address = SocketAddr::new(LOCALHOST, self.runtime_context.config.port);
         let server = TcpListener::bind(address).map_err(TcpError::ListenerBindError)?;
         server
             .set_nonblocking(true)

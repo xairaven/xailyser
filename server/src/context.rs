@@ -6,8 +6,7 @@ use xailyser_common::messages::{Request, Response};
 
 #[derive(Clone)]
 pub struct Context {
-    pub password: String,
-    pub port: u16,
+    pub config: Config,
 
     pub shutdown_flag: Arc<AtomicBool>,
 
@@ -18,13 +17,12 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(config: &Config) -> Self {
+    pub fn new(config: Config) -> Self {
         let (server_response_tx, server_response_rx) = unbounded::<Response>();
         let (client_request_tx, client_request_rx) = unbounded::<Request>();
 
         Self {
-            password: config.password.clone(),
-            port: config.port,
+            config,
 
             shutdown_flag: Arc::new(AtomicBool::new(false)),
 
