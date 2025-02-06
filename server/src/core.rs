@@ -25,17 +25,16 @@ pub fn start(config: Config) {
         std::process::exit(1);
     }
 
-    let shutdown_flag_copy = Arc::clone(&context.shutdown_flag);
+    let runtime_context = context.clone();
     let packet_sniffer_handle = thread::spawn(move || {
         log::info!("Packet sniffing thread started.");
-        PacketSniffer::new(shutdown_flag_copy).start();
+        PacketSniffer::new(runtime_context).start();
     });
 
-    let shutdown_flag_copy = Arc::clone(&context.shutdown_flag);
     let runtime_context = context.clone();
     let tcp_thread_handle = thread::spawn(move || {
         log::info!("TCP Listening thread started.");
-        let result = TcpHandler::new(runtime_context, shutdown_flag_copy).start();
+        let result = TcpHandler::new(runtime_context).start();
 
         if let Err(err) = result {
             log::error!("TCP Error: {}", err);

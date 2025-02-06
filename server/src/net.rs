@@ -1,20 +1,25 @@
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
+use crate::context::Context;
+use std::sync::atomic::Ordering;
 
 pub struct PacketSniffer {
-    shutdown_flag: Arc<AtomicBool>,
+    runtime_ctx: Context,
 }
 
 // TODO
 impl PacketSniffer {
-    pub fn new(shutdown_flag: Arc<AtomicBool>) -> Self {
-        Self { shutdown_flag }
+    pub fn new(context: Context) -> Self {
+        Self {
+            runtime_ctx: context,
+        }
     }
 
     pub fn start(&self) {
-        // while !self.shutdown_flag.load(Ordering::Acquire) {
-        //
-        // }
+        loop {
+            if self.runtime_ctx.shutdown_flag.load(Ordering::Acquire) {
+                log::info!("Shutting down net-capturing thread.");
+                break;
+            }
+        }
     }
 }
 

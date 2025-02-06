@@ -1,8 +1,7 @@
 use crate::context::Context;
 use crate::ws::WsHandler;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
@@ -12,25 +11,22 @@ const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const APPROXIMATE_MAX_CONNECTIONS: usize = 5;
 
 pub struct TcpHandler {
-    runtime_context: Context,
-
-    shutdown_flag: Arc<AtomicBool>,
+    runtime_ctx: Context,
 }
 
 impl TcpHandler {
-    pub fn new(runtime_context: Context, shutdown_flag: Arc<AtomicBool>) -> Self {
+    pub fn new(context: Context) -> Self {
         Self {
-            runtime_context,
-            shutdown_flag,
+            runtime_ctx: context,
         }
     }
 
-    pub fn start(&mut self) -> Result<(), TcpError> {
-        if self.shutdown_flag.load(Ordering::Acquire) {
+    pub fn start(&self) -> Result<(), TcpError> {
+        if self.runtime_ctx.shutdown_flag.load(Ordering::Acquire) {
             return Ok(());
         }
 
-        let address = SocketAddr::new(LOCALHOST, self.runtime_context.config.port);
+        let address = SocketAddr::new(LOCALHOST, self.runtime_ctx.config.port);
         let server = TcpListener::bind(address).map_err(TcpError::ListenerBindError)?;
         server
             .set_nonblocking(true)
@@ -42,23 +38,21 @@ impl TcpHandler {
         Ok(())
     }
 
-    pub fn listen(&mut self, listener: TcpListener) {
+    pub fn listen(&self, listener: TcpListener) {
         let mut ws_handles: Vec<JoinHandle<()>> =
             Vec::with_capacity(APPROXIMATE_MAX_CONNECTIONS);
         loop {
-            if self.shutdown_flag.load(Ordering::Acquire) {
+            if self.runtime_ctx.shutdown_flag.load(Ordering::Acquire) {
                 log::info!("Shutting down TCP listening thread.");
                 break;
             }
 
             match listener.accept() {
                 Ok((tcp_stream, _)) => {
-                    let shutdown_flag_copy = Arc::clone(&self.shutdown_flag);
-                    let runtime_context = self.runtime_context.clone();
+                    let runtime_ctx = self.runtime_ctx.clone();
                     let handle = thread::spawn(move || {
                         log::info!("TCP connection attempt found. Started WS thread.");
-                        let result = WsHandler::new(shutdown_flag_copy)
-                            .start(tcp_stream, runtime_context);
+                        let result = WsHandler::new(runtime_ctx).start(tcp_stream);
 
                         if let Err(err) = result {
                             log::error!("{}. Terminated connection.", err);

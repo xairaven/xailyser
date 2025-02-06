@@ -1,9 +1,7 @@
 use crate::context::Context;
 use bytes::Bytes;
-use crossbeam::channel::{Receiver, Sender};
 use std::net::TcpStream;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::thread;
 use thiserror::Error;
 use tungstenite::handshake::server;
@@ -15,18 +13,20 @@ use xailyser_common::auth;
 use xailyser_common::messages::{Request, Response, ServerError, CONNECTION_TIMEOUT};
 
 pub struct WsHandler {
-    shutdown_flag: Arc<AtomicBool>,
+    runtime_ctx: Context,
 }
 
 type WSStream = WebSocket<TcpStream>;
 
 impl WsHandler {
-    pub fn new(shutdown_flag: Arc<AtomicBool>) -> Self {
-        Self { shutdown_flag }
+    pub fn new(context: Context) -> Self {
+        Self {
+            runtime_ctx: context,
+        }
     }
 
-    pub fn start(&self, tcp_stream: TcpStream, context: Context) -> Result<(), WsError> {
-        let ws_stream = match self.connect(tcp_stream, context.config.password) {
+    pub fn start(&self, tcp_stream: TcpStream) -> Result<(), WsError> {
+        let ws_stream = match self.connect(tcp_stream) {
             Ok(value) => {
                 log::info!("Websocket connection established.");
                 value
@@ -34,17 +34,11 @@ impl WsHandler {
             Err(err) => return Err(err),
         };
 
-        self.send_receive_messages(
-            ws_stream,
-            context.client_request_tx,
-            context.server_response_rx,
-        );
+        self.send_receive_messages(ws_stream);
         Ok(())
     }
 
-    fn connect(
-        &self, tcp_stream: TcpStream, server_password: String,
-    ) -> Result<WSStream, WsError> {
+    fn connect(&self, tcp_stream: TcpStream) -> Result<WSStream, WsError> {
         if let Ok(peer_addr) = &tcp_stream.peer_addr() {
             log::info!(
                 "Received a new handshake from {}:{}",
@@ -55,8 +49,9 @@ impl WsHandler {
             log::info!("Received a new handshake!");
         }
 
-        let server_password_header = HeaderValue::from_str(server_password.as_str())
-            .map_err(|_| WsError::InvalidPasswordHeader)?;
+        let server_password_header =
+            HeaderValue::from_str(&self.runtime_ctx.config.password)
+                .map_err(|_| WsError::InvalidPasswordHeader)?;
         let check_authentication = |req: &server::Request, response: server::Response| {
             if let Some(given_password) = req.headers().get(auth::AUTH_HEADER) {
                 if given_password.eq(&server_password_header) {
@@ -80,18 +75,12 @@ impl WsHandler {
             .map_err(|_| WsError::AuthFailed)
     }
 
-    fn send_receive_messages(
-        &self, mut stream: WSStream, client_request_tx: Sender<Request>,
-        server_response_rx: Receiver<Response>,
-    ) {
-        while !self.shutdown_flag.load(Ordering::Acquire) {
-            if self
-                .receive_messages(&mut stream, &client_request_tx)
-                .is_err()
-            {
+    fn send_receive_messages(&self, mut stream: WSStream) {
+        while !self.runtime_ctx.shutdown_flag.load(Ordering::Acquire) {
+            if self.receive_messages(&mut stream).is_err() {
                 return;
             }
-            self.send_messages(&mut stream, &server_response_rx);
+            self.send_messages(&mut stream);
         }
 
         if let Ok(address) = stream.get_ref().peer_addr() {
@@ -110,9 +99,7 @@ impl WsHandler {
         }));
     }
 
-    fn receive_messages(
-        &self, stream: &mut WSStream, client_request_tx: &Sender<Request>,
-    ) -> Result<(), tungstenite::Error> {
+    fn receive_messages(&self, stream: &mut WSStream) -> Result<(), tungstenite::Error> {
         let msg = match stream.read() {
             Ok(value) => value,
             Err(err) => {
@@ -168,7 +155,7 @@ impl WsHandler {
                     message,
                     stream.get_ref().peer_addr()?
                 );
-                if let Err(err) = client_request_tx.try_send(message) {
+                if let Err(err) = self.runtime_ctx.client_request_tx.try_send(message) {
                     log::error!("Failed to pass command to the Processor: {}", err);
                 }
             } else {
@@ -182,10 +169,8 @@ impl WsHandler {
         Ok(())
     }
 
-    fn send_messages(
-        &self, stream: &mut WSStream, server_response_rx: &Receiver<Response>,
-    ) {
-        if let Ok(message) = server_response_rx.try_recv() {
+    fn send_messages(&self, stream: &mut WSStream) {
+        if let Ok(message) = self.runtime_ctx.server_response_rx.try_recv() {
             if let Ok(serialized) = serde_json::to_string(&message) {
                 let _ = stream.send(Message::text(serialized));
             } else {
