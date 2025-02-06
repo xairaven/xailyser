@@ -68,7 +68,9 @@ impl eframe::App for App {
         });
 
         // Processing all responses
-        communication::response::process(&mut self.context);
+        if let Ok(response) = self.context.server_response_rx.try_recv() {
+            communication::response::process(&mut self.context, response);
+        }
     }
 
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
