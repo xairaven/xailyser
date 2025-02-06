@@ -1,4 +1,4 @@
-use crate::commands::UiClientRequest;
+use crate::communication::request::UiClientRequest;
 use crate::ui::modals::Modal;
 use crate::ui::themes::ThemePreference;
 use crossbeam::channel::{unbounded, Receiver, Sender};

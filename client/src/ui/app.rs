@@ -1,13 +1,12 @@
-use crate::commands::UiClientRequest;
+use crate::communication;
+use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
-use crate::ui::modals::message::MessageModal;
 use crate::ui::modals::Modal;
 use crate::ui::themes::ThemePreference;
 use std::sync::atomic::Ordering;
 use std::thread::JoinHandle;
-use xailyser_common::messages::Response;
 
 pub struct App {
     context: Context,
@@ -68,7 +67,8 @@ impl eframe::App for App {
             self.show_opened_modals(ui);
         });
 
-        self.process_server_responses();
+        // Processing all responses
+        communication::response::process(&mut self.context);
     }
 
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
@@ -106,39 +106,5 @@ impl App {
         closed_modals.iter().for_each(|index| {
             self.modals.remove(*index);
         });
-    }
-
-    fn process_server_responses(&mut self) {
-        match self.context.server_response_rx.try_recv() {
-            Ok(Response::InterfacesList(list)) => {
-                self.context.interfaces_available = list;
-            },
-            Ok(Response::SetInterfaceResult(result)) => {
-                let modal = match result {
-                    Ok(_) => MessageModal::info("Successfully set interface!"),
-                    Err(err) => MessageModal::error(&err.to_string()),
-                };
-                let _ = self.context.modals_tx.try_send(Box::new(modal));
-            },
-            Ok(Response::ChangePasswordResult(result)) => {
-                let modal = match result {
-                    Ok(_) => MessageModal::info("Successfully changed password!"),
-                    Err(err) => MessageModal::error(&err.to_string()),
-                };
-                let _ = self.context.modals_tx.try_send(Box::new(modal));
-            },
-            Ok(Response::RebootResult(result)) => {
-                let modal = match result {
-                    Ok(_) => MessageModal::info("Successfully rebooted server!"),
-                    Err(err) => MessageModal::error(&err.to_string()),
-                };
-                let _ = self.context.modals_tx.try_send(Box::new(modal));
-            },
-            Ok(Response::Error(err)) => {
-                let modal = MessageModal::error(&err.to_string());
-                let _ = self.context.modals_tx.try_send(Box::new(modal));
-            },
-            Err(_) => {},
-        }
     }
 }

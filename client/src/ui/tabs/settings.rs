@@ -1,4 +1,4 @@
-use crate::commands::UiClientRequest;
+use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui::themes::ThemePreference;
 use chrono::{DateTime, Local};

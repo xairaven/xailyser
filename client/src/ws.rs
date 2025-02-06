@@ -1,4 +1,4 @@
-use crate::commands::UiClientRequest;
+use crate::communication::request::UiClientRequest;
 use crossbeam::channel::{Receiver, Sender};
 use http::Uri;
 use std::net::{SocketAddr, TcpStream};

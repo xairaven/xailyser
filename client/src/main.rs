@@ -37,7 +37,10 @@ fn main() {
     });
 }
 
-mod commands;
+mod communication {
+    pub mod request;
+    pub mod response;
+}
 mod config;
 mod context;
 mod logging;
