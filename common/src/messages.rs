@@ -15,7 +15,7 @@ pub enum Request {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
     InterfacesList(Vec<String>), // Available ethernet interfaces
-    SetInterfaceResult(Result<(), ServerError>), // Is interface set by request?
+    SetInterfaceResult(Result<String, ServerError>), // Is interface set by request?
     ChangePasswordResult(Result<(), ServerError>), // Is password changed by request?
     RebootResult(Result<(), ServerError>), // Can reboot at the moment?
 
