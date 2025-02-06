@@ -108,10 +108,10 @@ impl App {
         });
     }
 
-    fn process_server_responses(&self) {
+    fn process_server_responses(&mut self) {
         match self.context.server_response_rx.try_recv() {
-            Ok(Response::InterfacesList(_)) => {
-                todo!()
+            Ok(Response::InterfacesList(list)) => {
+                self.context.interfaces_available = list;
             },
             Ok(Response::SetInterfaceResult(result)) => {
                 let modal = match result {

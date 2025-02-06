@@ -1,13 +1,16 @@
 use crate::commands::UiClientRequest;
 use crate::context::Context;
 use crate::ui::themes::ThemePreference;
-use egui::Grid;
+use chrono::{DateTime, Local};
+use egui::{Color32, Grid, RichText};
 use strum::IntoEnumIterator;
 use xailyser_common::messages::Request;
 
 #[derive(Default)]
 pub struct SettingsTab {
     reboot_requested: bool, // To show confirmation
+
+    interfaces_last_request: Option<DateTime<Local>>, // For "Last Updated:"
 }
 
 impl SettingsTab {
@@ -31,6 +34,8 @@ impl SettingsTab {
                             self.reboot_view(ui, ctx);
                             ui.end_row();
                         });
+
+                    self.interfaces_view(ui, ctx);
                 },
             );
         });
@@ -38,7 +43,7 @@ impl SettingsTab {
 
     fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            egui::RichText::new("Theme:").size(16.0).strong(),
+            RichText::new("Theme:").size(16.0).strong(),
         ));
 
         egui::ComboBox::from_id_salt("Settings.Theme.ComboBox")
@@ -59,7 +64,7 @@ impl SettingsTab {
 
     fn reboot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            egui::RichText::new("Restart the server:")
+            RichText::new("Restart the server:")
                 .size(16.0)
                 .strong(),
         )).on_hover_text("After confirmation, you may not receive a message about the reboot.\nMonitor the server status.");
@@ -88,5 +93,53 @@ impl SettingsTab {
         }
 
         ui.end_row();
+    }
+
+    fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.collapsing(RichText::new("Interfaces:").size(16.0).strong(), |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Current:");
+                let interface =
+                    ctx.interface_active.clone().unwrap_or("None".to_string());
+                ui.label(RichText::new(interface).italics());
+            });
+
+            Grid::new("Settings.Interfaces.Request.Button")
+                .num_columns(2)
+                .show(ui, |ui| {
+                    ui.label("Request List:");
+                    if ui.button("Request").clicked() {
+                        self.interfaces_last_request = Some(Local::now());
+                        let _ = ctx.ui_client_requests_tx.try_send(
+                            UiClientRequest::Request(Request::RequestInterfaces),
+                        );
+                    }
+                });
+
+            ui.horizontal(|ui| {
+                ui.label("Last Update:\t");
+                if let Some(time) = &self.interfaces_last_request {
+                    ui.colored_label(
+                        Color32::GREEN,
+                        time.format("%m/%d %H:%M:%S").to_string(),
+                    );
+                } else {
+                    ui.colored_label(Color32::RED, "Never");
+                }
+            });
+
+            if !ctx.interfaces_available.is_empty() {
+                ui.label("Available Interfaces:");
+                ui.vertical_centered_justified(|ui| {
+                    for interface in &ctx.interfaces_available {
+                        if ui.button(RichText::new(interface).monospace()).clicked() {
+                            ctx.interface_active = Some(interface.to_string());
+                        }
+                    }
+                });
+            } else {
+                ui.label("Available Interfaces:\t—");
+            }
+        });
     }
 }

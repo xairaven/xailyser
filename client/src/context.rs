@@ -7,6 +7,9 @@ use std::sync::Arc;
 use xailyser_common::messages::Response;
 
 pub struct Context {
+    pub interfaces_available: Vec<String>,
+    pub interface_active: Option<String>,
+
     pub active_theme: ThemePreference,
     pub shutdown_flag: Arc<AtomicBool>,
 
@@ -36,6 +39,9 @@ impl Default for Context {
             unbounded::<UiClientRequest>();
 
         Self {
+            interfaces_available: vec![],
+            interface_active: None,
+
             active_theme: ThemePreference::default(),
             shutdown_flag: Arc::new(Default::default()),
 
