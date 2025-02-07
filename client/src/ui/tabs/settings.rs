@@ -1,5 +1,6 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
+use crate::ui::modals::message::MessageModal;
 use crate::ui::themes::ThemePreference;
 use chrono::{DateTime, Local};
 use egui::{Color32, Grid, RichText};
@@ -32,7 +33,10 @@ impl SettingsTab {
                             self.theme_view(ui, ctx);
                             ui.end_row();
 
-                            self.save_config_view(ui, ctx);
+                            self.save_client_config_view(ui, ctx);
+                            ui.end_row();
+
+                            self.save_server_config_view(ui, ctx);
                             ui.end_row();
 
                             self.reboot_view(ui, ctx);
@@ -52,11 +56,11 @@ impl SettingsTab {
 
         egui::ComboBox::from_id_salt("Settings.Theme.ComboBox")
             .width(200.0)
-            .selected_text(ctx.active_theme.title())
+            .selected_text(ctx.config.theme.title())
             .show_ui(ui, |ui| {
                 for theme in ThemePreference::iter() {
                     let res: egui::Response =
-                        ui.selectable_value(&mut ctx.active_theme, theme, theme.title());
+                        ui.selectable_value(&mut ctx.config.theme, theme, theme.title());
                     if res.changed() {
                         log::info!("Theme changed to {}", theme.title());
                         ui.ctx()
@@ -66,9 +70,28 @@ impl SettingsTab {
             });
     }
 
-    fn save_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            RichText::new("Save Config:").size(16.0).strong(),
+            RichText::new("Save Client Config:").size(16.0).strong(),
+        ));
+
+        if ui.button("Apply").clicked() {
+            let modal = match ctx.config.save_to_file() {
+                Ok(_) => MessageModal::info("Successfully saved client config!"),
+                Err(err) => {
+                    MessageModal::error(&format!("Failed to save client config! {}", err))
+                },
+            };
+            match ctx.modals_tx.try_send(Box::new(modal)) {
+                Ok(_) => log::info!("Requested saving client config. Saved"),
+                Err(_) => log::error!("Requested saving client config. Failed to save."),
+            }
+        }
+    }
+
+    fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.add(egui::Label::new(
+            RichText::new("Save Server Config:").size(16.0).strong(),
         ));
 
         if ui.button("Apply").clicked() {

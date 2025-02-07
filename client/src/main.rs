@@ -31,7 +31,7 @@ fn main() {
     log::info!("Config loaded.");
     log::info!("Logger initialized.");
 
-    ui::start(&config).unwrap_or_else(|err| {
+    ui::start(config).unwrap_or_else(|err| {
         log::error!("{}", err);
         std::process::exit(1);
     });

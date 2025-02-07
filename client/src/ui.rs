@@ -5,7 +5,7 @@ pub const MIN_WINDOW_WIDTH: f32 = 900.0;
 pub const MIN_WINDOW_HEIGHT: f32 = 550.0;
 const WINDOW_TITLE: &str = "Xailyser";
 
-pub fn start(config: &Config) -> eframe::Result {
+pub fn start(config: Config) -> eframe::Result {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title(WINDOW_TITLE)
@@ -27,7 +27,7 @@ pub fn start(config: &Config) -> eframe::Result {
     eframe::run_native(
         WINDOW_TITLE,
         native_options,
-        Box::new(|cc| Ok(Box::new(App::new(cc, config.theme)))),
+        Box::new(|cc| Ok(Box::new(App::new(cc, config)))),
     )
 }
 

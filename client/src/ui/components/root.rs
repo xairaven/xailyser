@@ -47,7 +47,7 @@ impl Default for RootComponent {
 
 impl RootComponent {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let theme = ctx.active_theme.into_aesthetix_theme();
+        let theme = ctx.config.theme.into_aesthetix_theme();
 
         SidePanel::left("MENU_PANEL")
             .resizable(false)

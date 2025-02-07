@@ -11,6 +11,7 @@ use xailyser_common::logging;
 
 const CONFIG_FILENAME: &str = "config.toml";
 
+#[derive(Clone)]
 pub struct Config {
     pub log_format: String,
     pub log_level: LevelFilter,

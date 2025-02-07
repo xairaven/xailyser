@@ -1,10 +1,10 @@
 use crate::communication;
 use crate::communication::request::UiClientRequest;
+use crate::config::Config;
 use crate::context::Context;
 use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
 use crate::ui::modals::Modal;
-use crate::ui::themes::ThemePreference;
 use std::sync::atomic::Ordering;
 use std::thread::JoinHandle;
 
@@ -20,14 +20,12 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(cc: &eframe::CreationContext<'_>, theme: ThemePreference) -> Self {
-        let context = Context::new(theme);
-
+    pub fn new(cc: &eframe::CreationContext<'_>, config: Config) -> Self {
         cc.egui_ctx
-            .set_style(context.active_theme.into_aesthetix_theme().custom_style());
+            .set_style(config.theme.into_aesthetix_theme().custom_style());
 
         Self {
-            context,
+            context: Context::new(config),
 
             net_thread: None,
 
@@ -61,7 +59,7 @@ impl eframe::App for App {
                 if self.root_component.logout_requested() {
                     self.root_component.logout(&self.context);
                     self.auth_component.logout();
-                    self.context = Context::new(self.context.active_theme);
+                    self.context = Context::new(self.context.config.clone());
                 }
             }
 
