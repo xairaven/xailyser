@@ -14,6 +14,9 @@ pub enum Tab {
     #[strum(to_string = "ℹ About")]
     About,
 
+    #[strum(to_string = "🔓 Logout")]
+    Logout,
+
     #[strum(to_string = "🗙 Exit")]
     Exit,
 }

@@ -56,6 +56,12 @@ impl eframe::App for App {
 
                 // Showing the root component.
                 self.root_component.show(ui, &mut self.context);
+
+                // Logout from root component, if requested.
+                if self.root_component.logout_requested() {
+                    self.root_component.logout(&self.context);
+                    self.auth_component.logout();
+                }
             }
 
             // Getting modals from the channels (in context).

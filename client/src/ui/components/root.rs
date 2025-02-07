@@ -1,3 +1,4 @@
+use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui;
 use crate::ui::tabs::about::AboutTab;
@@ -13,6 +14,8 @@ pub struct RootComponent {
     active_tab: Tab,
     tabs: BTreeMap<Tab, String>,
 
+    logout_requested: bool,
+
     status_tab: StatusTab,
     settings_tab: SettingsTab,
     about_tab: AboutTab,
@@ -27,10 +30,13 @@ impl Default for RootComponent {
                 (Tab::Status, Tab::Status.to_string()),
                 (Tab::Settings, Tab::Settings.to_string()),
                 (Tab::About, Tab::About.to_string()),
+                (Tab::Logout, Tab::Logout.to_string()),
                 (Tab::Exit, Tab::Exit.to_string()),
             ]
             .into_iter()
             .collect(),
+
+            logout_requested: false,
 
             status_tab: Default::default(),
             settings_tab: Default::default(),
@@ -93,6 +99,10 @@ impl RootComponent {
                     self.tab_heading(ui);
                     self.about_tab.show(ui, ctx);
                 },
+                Tab::Logout => {
+                    self.logout_requested = true;
+                    self.active_tab = Tab::Status;
+                },
                 Tab::Exit => {
                     ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                 },
@@ -109,5 +119,17 @@ impl RootComponent {
             )
             .size(25.0),
         );
+    }
+
+    pub fn logout_requested(&self) -> bool {
+        self.logout_requested
+    }
+
+    pub fn logout(&mut self, ctx: &Context) {
+        let _ = ctx
+            .ui_client_requests_tx
+            .try_send(UiClientRequest::CloseConnection);
+        self.logout_requested = false;
+        log::info!("Logged out!");
     }
 }

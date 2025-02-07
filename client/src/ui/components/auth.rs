@@ -136,6 +136,11 @@ impl AuthComponent {
 
         Ok(SocketAddr::new(ip_address, port))
     }
+
+    pub fn logout(&mut self) {
+        self.authenticated = false;
+        self.net_thread = None;
+    }
 }
 
 #[derive(Error, Debug)]
