@@ -7,7 +7,9 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_millis(100);
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Request {
     RequestInterfaces,      // List of available ethernet interfaces
+    RequestActiveInterface, // Active Interface
     SetInterface(String),   // Set an ethernet interface
+    SaveConfig,             // Save the config
     ChangePassword(String), // Change a password to another (not encrypted)
     Reboot, // Reboot server (needed to apply changing password, for example)
 }
@@ -15,7 +17,9 @@ pub enum Request {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
     InterfacesList(Vec<String>), // Available ethernet interfaces
+    InterfaceActive(Option<String>), // Active interface
     SetInterfaceResult(Result<String, ServerError>), // Is interface set by request?
+    SaveConfigResult(Result<(), ServerError>), // Is config was saved by request?
     ChangePasswordResult(Result<(), ServerError>), // Is password changed by request?
     RebootResult(Result<(), ServerError>), // Can reboot at the moment?
 
@@ -28,6 +32,7 @@ pub enum ServerError {
 
     InvalidInterface,
     FailedToChangePassword,
+    FailedToSaveConfig,
 }
 
 impl Display for ServerError {
@@ -40,6 +45,7 @@ impl Display for ServerError {
             ServerError::FailedToChangePassword => {
                 "Failed to change password.".to_string()
             },
+            ServerError::FailedToSaveConfig => "Failed to save config.".to_string(),
         };
 
         write!(f, "{}", msg)
