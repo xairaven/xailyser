@@ -13,7 +13,7 @@ pub fn process(ctx: &mut Context, response: Response) {
             let modal = match result {
                 Ok(interface) => {
                     let modal =
-                        MessageModal::info(&format!("Interface set: {interface}!"));
+                        MessageModal::info(&format!("Interface set: {interface}! Please restart the server for the changes to take effect."));
                     ctx.interface_active = Some(interface);
                     modal
                 },
@@ -23,7 +23,7 @@ pub fn process(ctx: &mut Context, response: Response) {
         },
         Response::ChangePasswordResult(result) => {
             let modal = match result {
-                Ok(_) => MessageModal::info("Successfully changed password!"),
+                Ok(_) => MessageModal::info("Successfully changed password! Please restart the server for the changes to take effect."),
                 Err(err) => MessageModal::error(&err.to_string()),
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));
