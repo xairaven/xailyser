@@ -32,6 +32,9 @@ impl SettingsTab {
                             self.theme_view(ui, ctx);
                             ui.end_row();
 
+                            self.save_config_view(ui, ctx);
+                            ui.end_row();
+
                             self.reboot_view(ui, ctx);
                             ui.end_row();
                         });
@@ -61,6 +64,23 @@ impl SettingsTab {
                     }
                 }
             });
+    }
+
+    fn save_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.add(egui::Label::new(
+            RichText::new("Save Config:").size(16.0).strong(),
+        ));
+
+        if ui.button("Apply").clicked() {
+            if let Err(err) = ctx
+                .ui_client_requests_tx
+                .try_send(UiClientRequest::Request(Request::SaveConfig))
+            {
+                log::error!("Failed to send command (Save Config): {}", err);
+            } else {
+                log::info!("UI -> WS: Sent 'Save Config' command.");
+            }
+        }
     }
 
     fn reboot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
@@ -105,7 +125,7 @@ impl SettingsTab {
                     ui.label("Active:");
                     ui.label(
                         RichText::new(
-                            ctx.interface_active.clone().unwrap_or("None".to_string()),
+                            ctx.interface_active.as_ref().unwrap_or(&"None".to_string()),
                         )
                         .strong(),
                     );
@@ -152,6 +172,9 @@ impl SettingsTab {
                         self.interfaces_last_request = Some(Local::now());
                         let _ = ctx.ui_client_requests_tx.try_send(
                             UiClientRequest::Request(Request::RequestInterfaces),
+                        );
+                        let _ = ctx.ui_client_requests_tx.try_send(
+                            UiClientRequest::Request(Request::RequestActiveInterface),
                         );
                     }
                 });
