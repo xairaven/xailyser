@@ -50,7 +50,7 @@ impl WsHandler {
         }
 
         let server_password_header =
-            HeaderValue::from_str(&self.runtime_ctx.config.password)
+            HeaderValue::from_str(&self.runtime_ctx.encrypted_password)
                 .map_err(|_| WsError::InvalidPasswordHeader)?;
         let check_authentication = |req: &server::Request, response: server::Response| {
             if let Some(given_password) = req.headers().get(auth::AUTH_HEADER) {

@@ -6,11 +6,13 @@ use pnet::datalink::NetworkInterface;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use thiserror::Error;
+use xailyser_common::cryptography::encrypt_password;
 use xailyser_common::messages::{Request, Response};
 
 #[derive(Clone)]
 pub struct Context {
     pub config: Config,
+    pub encrypted_password: String,
 
     pub network_interface: Option<NetworkInterface>,
 
@@ -26,6 +28,8 @@ impl Context {
     pub fn new(config: Config) -> Result<Self, ContextError> {
         let (server_response_tx, server_response_rx) = unbounded::<Response>();
         let (client_request_tx, client_request_rx) = unbounded::<Request>();
+
+        let encrypted_password = encrypt_password(&config.password);
 
         let interface: Option<NetworkInterface> = match &config.interface {
             None => None,
@@ -43,6 +47,8 @@ impl Context {
 
         Ok(Self {
             config,
+
+            encrypted_password,
 
             network_interface: interface,
             shutdown_flag: Arc::new(AtomicBool::new(false)),

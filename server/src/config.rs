@@ -3,7 +3,6 @@ use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 use std::str::FromStr;
 use thiserror::Error;
-use xailyser_common::cryptography::encrypt_password;
 use xailyser_common::logging;
 
 const CONFIG_FILENAME: &str = "config.toml";
@@ -59,11 +58,9 @@ impl Config {
             return Ok(config);
         }
 
-        let mut dto: ConfigDto = toml::from_str(&data.unwrap_or_default())
-            .map_err(ConfigError::TomlDeserializationError)?;
-        dto.password = encrypt_password(&dto.password);
-
-        dto.into_config()
+        toml::from_str::<ConfigDto>(&data.unwrap_or_default())
+            .map_err(ConfigError::TomlDeserializationError)?
+            .into_config()
     }
 
     pub fn save_to_file(&self) -> Result<(), ConfigError> {
