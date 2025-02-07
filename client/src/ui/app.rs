@@ -61,6 +61,7 @@ impl eframe::App for App {
                 if self.root_component.logout_requested() {
                     self.root_component.logout(&self.context);
                     self.auth_component.logout();
+                    self.context = Context::new(self.context.active_theme);
                 }
             }
 
