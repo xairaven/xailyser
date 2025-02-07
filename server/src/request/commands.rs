@@ -1,5 +1,5 @@
 use crate::net;
-use xailyser_common::messages::{Response, ServerError};
+use xailyser_common::messages::Response;
 
 pub fn interfaces() -> Response {
     let interfaces = net::interface::usable_sorted()
@@ -15,17 +15,9 @@ pub fn interfaces() -> Response {
     Response::InterfacesList(interfaces)
 }
 
-pub fn spawn_new_process() -> Response {
-    let args: Vec<String> = std::env::args().collect();
-    log::info!("Restarting server.");
+pub fn exit_reboot() {
+    const RESTART_CODE: i32 = 42;
 
-    match std::process::Command::new(&args[0])
-        .args(&args[1..])
-        .spawn()
-    {
-        Ok(_) => Response::RebootResult(Ok(())),
-        Err(err) => {
-            Response::RebootResult(Err(ServerError::RebootFailure(err.to_string())))
-        },
-    }
+    log::info!("Restarting server.");
+    std::process::exit(RESTART_CODE);
 }
