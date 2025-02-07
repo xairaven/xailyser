@@ -1,12 +1,18 @@
 use crate::config::Config;
+use crate::net::interface;
+use crate::net::interface::InterfaceError;
 use crossbeam::channel::{unbounded, Receiver, Sender};
+use pnet::datalink::NetworkInterface;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use thiserror::Error;
 use xailyser_common::messages::{Request, Response};
 
 #[derive(Clone)]
 pub struct Context {
     pub config: Config,
+
+    pub network_interface: Option<NetworkInterface>,
 
     pub shutdown_flag: Arc<AtomicBool>,
 
@@ -17,19 +23,40 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Config) -> Result<Self, ContextError> {
         let (server_response_tx, server_response_rx) = unbounded::<Response>();
         let (client_request_tx, client_request_rx) = unbounded::<Request>();
 
-        Self {
+        let interface: Option<NetworkInterface> = match &config.interface {
+            None => None,
+            Some(interface_name) => {
+                let network_interface = interface::get_network_interface(interface_name);
+                let network_interface = match network_interface {
+                    Ok(value) => value,
+                    Err(err) => {
+                        return Err(ContextError::InterfaceError(err));
+                    },
+                };
+                Some(network_interface)
+            },
+        };
+
+        Ok(Self {
             config,
 
+            network_interface: interface,
             shutdown_flag: Arc::new(AtomicBool::new(false)),
 
             server_response_tx,
             server_response_rx,
             client_request_tx,
             client_request_rx,
-        }
+        })
     }
+}
+
+#[derive(Debug, Error)]
+pub enum ContextError {
+    #[error("Interface error.")]
+    InterfaceError(InterfaceError),
 }

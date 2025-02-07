@@ -22,15 +22,15 @@ pub fn usable_sorted() -> Vec<NetworkInterface> {
 pub fn get_network_interface(
     iface_name: &str,
 ) -> Result<NetworkInterface, InterfaceError> {
-    let interface_names_match = |iface: &NetworkInterface| iface.name == iface_name;
+    let needed_interface = |iface: &NetworkInterface| {
+        iface.name == iface_name || iface.description == iface_name
+    };
 
     let interfaces = datalink::interfaces();
-    let interface = interfaces
+    interfaces
         .into_iter()
-        .find(interface_names_match)
-        .ok_or(InterfaceError::UnknownInterface)?;
-
-    Ok(interface)
+        .find(needed_interface)
+        .ok_or(InterfaceError::UnknownInterface)
 }
 
 pub fn get_datalink_channel(
