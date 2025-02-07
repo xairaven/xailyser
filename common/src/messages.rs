@@ -28,8 +28,6 @@ pub enum ServerError {
 
     InvalidInterface,
     FailedToChangePassword,
-
-    RebootFailure(String),
 }
 
 impl Display for ServerError {
@@ -41,9 +39,6 @@ impl Display for ServerError {
             ServerError::InvalidInterface => "Invalid interface.".to_string(),
             ServerError::FailedToChangePassword => {
                 "Failed to change password.".to_string()
-            },
-            ServerError::RebootFailure(err) => {
-                format!("Failed to reboot server. Error: {}", err)
             },
         };
 
