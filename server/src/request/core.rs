@@ -13,6 +13,14 @@ pub fn process(ctx: &mut Context, request: Request) {
             let response = commands::interfaces();
             let _ = ctx.server_response_tx.try_send(response);
         },
+        Request::RequestActiveInterface => {
+            log::info!("Commands: Active interface requested.");
+            let interface = ctx.network_interface.clone();
+            let name: Option<String> =
+                interface.map(|iface| interface::get_network_interface_name(&iface));
+            let response = Response::InterfaceActive(name);
+            let _ = ctx.server_response_tx.try_send(response);
+        },
         Request::SetInterface(interface_name) => {
             let network_interface = interface::get_network_interface(&interface_name);
             let network_interface = match network_interface {
@@ -45,6 +53,17 @@ pub fn process(ctx: &mut Context, request: Request) {
         },
         Request::ChangePassword(_) => {
             todo!()
+        },
+        Request::SaveConfig => {
+            log::info!("Commands: Saving config requested.");
+            let result = ctx.config.save_to_file();
+            let response = match result {
+                Ok(_) => Response::SaveConfigResult(Ok(())),
+                Err(_) => {
+                    Response::SaveConfigResult(Err(ServerError::FailedToSaveConfig))
+                },
+            };
+            let _ = ctx.server_response_tx.try_send(response);
         },
         Request::Reboot => {
             log::info!("Commands: Reboot requested.");

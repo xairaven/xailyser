@@ -18,6 +18,16 @@ pub fn usable_sorted() -> Vec<NetworkInterface> {
     interfaces
 }
 
+pub fn get_network_interface_name(network_interface: &NetworkInterface) -> String {
+    #[cfg(target_os = "windows")]
+    let name = network_interface.description.clone();
+
+    #[cfg(target_os = "linux")]
+    let name = network_interface.name.clone();
+
+    name
+}
+
 /// Get `NetworkInterface` by its name.
 pub fn get_network_interface(
     iface_name: &str,
