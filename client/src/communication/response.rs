@@ -1,5 +1,6 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
+use chrono::Local;
 use xailyser_common::messages::Response;
 
 pub fn process(ctx: &mut Context, response: Response) {
@@ -8,9 +9,11 @@ pub fn process(ctx: &mut Context, response: Response) {
             let modal = MessageModal::info("Successfully got interfaces list!");
             let _ = ctx.modals_tx.try_send(Box::new(modal));
             ctx.interfaces_available = list;
+            ctx.interfaces_last_updated = Some(Local::now());
         },
         Response::InterfaceActive(name) => {
             ctx.interface_active = name;
+            ctx.interfaces_last_updated = Some(Local::now());
         },
         Response::SetInterfaceResult(result) => {
             let modal = match result {

@@ -133,13 +133,39 @@ impl SettingsServerTab {
 
                     ui.end_row();
                     ui.label("Last Request Update:\t");
-                    if let Some(time) = &self.interfaces_last_request {
-                        ui.colored_label(
-                            Color32::GREEN,
-                            time.format("%m/%d %H:%M:%S").to_string(),
-                        );
-                    } else {
-                        ui.colored_label(Color32::RED, "Never");
+                    {
+                        let mut text = RichText::new("Never").color(Color32::RED);
+
+                        let last_request = &self.interfaces_last_request;
+                        let last_update = &ctx.interfaces_last_updated;
+
+                        if let (Some(last_request), Some(last_update)) =
+                            (last_request, last_update)
+                        {
+                            if last_request > last_update {
+                                text = RichText::new(
+                                    last_request.format("%m/%d %H:%M:%S").to_string(),
+                                )
+                                .color(Color32::RED);
+                            } else {
+                                text = RichText::new(
+                                    last_update.format("%m/%d %H:%M:%S").to_string(),
+                                )
+                                .color(Color32::GREEN);
+                            }
+                        } else if let Some(last_update) = &last_update {
+                            text = RichText::new(
+                                last_update.format("%m/%d %H:%M:%S").to_string(),
+                            )
+                            .color(Color32::GREEN);
+                        } else if let Some(last_request) = &last_request {
+                            text = RichText::new(
+                                last_request.format("%m/%d %H:%M:%S").to_string(),
+                            )
+                            .color(Color32::RED);
+                        }
+
+                        ui.label(text);
                     }
                     ui.end_row();
 

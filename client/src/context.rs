@@ -1,6 +1,7 @@
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::ui::modals::Modal;
+use chrono::{DateTime, Local};
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
@@ -11,6 +12,7 @@ pub struct Context {
 
     pub interfaces_available: Vec<String>,
     pub interface_active: Option<String>,
+    pub interfaces_last_updated: Option<DateTime<Local>>,
 
     pub shutdown_flag: Arc<AtomicBool>,
 
@@ -34,6 +36,7 @@ impl Context {
 
             interfaces_available: vec![],
             interface_active: None,
+            interfaces_last_updated: None,
 
             shutdown_flag: Arc::new(Default::default()),
 
