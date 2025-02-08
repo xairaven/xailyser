@@ -2,10 +2,20 @@ use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::themes::ThemePreference;
 use egui::{Grid, RichText};
+use log::LevelFilter;
 use strum::IntoEnumIterator;
 
-#[derive(Default)]
-pub struct SettingsClientTab;
+pub struct SettingsClientTab {
+    log_level_choice: LevelFilter,
+}
+
+impl Default for SettingsClientTab {
+    fn default() -> Self {
+        Self {
+            log_level_choice: LevelFilter::Info,
+        }
+    }
+}
 
 impl SettingsClientTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
@@ -22,10 +32,16 @@ impl SettingsClientTab {
                         .min_col_width(available_width / GRID_COLUMNS as f32)
                         .num_columns(GRID_COLUMNS)
                         .show(ui, |ui| {
+                            self.save_client_config_view(ui, ctx);
+                            ui.end_row();
+
                             self.theme_view(ui, ctx);
                             ui.end_row();
 
-                            self.save_client_config_view(ui, ctx);
+                            self.logs_level_view(ui, ctx);
+                            ui.end_row();
+
+                            self.logs_format_view(ui, ctx);
                             ui.end_row();
                         });
                 },
@@ -71,5 +87,38 @@ impl SettingsClientTab {
                 Err(_) => log::error!("Requested saving client config. Failed to save."),
             }
         }
+    }
+
+    fn logs_level_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.add(egui::Label::new(
+            RichText::new("Log Level:").size(16.0).strong(),
+        ));
+
+        egui::ComboBox::from_id_salt("Settings.Client.Log.Level.ComboBox")
+            .selected_text(format!("{:?}", &mut self.log_level_choice))
+            .show_ui(ui, |ui| {
+                for level_filter in LevelFilter::iter() {
+                    ui.selectable_value(
+                        &mut self.log_level_choice,
+                        level_filter,
+                        level_filter.to_string(),
+                    );
+                }
+            });
+
+        if ui.button("Apply").clicked() {
+            ctx.config.log_level = self.log_level_choice;
+            let modal = MessageModal::info(
+                "Successfully changed log level! Don't forget to save configuration!",
+            );
+            match ctx.modals_tx.try_send(Box::new(modal)) {
+                Ok(_) => log::info!("Requested changing log level. Success"),
+                Err(_) => log::error!("Requested changing log level. Failure"),
+            }
+        }
+    }
+
+    fn logs_format_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        // TODO
     }
 }
