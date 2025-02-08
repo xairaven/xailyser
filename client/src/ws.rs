@@ -148,7 +148,24 @@ pub enum WsError {
 impl WsError {
     pub fn additional_info(&self) -> Option<String> {
         match self {
-            WsError::ConnectionFailed(err) => Some(err.to_string()),
+            WsError::ConnectionFailed(err) => match err {
+                tungstenite::Error::ConnectionClosed
+                | tungstenite::Error::AlreadyClosed
+                | tungstenite::Error::Io(_)
+                | tungstenite::Error::Tls(_)
+                | tungstenite::Error::Capacity(_)
+                | tungstenite::Error::Protocol(_)
+                | tungstenite::Error::WriteBufferFull(_)
+                | tungstenite::Error::Utf8
+                | tungstenite::Error::AttackAttempt
+                | tungstenite::Error::HttpFormat(_) => Some(err.to_string()),
+                tungstenite::Error::Url(_) => {
+                    Some("Bad url (or server is not working)".to_string())
+                },
+                tungstenite::Error::Http(_) => {
+                    Some("Unauthorized, or bad headers.".to_string())
+                },
+            },
             WsError::BadReadTimeoutDuration(err) => Some(err.to_string()),
             _ => None,
         }
