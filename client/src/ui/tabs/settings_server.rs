@@ -1,21 +1,18 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
-use crate::ui::modals::message::MessageModal;
-use crate::ui::themes::ThemePreference;
 use chrono::{DateTime, Local};
 use egui::{Color32, Grid, RichText};
-use strum::IntoEnumIterator;
 use xailyser_common::messages::Request;
 
 #[derive(Default)]
-pub struct SettingsTab {
+pub struct SettingsServerTab {
     reboot_requested: bool, // To show confirmation
 
     interface_current: Option<String>,
     interfaces_last_request: Option<DateTime<Local>>, // For "Last Updated:"
 }
 
-impl SettingsTab {
+impl SettingsServerTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         const GRID_COLUMNS: usize = 4;
         let available_width = ui.available_width();
@@ -30,12 +27,6 @@ impl SettingsTab {
                         .min_col_width(available_width / GRID_COLUMNS as f32)
                         .num_columns(GRID_COLUMNS)
                         .show(ui, |ui| {
-                            self.theme_view(ui, ctx);
-                            ui.end_row();
-
-                            self.save_client_config_view(ui, ctx);
-                            ui.end_row();
-
                             self.save_server_config_view(ui, ctx);
                             ui.end_row();
 
@@ -47,46 +38,6 @@ impl SettingsTab {
                 },
             );
         });
-    }
-
-    fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new("Theme:").size(16.0).strong(),
-        ));
-
-        egui::ComboBox::from_id_salt("Settings.Theme.ComboBox")
-            .width(200.0)
-            .selected_text(ctx.config.theme.title())
-            .show_ui(ui, |ui| {
-                for theme in ThemePreference::iter() {
-                    let res: egui::Response =
-                        ui.selectable_value(&mut ctx.config.theme, theme, theme.title());
-                    if res.changed() {
-                        log::info!("Theme changed to {}", theme.title());
-                        ui.ctx()
-                            .set_style(theme.into_aesthetix_theme().custom_style());
-                    }
-                }
-            });
-    }
-
-    fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new("Save Client Config:").size(16.0).strong(),
-        ));
-
-        if ui.button("Apply").clicked() {
-            let modal = match ctx.config.save_to_file() {
-                Ok(_) => MessageModal::info("Successfully saved client config!"),
-                Err(err) => {
-                    MessageModal::error(&format!("Failed to save client config! {}", err))
-                },
-            };
-            match ctx.modals_tx.try_send(Box::new(modal)) {
-                Ok(_) => log::info!("Requested saving client config. Saved"),
-                Err(_) => log::error!("Requested saving client config. Failed to save."),
-            }
-        }
     }
 
     fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {

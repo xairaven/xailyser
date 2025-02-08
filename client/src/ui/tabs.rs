@@ -8,8 +8,11 @@ pub enum Tab {
     #[strum(to_string = "🏠 Status")]
     Status,
 
-    #[strum(to_string = "⚙ Settings")]
-    Settings,
+    #[strum(to_string = "⚙ Client Settings")]
+    ClientSettings,
+
+    #[strum(to_string = "⚙ Server Settings")]
+    ServerSettings,
 
     #[strum(to_string = "ℹ About")]
     About,
@@ -22,5 +25,6 @@ pub enum Tab {
 }
 
 pub mod about;
-pub mod settings;
+pub mod settings_client;
+pub mod settings_server;
 pub mod status;

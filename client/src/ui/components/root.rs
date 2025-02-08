@@ -2,7 +2,8 @@ use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui;
 use crate::ui::tabs::about::AboutTab;
-use crate::ui::tabs::settings::SettingsTab;
+use crate::ui::tabs::settings_client::SettingsClientTab;
+use crate::ui::tabs::settings_server::SettingsServerTab;
 use crate::ui::tabs::status::StatusTab;
 use crate::ui::tabs::Tab;
 use egui::{CentralPanel, SidePanel};
@@ -17,7 +18,8 @@ pub struct RootComponent {
     logout_requested: bool,
 
     status_tab: StatusTab,
-    settings_tab: SettingsTab,
+    settings_client_tab: SettingsClientTab,
+    settings_server_tab: SettingsServerTab,
     about_tab: AboutTab,
 }
 
@@ -28,7 +30,8 @@ impl Default for RootComponent {
 
             tabs: [
                 (Tab::Status, Tab::Status.to_string()),
-                (Tab::Settings, Tab::Settings.to_string()),
+                (Tab::ClientSettings, Tab::ClientSettings.to_string()),
+                (Tab::ServerSettings, Tab::ServerSettings.to_string()),
                 (Tab::About, Tab::About.to_string()),
                 (Tab::Logout, Tab::Logout.to_string()),
                 (Tab::Exit, Tab::Exit.to_string()),
@@ -39,7 +42,8 @@ impl Default for RootComponent {
             logout_requested: false,
 
             status_tab: Default::default(),
-            settings_tab: Default::default(),
+            settings_client_tab: Default::default(),
+            settings_server_tab: Default::default(),
             about_tab: Default::default(),
         }
     }
@@ -91,9 +95,13 @@ impl RootComponent {
                     self.tab_heading(ui);
                     self.status_tab.show(ui, ctx);
                 },
-                Tab::Settings => {
+                Tab::ClientSettings => {
                     self.tab_heading(ui);
-                    self.settings_tab.show(ui, ctx);
+                    self.settings_client_tab.show(ui, ctx);
+                },
+                Tab::ServerSettings => {
+                    self.tab_heading(ui);
+                    self.settings_server_tab.show(ui, ctx);
                 },
                 Tab::About => {
                     self.tab_heading(ui);
