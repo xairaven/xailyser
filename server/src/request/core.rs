@@ -49,8 +49,12 @@ pub fn process(ctx: &mut Context, request: Request) {
 
             ctx.network_interface = Some(network_interface);
         },
-        Request::ChangePassword(_) => {
-            todo!()
+        Request::ChangePassword(password) => {
+            log::info!("Commands: Changing password requested.");
+            ctx.config.password = password;
+            let _ = ctx
+                .server_response_tx
+                .try_send(Response::ChangePasswordConfirmation);
         },
         Request::SaveConfig => {
             log::info!("Commands: Saving config requested.");

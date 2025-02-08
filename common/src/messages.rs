@@ -20,7 +20,7 @@ pub enum Response {
     InterfaceActive(Option<String>), // Active interface
     SetInterfaceResult(Result<String, ServerError>), // Is interface set by request?
     SaveConfigResult(Result<(), ServerError>), // Is config was saved by request?
-    ChangePasswordResult(Result<(), ServerError>), // Is password changed by request?
+    ChangePasswordConfirmation,  // Is password changed by request?
 
     Error(ServerError), // Generic Error.
 }

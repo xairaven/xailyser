@@ -1,13 +1,15 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use chrono::{DateTime, Local};
-use egui::{Color32, Grid, RichText};
+use egui::{Color32, Grid, RichText, TextBuffer, TextEdit};
 use xailyser_common::messages::Request;
 
 #[derive(Default)]
 pub struct SettingsServerTab {
     pub reboot_requested: bool, // To logout after reboot
     reboot_confirm: bool,       // To show confirmation
+
+    password_field: String,
 
     interface_current: Option<String>,
     interfaces_last_request: Option<DateTime<Local>>, // For "Last Updated:"
@@ -32,6 +34,9 @@ impl SettingsServerTab {
                             ui.end_row();
 
                             self.reboot_view(ui, ctx);
+                            ui.end_row();
+
+                            self.change_password_view(ui, ctx);
                             ui.end_row();
                         });
 
@@ -88,8 +93,20 @@ impl SettingsServerTab {
                 self.reboot_confirm = false;
             }
         }
+    }
 
-        ui.end_row();
+    fn change_password_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.add(egui::Label::new(
+            RichText::new("Change Password:").size(16.0).strong(),
+        ));
+
+        ui.add(TextEdit::singleline(&mut self.password_field));
+
+        if ui.button("Apply").clicked() {
+            let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
+                Request::ChangePassword(self.password_field.take()),
+            ));
+        }
     }
 
     fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
