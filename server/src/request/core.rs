@@ -2,8 +2,6 @@ use crate::context::Context;
 use crate::net::interface;
 use crate::request::commands;
 use std::sync::atomic::Ordering;
-use std::thread;
-use std::time::Duration;
 use xailyser_common::messages::{Request, Response, ServerError};
 
 pub fn process(ctx: &mut Context, request: Request) {
@@ -67,13 +65,7 @@ pub fn process(ctx: &mut Context, request: Request) {
         },
         Request::Reboot => {
             log::info!("Commands: Reboot requested.");
-            let response = Response::RebootResult(Ok(()));
-            let _ = ctx.server_response_tx.try_send(response);
             ctx.shutdown_flag.store(true, Ordering::Release);
-
-            // Waiting for sending `Reboot` response
-            thread::sleep(Duration::from_millis(100));
-
             commands::exit_reboot();
         },
     }
