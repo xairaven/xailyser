@@ -28,13 +28,6 @@ pub fn process(ctx: &mut Context, response: Response) {
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
-        Response::RebootResult(result) => {
-            let modal = match result {
-                Ok(_) => MessageModal::info("Successfully rebooted server!"),
-                Err(err) => MessageModal::error(&err.to_string()),
-            };
-            let _ = ctx.modals_tx.try_send(Box::new(modal));
-        },
         Response::SaveConfigResult(result) => {
             let modal = match result {
                 Ok(_) => MessageModal::info("Successfully saved the config!"),

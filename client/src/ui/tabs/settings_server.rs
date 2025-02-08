@@ -6,7 +6,8 @@ use xailyser_common::messages::Request;
 
 #[derive(Default)]
 pub struct SettingsServerTab {
-    reboot_requested: bool, // To show confirmation
+    pub reboot_requested: bool, // To logout after reboot
+    reboot_confirm: bool,       // To show confirmation
 
     interface_current: Option<String>,
     interfaces_last_request: Option<DateTime<Local>>, // For "Last Updated:"
@@ -64,13 +65,14 @@ impl SettingsServerTab {
                 .strong(),
         )).on_hover_text("After confirmation, you may not receive a message about the reboot.\nMonitor the server status.");
 
-        if !self.reboot_requested {
+        if !self.reboot_confirm {
             if ui.button("Apply").clicked() {
-                self.reboot_requested = true;
+                self.reboot_confirm = true;
             }
         } else {
             if ui.button("CONFIRM").clicked() {
-                self.reboot_requested = false;
+                self.reboot_confirm = false;
+                self.reboot_requested = true;
 
                 if let Err(err) = ctx
                     .ui_client_requests_tx
@@ -83,7 +85,7 @@ impl SettingsServerTab {
             }
 
             if ui.button("Cancel").clicked() {
-                self.reboot_requested = false;
+                self.reboot_confirm = false;
             }
         }
 

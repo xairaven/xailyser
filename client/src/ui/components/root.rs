@@ -102,6 +102,12 @@ impl RootComponent {
                 Tab::ServerSettings => {
                     self.tab_heading(ui);
                     self.settings_server_tab.show(ui, ctx);
+
+                    if self.settings_server_tab.reboot_requested {
+                        self.settings_server_tab.reboot_requested = false;
+                        self.logout_requested = true;
+                        self.active_tab = Tab::Status;
+                    }
                 },
                 Tab::About => {
                     self.tab_heading(ui);
