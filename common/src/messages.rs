@@ -21,7 +21,6 @@ pub enum Response {
     SetInterfaceResult(Result<String, ServerError>), // Is interface set by request?
     SaveConfigResult(Result<(), ServerError>), // Is config was saved by request?
     ChangePasswordResult(Result<(), ServerError>), // Is password changed by request?
-    RebootResult(Result<(), ServerError>), // Can reboot at the moment?
 
     Error(ServerError), // Generic Error.
 }
