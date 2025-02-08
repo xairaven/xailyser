@@ -23,8 +23,8 @@ pub struct RootComponent {
     about_tab: AboutTab,
 }
 
-impl Default for RootComponent {
-    fn default() -> Self {
+impl RootComponent {
+    pub fn new(ctx: &Context) -> Self {
         Self {
             active_tab: Default::default(),
 
@@ -42,7 +42,7 @@ impl Default for RootComponent {
             logout_requested: false,
 
             status_tab: Default::default(),
-            settings_client_tab: Default::default(),
+            settings_client_tab: SettingsClientTab::new(ctx),
             settings_server_tab: Default::default(),
             about_tab: Default::default(),
         }

@@ -21,18 +21,19 @@ pub struct App {
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>, config: Config) -> Self {
+        let ctx = Context::new(config);
         cc.egui_ctx
-            .set_style(config.theme.into_aesthetix_theme().custom_style());
+            .set_style(ctx.config.theme.into_aesthetix_theme().custom_style());
 
         Self {
-            context: Context::new(config),
-
             net_thread: None,
 
             auth_component: Default::default(),
-            root_component: Default::default(),
+            root_component: RootComponent::new(&ctx),
 
             modals: vec![],
+
+            context: ctx,
         }
     }
 }

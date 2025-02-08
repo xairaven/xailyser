@@ -1,18 +1,20 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::themes::ThemePreference;
-use egui::{Grid, RichText};
+use egui::{Grid, RichText, TextEdit};
 use log::LevelFilter;
 use strum::IntoEnumIterator;
 
 pub struct SettingsClientTab {
     log_level_choice: LevelFilter,
+    log_format_choice: String,
 }
 
-impl Default for SettingsClientTab {
-    fn default() -> Self {
+impl SettingsClientTab {
+    pub fn new(ctx: &Context) -> Self {
         Self {
-            log_level_choice: LevelFilter::Info,
+            log_level_choice: ctx.config.log_level,
+            log_format_choice: ctx.config.log_format.clone(),
         }
     }
 }
@@ -119,6 +121,21 @@ impl SettingsClientTab {
     }
 
     fn logs_format_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        // TODO
+        ui.add(egui::Label::new(
+            RichText::new("Log Format:").size(16.0).strong(),
+        ));
+
+        ui.add(TextEdit::multiline(&mut self.log_format_choice));
+
+        if ui.button("Apply").clicked() {
+            ctx.config.log_format = self.log_format_choice.clone();
+            let modal = MessageModal::info(
+                "Successfully changed log format! Don't forget to save configuration!",
+            );
+            match ctx.modals_tx.try_send(Box::new(modal)) {
+                Ok(_) => log::info!("Requested changing log format. Success"),
+                Err(_) => log::error!("Requested changing log format. Failure"),
+            }
+        }
     }
 }
