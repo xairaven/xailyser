@@ -32,11 +32,7 @@ impl AuthComponent {
                 ui.add_space(window_height / 6.0);
 
                 ui.vertical_centered_justified(|ui| {
-                    ui.label(
-                        RichText::new("Login")
-                            .color(egui::Color32::WHITE)
-                            .size(26.0),
-                    );
+                    ui.label(RichText::new("Login").size(26.0));
                 });
 
                 ui.add_space(window_height / 6.0);
@@ -46,21 +42,21 @@ impl AuthComponent {
                     .striped(false)
                     .spacing([20.0, 20.0])
                     .show(ui, |ui| {
-                        ui.label(RichText::new("IP:").color(egui::Color32::WHITE));
+                        ui.label("IP:");
                         ui.add(
                             TextEdit::singleline(&mut self.ip_text_field)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
-                        ui.label(RichText::new("Port:").color(egui::Color32::WHITE));
+                        ui.label("Port:");
                         ui.add(
                             TextEdit::singleline(&mut self.port_text_field)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
-                        ui.label(RichText::new("Password:").color(egui::Color32::WHITE));
+                        ui.label("Password:");
                         ui.add(
                             TextEdit::singleline(&mut self.password_text_field)
                                 .password(true)
