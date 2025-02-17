@@ -20,7 +20,7 @@ chrono = "0.4.39"
 crossbeam = "0.8.4"
 directories = "6.0.0"
 egui = "0.31.0"
-egui-aesthetix = { path = "../egui-aesthetix", features = ["all_themes"]}
+egui-aesthetix = { git="https://github.com/thebashpotato/egui-aesthetix.git", rev="20ce3a5b098831ad5c3335e2b3814f5295573458", features = ["all_themes"]}
 eframe = { version = "0.31.0", default-features = false, features = [
     "default_fonts",
     "glow",
