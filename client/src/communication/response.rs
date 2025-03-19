@@ -17,15 +17,17 @@ pub fn process(ctx: &mut Context, response: Response) {
         },
         Response::SetInterfaceResult(result) => {
             let modal = match result {
-                Ok(interface) => {
-                    MessageModal::info(&format!("Interface set: {interface}! Please save config & restart server for the changes to take effect."))
-                },
+                Ok(interface) => MessageModal::info(&format!(
+                    "Interface set: {interface}! Please save config & restart server for the changes to take effect."
+                )),
                 Err(err) => MessageModal::error(&err.to_string()),
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
         Response::ChangePasswordConfirmation => {
-            let modal = MessageModal::info("Successfully changed password! Please save config & restart server for the changes to take effect.");
+            let modal = MessageModal::info(
+                "Successfully changed password! Please save config & restart server for the changes to take effect.",
+            );
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
         Response::SaveConfigResult(result) => {

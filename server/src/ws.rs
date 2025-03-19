@@ -6,11 +6,11 @@ use std::thread;
 use thiserror::Error;
 use tungstenite::handshake::server;
 use tungstenite::http::{HeaderValue, StatusCode};
-use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::protocol::CloseFrame;
+use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::{Message, Utf8Bytes, WebSocket};
 use xailyser_common::auth;
-use xailyser_common::messages::{Request, Response, ServerError, CONNECTION_TIMEOUT};
+use xailyser_common::messages::{CONNECTION_TIMEOUT, Request, Response, ServerError};
 
 pub struct WsHandler {
     runtime_ctx: Context,
@@ -123,7 +123,7 @@ impl WsHandler {
                         log::error!("{}", err);
                         Ok(())
                     },
-                }
+                };
             },
         };
 

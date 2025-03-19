@@ -1,11 +1,11 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui;
+use crate::ui::tabs::Tab;
 use crate::ui::tabs::about::AboutTab;
 use crate::ui::tabs::settings_client::SettingsClientTab;
 use crate::ui::tabs::settings_server::SettingsServerTab;
 use crate::ui::tabs::status::StatusTab;
-use crate::ui::tabs::Tab;
 use egui::{CentralPanel, SidePanel};
 use std::collections::BTreeMap;
 

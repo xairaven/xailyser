@@ -1,10 +1,10 @@
 use crate::config::Config;
 use crate::net::interface;
 use crate::net::interface::InterfaceError;
-use crossbeam::channel::{unbounded, Receiver, Sender};
+use crossbeam::channel::{Receiver, Sender, unbounded};
 use pnet::datalink::NetworkInterface;
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use thiserror::Error;
 use xailyser_common::cryptography::encrypt_password;
 use xailyser_common::messages::{Request, Response};

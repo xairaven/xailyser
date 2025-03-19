@@ -2,15 +2,15 @@ use crate::communication::request::UiClientRequest;
 use crossbeam::channel::{Receiver, Sender};
 use http::Uri;
 use std::net::{SocketAddr, TcpStream};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use thiserror::Error;
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
 use xailyser_common::auth::AUTH_HEADER;
 use xailyser_common::cryptography::encrypt_password;
-use xailyser_common::messages::{Response, CONNECTION_TIMEOUT};
+use xailyser_common::messages::{CONNECTION_TIMEOUT, Response};
 
 type WsStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
@@ -76,7 +76,7 @@ fn receive_messages(
                     log::error!("WS-Stream: {}", err);
                     Ok(())
                 },
-            }
+            };
         },
     };
 

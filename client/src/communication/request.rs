@@ -1,5 +1,5 @@
-use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::protocol::CloseFrame;
+use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::{Bytes, Message};
 use xailyser_common::messages::Request;
 

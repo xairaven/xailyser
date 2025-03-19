@@ -2,9 +2,9 @@ use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::ui::modals::Modal;
 use chrono::{DateTime, Local};
-use crossbeam::channel::{unbounded, Receiver, Sender};
-use std::sync::atomic::AtomicBool;
+use crossbeam::channel::{Receiver, Sender, unbounded};
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use xailyser_common::messages::Response;
 
 pub struct Context {
