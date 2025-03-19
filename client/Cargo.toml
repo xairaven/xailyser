@@ -3,8 +3,8 @@ name = "xailyser-client"
 version = "0.0.1"
 authors = ["Alex Kovalov <alexkovalevkpi@gmail.com>"]
 
-edition = "2021"
-rust-version = "1.84.1"
+edition = "2024"
+rust-version = "1.85"
 
 categories = ["network-programming"]
 keywords = ["networking", "routers", "monitoring"]
@@ -16,25 +16,25 @@ repository = "https://github.com/xairaven/xailyser"
 [dependencies]
 xailyser-common = { path = "../common" }
 
-chrono = "0.4.39"
+chrono = "0.4.40"
 crossbeam = "0.8.4"
 directories = "6.0.0"
-egui = "0.31.0"
-egui-aesthetix = { git="https://github.com/thebashpotato/egui-aesthetix.git", rev="20ce3a5b098831ad5c3335e2b3814f5295573458", features = ["all_themes"]}
-eframe = { version = "0.31.0", default-features = false, features = [
+egui = "0.31.1"
+egui-aesthetix = { git="https://github.com/thebashpotato/egui-aesthetix.git", rev="c26c1dd543819fc46bfebe4cb1f42ee84ed14416", features = ["all_themes"]}
+eframe = { version = "0.31.1", default-features = false, features = [
     "default_fonts",
     "glow",
     "wayland",
 ] }
 fern = "0.7.1"
-http = "1.2.0"
-log = "0.4.25"
+http = "1.3.1"
+log = "0.4.26"
 rand = "0.9.0"
-semver = "1.0.25"
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.138"
+semver = "1.0.26"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
 strum = "0.27.1"
 strum_macros = "0.27.1"
-thiserror = "2.0.11"
+thiserror = "2.0.12"
 toml = "0.8.20"
-tungstenite = "0.26.1"
+tungstenite = "0.26.2"
