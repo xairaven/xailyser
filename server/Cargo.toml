@@ -1,11 +1,11 @@
 [package]
-name = "xailyser-server"
+name = "server"
 version = "0.0.1"
 authors = ["Alex Kovalov <alexkovalevkpi@gmail.com>"]
 build = "build.rs"
 
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.86"
 
 categories = ["network-programming"]
 keywords = ["networking", "routers", "monitoring"]
@@ -15,13 +15,13 @@ license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
-xailyser-common = { path = "../common" }
+common = { path = "../common" }
 
 bytes = "1.10.1"
 crossbeam = "0.8.4"
-ctrlc = "3.4.5"
+ctrlc = "3.4.6"
 fern = "0.7.1"
-log = "0.4.26"
+log = "0.4.27"
 pnet = "0.35.0"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"

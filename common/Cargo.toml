@@ -1,10 +1,10 @@
 [package]
-name = "xailyser-common"
+name = "common"
 version = "0.0.1"
 authors = ["Alex Kovalov <alexkovalevkpi@gmail.com>"]
 
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.86"
 
 categories = ["network-programming"]
 keywords = ["networking", "routers", "monitoring"]
@@ -16,7 +16,7 @@ repository = "https://github.com/xairaven/xailyser"
 [dependencies]
 chrono = "0.4.40"
 hex = "0.4.3"
-log = "0.4.26"
+log = "0.4.27"
 serde = { version = "1.0.219", features = ["derive"] }
 sha2 = "0.10.8"
 thiserror = "2.0.12"
