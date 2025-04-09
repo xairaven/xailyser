@@ -1,4 +1,5 @@
 use crate::channels::Channels;
+use crate::context;
 use crate::context::Context;
 use crate::ws::WsHandler;
 use common::messages::CONNECTION_TIMEOUT;
@@ -35,13 +36,7 @@ impl TcpHandler {
             return Ok(());
         }
 
-        let port = match self.context.lock() {
-            Ok(guard) => guard.config.port,
-            Err(err) => {
-                log::error!("{}", err);
-                std::process::exit(1);
-            },
-        };
+        let port = context::lock(&self.context, |ctx| ctx.config.port);
         let address = SocketAddr::new(LOCALHOST, port);
         let server = TcpListener::bind(address).map_err(TcpError::ListenerBindError)?;
         server

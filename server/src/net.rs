@@ -1,3 +1,4 @@
+use crate::context;
 use crate::context::Context;
 use crate::net::interface::InterfaceError;
 use pnet::datalink::DataLinkReceiver;
@@ -20,30 +21,19 @@ impl PacketSniffer {
     }
 
     pub fn start(&self) -> Result<(), NetworkError> {
-        match self.context.lock() {
-            Ok(guard) => {
-                let interface = match &guard.network_interface {
-                    None => return Err(NetworkError::NoInterface),
-                    Some(value) => value.clone(),
-                };
-                drop(guard);
+        let interface = context::lock(&self.context, |ctx| ctx.network_interface.clone())
+            .ok_or(NetworkError::NoInterface)?;
 
-                let datalink_rx = match interface::get_datalink_channel(&interface) {
-                    Ok(channel) => channel,
-                    Err(err) => {
-                        return Err(NetworkError::InterfaceError(err));
-                    },
-                };
-
-                self.listen(datalink_rx)?;
-
-                Ok(())
-            },
+        let datalink_rx = match interface::get_datalink_channel(&interface) {
+            Ok(channel) => channel,
             Err(err) => {
-                log::error!("{}", err);
-                std::process::exit(1);
+                return Err(NetworkError::InterfaceError(err));
             },
-        }
+        };
+
+        self.listen(datalink_rx)?;
+
+        Ok(())
     }
 
     pub fn listen(

@@ -3,6 +3,7 @@ use crate::net::interface;
 use crate::net::interface::InterfaceError;
 use common::cryptography::encrypt_password;
 use pnet::datalink::NetworkInterface;
+use std::sync::{Arc, Mutex};
 use thiserror::Error;
 
 pub struct Context {
@@ -46,6 +47,16 @@ impl Context {
     pub fn change_password(&mut self, new_password: String) {
         self.encrypted_password = encrypt_password(&new_password);
         self.config.password = new_password;
+    }
+}
+
+pub fn lock<T>(context: &Arc<Mutex<Context>>, f: impl FnOnce(&mut Context) -> T) -> T {
+    match context.lock() {
+        Ok(mut guard) => f(&mut guard),
+        Err(err) => {
+            log::error!("Context lock failed: {}", err);
+            std::process::exit(1);
+        },
     }
 }
 

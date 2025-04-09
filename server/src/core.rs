@@ -2,8 +2,8 @@ use crate::channels::Channels;
 use crate::config::Config;
 use crate::context::Context;
 use crate::net::PacketSniffer;
-use crate::request;
 use crate::tcp::TcpHandler;
+use crate::{context, request};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -31,13 +31,8 @@ pub fn start(config: Config) {
     }
 
     let packet_sniffer_handle = {
-        let is_some_interface = match context.lock() {
-            Ok(guard) => guard.network_interface.is_some(),
-            Err(err) => {
-                log::error!("{}", err);
-                std::process::exit(1);
-            },
-        };
+        let is_some_interface =
+            context::lock(&context, |ctx| ctx.network_interface.is_some());
 
         if !is_some_interface {
             None

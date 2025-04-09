@@ -1,4 +1,5 @@
 use crate::channels::Channels;
+use crate::context;
 use crate::context::Context;
 use bytes::Bytes;
 use common::auth;
@@ -61,14 +62,10 @@ impl WsHandler {
             log::info!("WS-{}. Received a new handshake!", self.id);
         }
 
-        let server_password_header = match self.context.lock() {
-            Ok(guard) => HeaderValue::from_str(&guard.encrypted_password)
-                .map_err(|_| WsError::InvalidPasswordHeader)?,
-            Err(err) => {
-                log::info!("WS-{}. {}", self.id, err);
-                std::process::exit(1);
-            },
-        };
+        let server_password_header = context::lock(&self.context, |ctx| {
+            HeaderValue::from_str(&ctx.encrypted_password)
+                .map_err(|_| WsError::InvalidPasswordHeader)
+        })?;
 
         let check_authentication =
             |req: &server::Request, response: server::Response| match req
