@@ -1,13 +1,13 @@
 use crate::config::Config;
 use crate::net::interface;
 use crate::net::interface::InterfaceError;
+use common::cryptography::encrypt_password;
+use common::messages::{Request, Response};
 use crossbeam::channel::{Receiver, Sender, unbounded};
 use pnet::datalink::NetworkInterface;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use thiserror::Error;
-use xailyser_common::cryptography::encrypt_password;
-use xailyser_common::messages::{Request, Response};
 
 #[derive(Clone)]
 pub struct Context {

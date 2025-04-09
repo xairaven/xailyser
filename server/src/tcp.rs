@@ -1,11 +1,11 @@
 use crate::context::Context;
 use crate::ws::WsHandler;
+use common::messages::CONNECTION_TIMEOUT;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use std::sync::atomic::Ordering;
 use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
-use xailyser_common::messages::CONNECTION_TIMEOUT;
 
 const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const APPROXIMATE_MAX_CONNECTIONS: usize = 5;

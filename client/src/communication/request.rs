@@ -1,7 +1,7 @@
+use common::messages::Request;
 use tungstenite::protocol::CloseFrame;
 use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::{Bytes, Message};
-use xailyser_common::messages::Request;
 
 #[derive(Debug)]
 pub enum UiClientRequest {

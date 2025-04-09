@@ -1,5 +1,7 @@
 use crate::context::Context;
 use bytes::Bytes;
+use common::auth;
+use common::messages::{CONNECTION_TIMEOUT, Request, Response, ServerError};
 use std::net::TcpStream;
 use std::sync::atomic::Ordering;
 use std::thread;
@@ -9,8 +11,6 @@ use tungstenite::http::{HeaderValue, StatusCode};
 use tungstenite::protocol::CloseFrame;
 use tungstenite::protocol::frame::coding::CloseCode;
 use tungstenite::{Message, Utf8Bytes, WebSocket};
-use xailyser_common::auth;
-use xailyser_common::messages::{CONNECTION_TIMEOUT, Request, Response, ServerError};
 
 pub struct WsHandler {
     runtime_ctx: Context,

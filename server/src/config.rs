@@ -1,9 +1,9 @@
+use common::logging;
 use log::LevelFilter;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 use std::str::FromStr;
 use thiserror::Error;
-use xailyser_common::logging;
 
 const CONFIG_FILENAME: &str = "config.toml";
 

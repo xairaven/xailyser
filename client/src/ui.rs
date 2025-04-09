@@ -16,7 +16,7 @@ pub fn start(config: Config) -> eframe::Result {
                     &include_bytes!("../assets/icon-64.png")[..],
                 )
                 .unwrap_or_else(|err| {
-                    log::error!("{}", format!("Failed to load app icon. {err}"));
+                    log::error!("Failed to load app icon. {err}");
                     std::process::exit(1);
                 }),
             ),

@@ -1,5 +1,5 @@
 use crate::net;
-use xailyser_common::messages::Response;
+use common::messages::Response;
 
 pub fn interfaces() -> Response {
     let interfaces = net::interface::usable_sorted()

@@ -15,7 +15,7 @@ pub fn start(config: Config) {
     let mut context = match Context::new(config) {
         Ok(value) => value,
         Err(err) => {
-            log::error!("{}", err.to_string());
+            log::error!("{}", err);
             std::process::exit(1);
         },
     };

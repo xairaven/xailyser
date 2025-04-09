@@ -1,6 +1,6 @@
 use crate::config::Config;
+use common::logging::LogError;
 use log::LevelFilter;
-use xailyser_common::logging::LogError;
 
 pub fn setup(config: &Config) -> Result<(), LogError> {
     if config.log_level.eq(&LevelFilter::Off) {
@@ -11,11 +11,8 @@ pub fn setup(config: &Config) -> Result<(), LogError> {
     fern::Dispatch::new()
         .level(config.log_level)
         .format(move |out, message, record| {
-            let formatted = xailyser_common::logging::parse_format(
-                log_format.clone(),
-                message,
-                record,
-            );
+            let formatted =
+                common::logging::parse_format(log_format.clone(), message, record);
 
             out.finish(format_args!("{}", formatted))
         })

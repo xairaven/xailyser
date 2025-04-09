@@ -1,4 +1,5 @@
 use crate::ui::themes::ThemePreference;
+use common::logging;
 use directories::ProjectDirs;
 use log::LevelFilter;
 use serde::ser::SerializeStruct;
@@ -7,7 +8,6 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::{env, fs};
 use thiserror::Error;
-use xailyser_common::logging;
 
 const CONFIG_FILENAME: &str = "config.toml";
 

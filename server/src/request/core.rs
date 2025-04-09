@@ -1,8 +1,8 @@
 use crate::context::Context;
 use crate::net::interface;
 use crate::request::commands;
+use common::messages::{Request, Response, ServerError};
 use std::sync::atomic::Ordering;
-use xailyser_common::messages::{Request, Response, ServerError};
 
 pub fn process(ctx: &mut Context, request: Request) {
     match request {

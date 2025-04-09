@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use chrono::Local;
-use xailyser_common::messages::Response;
+use common::messages::Response;
 
 pub fn process(ctx: &mut Context, response: Response) {
     match response {

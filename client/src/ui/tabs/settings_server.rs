@@ -1,8 +1,8 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use chrono::{DateTime, Local};
+use common::messages::Request;
 use egui::{Color32, Grid, RichText, TextBuffer, TextEdit};
-use xailyser_common::messages::Request;
 
 #[derive(Default)]
 pub struct SettingsServerTab {
