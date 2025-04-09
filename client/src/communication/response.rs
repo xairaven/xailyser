@@ -18,7 +18,7 @@ pub fn process(ctx: &mut Context, response: Response) {
         Response::SetInterfaceResult(result) => {
             let modal = match result {
                 Ok(interface) => MessageModal::info(&format!(
-                    "Interface set: {interface}! Please save config & restart server for the changes to take effect."
+                    "Interface set: {interface}! Don't forget to save the config, if needed."
                 )),
                 Err(err) => MessageModal::error(&err.to_string()),
             };
@@ -26,7 +26,7 @@ pub fn process(ctx: &mut Context, response: Response) {
         },
         Response::ChangePasswordConfirmation => {
             let modal = MessageModal::info(
-                "Successfully changed password! Please save config & restart server for the changes to take effect.",
+                "Successfully changed password! Don't forget to save the config, if needed.",
             );
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
