@@ -8,7 +8,7 @@ $last_restart_time = [DateTime]::UtcNow
 Write-Host "Starting the script..."
 
 while ($true) {
-    & .\xailyser-server.exe
+    & .\server.exe
     $exit_code = $LASTEXITCODE
 
     $current_time = [DateTime]::UtcNow

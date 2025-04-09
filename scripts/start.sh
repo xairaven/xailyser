@@ -8,7 +8,7 @@ restart_count=0
 last_restart_time=$(date +%s)
 
 while true; do
-  ./xailyser-server
+  ./server
   exit_code=$?
 
   current_time=$(date +%s)
