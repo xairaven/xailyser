@@ -1,45 +1,56 @@
 use crate::context::Context;
 use crate::net::interface::InterfaceError;
 use pnet::datalink::DataLinkReceiver;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use thiserror::Error;
 
 pub struct PacketSniffer {
-    runtime_ctx: Context,
+    context: Arc<Mutex<Context>>,
+    shutdown_flag: Arc<AtomicBool>,
 }
 
 // TODO
 impl PacketSniffer {
-    pub fn new(context: Context) -> Self {
+    pub fn new(context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>) -> Self {
         Self {
-            runtime_ctx: context,
+            context,
+            shutdown_flag,
         }
     }
 
     pub fn start(&self) -> Result<(), NetworkError> {
-        let interface = match self.runtime_ctx.network_interface.clone() {
-            None => return Err(NetworkError::NoInterface),
-            Some(value) => value,
-        };
+        match self.context.lock() {
+            Ok(guard) => {
+                let interface = match &guard.network_interface {
+                    None => return Err(NetworkError::NoInterface),
+                    Some(value) => value.clone(),
+                };
+                drop(guard);
 
-        let datalink_rx = interface::get_datalink_channel(&interface);
-        let datalink_rx = match datalink_rx {
-            Ok(channel) => channel,
-            Err(err) => {
-                return Err(NetworkError::InterfaceError(err));
+                let datalink_rx = match interface::get_datalink_channel(&interface) {
+                    Ok(channel) => channel,
+                    Err(err) => {
+                        return Err(NetworkError::InterfaceError(err));
+                    },
+                };
+
+                self.listen(datalink_rx)?;
+
+                Ok(())
             },
-        };
-
-        self.listen(datalink_rx)?;
-
-        Ok(())
+            Err(err) => {
+                log::error!("{}", err);
+                std::process::exit(1);
+            },
+        }
     }
 
     pub fn listen(
         &self, mut channel_rx: Box<dyn DataLinkReceiver>,
     ) -> Result<(), NetworkError> {
         loop {
-            if self.runtime_ctx.shutdown_flag.load(Ordering::Acquire) {
+            if self.shutdown_flag.load(Ordering::Acquire) {
                 log::info!("Shutting down net-capturing thread.");
                 break;
             }

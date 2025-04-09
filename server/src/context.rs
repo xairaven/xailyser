@@ -2,33 +2,18 @@ use crate::config::Config;
 use crate::net::interface;
 use crate::net::interface::InterfaceError;
 use common::cryptography::encrypt_password;
-use common::messages::{Request, Response};
-use crossbeam::channel::{Receiver, Sender, unbounded};
 use pnet::datalink::NetworkInterface;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
 use thiserror::Error;
 
-#[derive(Clone)]
 pub struct Context {
     pub config: Config,
     pub encrypted_password: String,
 
     pub network_interface: Option<NetworkInterface>,
-
-    pub shutdown_flag: Arc<AtomicBool>,
-
-    pub server_response_tx: Sender<Response>,
-    pub server_response_rx: Receiver<Response>,
-    pub client_request_tx: Sender<Request>,
-    pub client_request_rx: Receiver<Request>,
 }
 
 impl Context {
     pub fn new(config: Config) -> Result<Self, ContextError> {
-        let (server_response_tx, server_response_rx) = unbounded::<Response>();
-        let (client_request_tx, client_request_rx) = unbounded::<Request>();
-
         let encrypted_password = encrypt_password(&config.password);
 
         let interface: Option<NetworkInterface> = match &config.interface {
@@ -47,17 +32,20 @@ impl Context {
 
         Ok(Self {
             config,
-
             encrypted_password,
-
             network_interface: interface,
-            shutdown_flag: Arc::new(AtomicBool::new(false)),
-
-            server_response_tx,
-            server_response_rx,
-            client_request_tx,
-            client_request_rx,
         })
+    }
+
+    pub fn change_network_interface(&mut self, interface: NetworkInterface) {
+        let name = interface::get_network_interface_name(&interface);
+        self.config.interface = Some(name);
+        self.network_interface = Some(interface);
+    }
+
+    pub fn change_password(&mut self, new_password: String) {
+        self.encrypted_password = encrypt_password(&new_password);
+        self.config.password = new_password;
     }
 }
 

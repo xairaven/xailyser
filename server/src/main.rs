@@ -34,6 +34,7 @@ fn main() {
     core::start(config);
 }
 
+mod channels;
 mod config;
 mod context;
 mod core;

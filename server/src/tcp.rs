@@ -1,32 +1,48 @@
+use crate::channels::Channels;
 use crate::context::Context;
 use crate::ws::WsHandler;
 use common::messages::CONNECTION_TIMEOUT;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
 
 const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-const APPROXIMATE_MAX_CONNECTIONS: usize = 5;
 
 pub struct TcpHandler {
-    runtime_ctx: Context,
+    channels: Channels,
+    context: Arc<Mutex<Context>>,
+    shutdown_flag: Arc<AtomicBool>,
+    ws_threads_counter: u16,
 }
 
 impl TcpHandler {
-    pub fn new(context: Context) -> Self {
+    pub fn new(
+        channels: Channels, context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
+    ) -> Self {
         Self {
-            runtime_ctx: context,
+            channels,
+            context,
+            shutdown_flag,
+            ws_threads_counter: 0,
         }
     }
 
-    pub fn start(&self) -> Result<(), TcpError> {
-        if self.runtime_ctx.shutdown_flag.load(Ordering::Acquire) {
+    pub fn start(&mut self) -> Result<(), TcpError> {
+        if self.shutdown_flag.load(Ordering::Acquire) {
             return Ok(());
         }
 
-        let address = SocketAddr::new(LOCALHOST, self.runtime_ctx.config.port);
+        let port = match self.context.lock() {
+            Ok(guard) => guard.config.port,
+            Err(err) => {
+                log::error!("{}", err);
+                std::process::exit(1);
+            },
+        };
+        let address = SocketAddr::new(LOCALHOST, port);
         let server = TcpListener::bind(address).map_err(TcpError::ListenerBindError)?;
         server
             .set_nonblocking(true)
@@ -38,27 +54,50 @@ impl TcpHandler {
         Ok(())
     }
 
-    pub fn listen(&self, listener: TcpListener) {
+    pub fn listen(&mut self, listener: TcpListener) {
+        const APPROXIMATE_MAX_CONNECTIONS: usize = 5;
         let mut ws_handles: Vec<JoinHandle<()>> =
             Vec::with_capacity(APPROXIMATE_MAX_CONNECTIONS);
         loop {
-            if self.runtime_ctx.shutdown_flag.load(Ordering::Acquire) {
+            if self.shutdown_flag.load(Ordering::Acquire) {
                 log::info!("Shutting down TCP listening thread.");
                 break;
             }
 
             match listener.accept() {
                 Ok((tcp_stream, _)) => {
-                    let runtime_ctx = self.runtime_ctx.clone();
-                    let handle = thread::spawn(move || {
-                        log::info!("TCP connection attempt found. Started WS thread.");
-                        let result = WsHandler::new(runtime_ctx).start(tcp_stream);
-
-                        if let Err(err) = result {
-                            log::error!("{}. Terminated connection.", err);
-                        }
-                    });
-
+                    let thread_counter = self.ws_threads_counter;
+                    let handle = thread::Builder::new()
+                        .name(format!("WS-Connection-{}", thread_counter))
+                        .spawn({
+                            let context = Arc::clone(&self.context);
+                            let channels = self.channels.clone();
+                            let shutdown_flag = Arc::clone(&self.shutdown_flag);
+                            move || {
+                                log::info!(
+                                    "TCP connection attempt found. Started WS thread."
+                                );
+                                if let Err(err) = WsHandler::new(
+                                    thread_counter,
+                                    channels,
+                                    context,
+                                    shutdown_flag,
+                                )
+                                .start(tcp_stream)
+                                {
+                                    log::error!("{}. Terminated connection.", err);
+                                }
+                            }
+                        })
+                        .unwrap_or_else(|err| {
+                            log::error!(
+                                "Failed to spawn web-socket thread (N: {}): {}",
+                                self.ws_threads_counter,
+                                err
+                            );
+                            std::process::exit(1);
+                        });
+                    self.ws_threads_counter += 1;
                     ws_handles.push(handle);
                 },
                 Err(ref err)
