@@ -5,6 +5,9 @@ use egui::{DragValue, Grid, RichText, TextEdit};
 use log::LevelFilter;
 use strum::IntoEnumIterator;
 
+const FIELD_NOT_APPLIED_COLOR: egui::Color32 = egui::Color32::RED;
+const FIELD_NOT_APPLIED_HOVER: &str = "This field is not applied at the moment.";
+
 pub struct SettingsClientTab {
     log_level_choice: LevelFilter,
     log_format_choice: String,
@@ -97,9 +100,14 @@ impl SettingsClientTab {
     }
 
     fn logs_level_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new("Log Level:").size(16.0).strong(),
-        ));
+        let mut label = RichText::new("Log Level:").size(16.0).strong();
+        if self.log_level_choice != ctx.config.log_level {
+            label = label.color(FIELD_NOT_APPLIED_COLOR);
+            ui.add(egui::Label::new(label))
+                .on_hover_text(FIELD_NOT_APPLIED_HOVER);
+        } else {
+            ui.add(egui::Label::new(label));
+        }
 
         egui::ComboBox::from_id_salt("Settings.Client.Log.Level.ComboBox")
             .selected_text(format!("{:?}", &mut self.log_level_choice))
@@ -126,9 +134,17 @@ impl SettingsClientTab {
     }
 
     fn logs_format_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new("Log Format:").size(16.0).strong(),
-        ));
+        let mut label = RichText::new("Log Format:").size(16.0).strong();
+        if !self
+            .log_format_choice
+            .eq_ignore_ascii_case(&ctx.config.log_format)
+        {
+            label = label.color(FIELD_NOT_APPLIED_COLOR);
+            ui.add(egui::Label::new(label))
+                .on_hover_text(FIELD_NOT_APPLIED_HOVER);
+        } else {
+            ui.add(egui::Label::new(label));
+        }
 
         ui.add(TextEdit::multiline(&mut self.log_format_choice));
 
@@ -145,9 +161,14 @@ impl SettingsClientTab {
     }
 
     fn ping_delay_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new("Sync Delay:").size(16.0).strong(),
-        ));
+        let mut label = RichText::new("Sync Delay:").size(16.0).strong();
+        if self.ping_delay_seconds != ctx.config.sync_delay_seconds {
+            label = label.color(FIELD_NOT_APPLIED_COLOR);
+            ui.add(egui::Label::new(label))
+                .on_hover_text(FIELD_NOT_APPLIED_HOVER);
+        } else {
+            ui.add(egui::Label::new(label));
+        }
 
         ui.add(
             DragValue::new(&mut self.ping_delay_seconds)
