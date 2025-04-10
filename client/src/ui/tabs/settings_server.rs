@@ -1,5 +1,6 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
+use crate::utils;
 use chrono::{DateTime, Local};
 use common::messages::Request;
 use egui::{Color32, Grid, RichText, TextBuffer, TextEdit};
@@ -111,92 +112,96 @@ impl SettingsServerTab {
 
     fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.collapsing(RichText::new("Interfaces:").size(16.0).strong(), |ui| {
-            Grid::new("Settings.Interfaces.Status.Grid")
-                .striped(false)
-                .num_columns(3)
-                .show(ui, |ui| {
-                    ui.label("Active:");
-                    ui.label(
-                        RichText::new(
-                            ctx.interface_active.as_ref().unwrap_or(&"None".to_string()),
-                        )
-                        .strong(),
-                    );
-                    ui.end_row();
-
-                    if let Some(chosen) = &self.interface_current {
-                        ui.label("Chosen:");
-                        ui.label(RichText::new(chosen).italics());
-
-                        if ui.button("Apply").clicked() {
-                            if let Err(err) = ctx.ui_client_requests_tx.try_send(
-                                UiClientRequest::Request(Request::SetInterface(
-                                    chosen.clone(),
-                                )),
-                            ) {
-                                log::error!(
-                                    "Failed to send request (SetInterface): {}",
-                                    err
-                                );
-                            }
-                            self.interface_current = None;
-                        }
-
-                        if ui.button("Reset").clicked() {
-                            self.interface_current = None;
-                        }
+            utils::ui::with_temp_spacing_y(ui, 4.0, |ui| {
+                Grid::new("Settings.Interfaces.Status.Grid")
+                    .striped(false)
+                    .num_columns(3)
+                    .show(ui, |ui| {
+                        ui.label("Active:");
+                        ui.label(
+                            RichText::new(
+                                ctx.interface_active
+                                    .as_ref()
+                                    .unwrap_or(&"None".to_string()),
+                            )
+                            .strong(),
+                        );
                         ui.end_row();
-                    }
 
-                    ui.end_row();
-                    ui.label("Last Request Update:\t");
-                    {
-                        let mut text = RichText::new("Never").color(Color32::RED);
+                        if let Some(chosen) = &self.interface_current {
+                            ui.label("Chosen:");
+                            ui.label(RichText::new(chosen).italics());
 
-                        let last_request = &self.interfaces_last_request;
-                        let last_update = &ctx.interfaces_last_updated;
+                            if ui.button("Apply").clicked() {
+                                if let Err(err) = ctx.ui_client_requests_tx.try_send(
+                                    UiClientRequest::Request(Request::SetInterface(
+                                        chosen.clone(),
+                                    )),
+                                ) {
+                                    log::error!(
+                                        "Failed to send request (SetInterface): {}",
+                                        err
+                                    );
+                                }
+                                self.interface_current = None;
+                            }
 
-                        if let (Some(last_request), Some(last_update)) =
-                            (last_request, last_update)
+                            if ui.button("Reset").clicked() {
+                                self.interface_current = None;
+                            }
+                            ui.end_row();
+                        }
+
+                        ui.end_row();
+                        ui.label("Last Request Update:\t");
                         {
-                            if last_request > last_update {
-                                text = RichText::new(
-                                    last_request.format("%m/%d %H:%M:%S").to_string(),
-                                )
-                                .color(Color32::RED);
-                            } else {
+                            let mut text = RichText::new("Never").color(Color32::RED);
+
+                            let last_request = &self.interfaces_last_request;
+                            let last_update = &ctx.interfaces_last_updated;
+
+                            if let (Some(last_request), Some(last_update)) =
+                                (last_request, last_update)
+                            {
+                                if last_request > last_update {
+                                    text = RichText::new(
+                                        last_request.format("%m/%d %H:%M:%S").to_string(),
+                                    )
+                                    .color(Color32::RED);
+                                } else {
+                                    text = RichText::new(
+                                        last_update.format("%m/%d %H:%M:%S").to_string(),
+                                    )
+                                    .color(Color32::GREEN);
+                                }
+                            } else if let Some(last_update) = &last_update {
                                 text = RichText::new(
                                     last_update.format("%m/%d %H:%M:%S").to_string(),
                                 )
                                 .color(Color32::GREEN);
+                            } else if let Some(last_request) = &last_request {
+                                text = RichText::new(
+                                    last_request.format("%m/%d %H:%M:%S").to_string(),
+                                )
+                                .color(Color32::RED);
                             }
-                        } else if let Some(last_update) = &last_update {
-                            text = RichText::new(
-                                last_update.format("%m/%d %H:%M:%S").to_string(),
-                            )
-                            .color(Color32::GREEN);
-                        } else if let Some(last_request) = &last_request {
-                            text = RichText::new(
-                                last_request.format("%m/%d %H:%M:%S").to_string(),
-                            )
-                            .color(Color32::RED);
+
+                            ui.label(text);
                         }
+                        ui.end_row();
 
-                        ui.label(text);
-                    }
-                    ui.end_row();
-
-                    ui.label("Request List:");
-                    if ui.button("Request").clicked() {
-                        self.interfaces_last_request = Some(Local::now());
-                        let _ = ctx.ui_client_requests_tx.try_send(
-                            UiClientRequest::Request(Request::RequestInterfaces),
-                        );
-                        let _ = ctx.ui_client_requests_tx.try_send(
-                            UiClientRequest::Request(Request::RequestActiveInterface),
-                        );
-                    }
-                });
+                        ui.label("Request List:");
+                        if ui.button("Request").clicked() {
+                            self.interfaces_last_request = Some(Local::now());
+                            let _ = ctx.ui_client_requests_tx.try_send(
+                                UiClientRequest::Request(Request::RequestInterfaces),
+                            );
+                            let _ = ctx.ui_client_requests_tx.try_send(
+                                UiClientRequest::Request(Request::RequestActiveInterface),
+                            );
+                        }
+                    });
+            });
 
             ui.add_space(16.0);
 
