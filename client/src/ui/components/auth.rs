@@ -94,14 +94,20 @@ impl AuthComponent {
                 let server_response_tx = ctx.server_response_tx.clone();
                 let ui_client_requests_rx = ctx.ui_client_requests_rx.clone();
                 let shutdown_flag = Arc::clone(&ctx.shutdown_flag);
-                let handle = thread::spawn(move || {
-                    ws::send_receive_messages(
-                        stream,
-                        server_response_tx,
-                        ui_client_requests_rx,
-                        shutdown_flag,
-                    );
-                });
+                let handle = thread::Builder::new()
+                    .name("WS-Thread".to_string())
+                    .spawn(move || {
+                        ws::send_receive_messages(
+                            stream,
+                            server_response_tx,
+                            ui_client_requests_rx,
+                            shutdown_flag,
+                        );
+                    })
+                    .unwrap_or_else(|err| {
+                        log::error!("Failed to spawn TCP thread: {}", err);
+                        std::process::exit(1);
+                    });
 
                 self.net_thread = Some(handle);
                 self.authenticated = true;
