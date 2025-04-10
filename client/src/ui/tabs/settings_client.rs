@@ -1,13 +1,14 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::themes::ThemePreference;
-use egui::{Grid, RichText, TextEdit};
+use egui::{DragValue, Grid, RichText, TextEdit};
 use log::LevelFilter;
 use strum::IntoEnumIterator;
 
 pub struct SettingsClientTab {
     log_level_choice: LevelFilter,
     log_format_choice: String,
+    ping_delay_seconds: i64,
 }
 
 impl SettingsClientTab {
@@ -15,6 +16,7 @@ impl SettingsClientTab {
         Self {
             log_level_choice: ctx.config.log_level,
             log_format_choice: ctx.config.log_format.clone(),
+            ping_delay_seconds: ctx.config.sync_delay_seconds,
         }
     }
 }
@@ -44,6 +46,9 @@ impl SettingsClientTab {
                             ui.end_row();
 
                             self.logs_format_view(ui, ctx);
+                            ui.end_row();
+
+                            self.ping_delay_view(ui, ctx);
                             ui.end_row();
                         });
                 },
@@ -135,6 +140,30 @@ impl SettingsClientTab {
             match ctx.modals_tx.try_send(Box::new(modal)) {
                 Ok(_) => log::info!("Requested changing log format. Success"),
                 Err(_) => log::error!("Requested changing log format. Failure"),
+            }
+        }
+    }
+
+    fn ping_delay_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.add(egui::Label::new(
+            RichText::new("Sync Delay:").size(16.0).strong(),
+        ));
+
+        ui.add(
+            DragValue::new(&mut self.ping_delay_seconds)
+                .speed(1)
+                .range(1..=i64::MAX)
+                .suffix(" seconds"),
+        );
+
+        if ui.button("Apply").clicked() {
+            ctx.config.sync_delay_seconds = self.ping_delay_seconds;
+            let modal = MessageModal::info(
+                "Successfully changed ping delay! Don't forget to save configuration!",
+            );
+            match ctx.modals_tx.try_send(Box::new(modal)) {
+                Ok(_) => log::info!("Requested changing sync delay. Success"),
+                Err(_) => log::error!("Requested changing sync delay. Failure"),
             }
         }
     }
