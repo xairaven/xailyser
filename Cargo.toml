@@ -6,6 +6,7 @@ members = [
     "server",
 
     "common",
+    "dpi",
 ]
 
 [profile.release]
