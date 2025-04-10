@@ -45,4 +45,7 @@ mod config;
 mod context;
 mod logging;
 mod ui;
+mod utils {
+    pub mod ui;
+}
 mod ws;
