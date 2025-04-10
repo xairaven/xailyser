@@ -1,3 +1,4 @@
+use crate::communication::heartbeat;
 use crate::ui::themes::ThemePreference;
 use common::logging;
 use directories::ProjectDirs;
@@ -16,6 +17,7 @@ pub struct Config {
     pub log_format: String,
     pub log_level: LevelFilter,
     pub theme: ThemePreference,
+    pub sync_delay_seconds: i64,
 }
 
 impl Default for Config {
@@ -24,6 +26,8 @@ impl Default for Config {
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
             theme: ThemePreference::default(),
+
+            sync_delay_seconds: heartbeat::DEFAULT_PING_DELAY_SECONDS,
         }
     }
 }
@@ -37,6 +41,7 @@ impl Serialize for Config {
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
         state.serialize_field("theme", &self.theme.to_string())?;
+        state.serialize_field("sync_delay_seconds", &self.sync_delay_seconds)?;
         state.end()
     }
 }
@@ -93,6 +98,7 @@ struct ConfigDto {
     log_format: String,
     log_level: String,
     theme: String,
+    sync_delay_seconds: i64,
 }
 
 impl ConfigDto {
@@ -103,6 +109,7 @@ impl ConfigDto {
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
             theme: ThemePreference::from_str(self.theme.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownTheme)?,
+            sync_delay_seconds: self.sync_delay_seconds,
         };
 
         Ok(config)

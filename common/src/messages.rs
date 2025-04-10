@@ -16,6 +16,8 @@ pub enum Request {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
+    SyncSuccessful, // Pong
+
     InterfacesList(Vec<String>), // Available ethernet interfaces
     InterfaceActive(Option<String>), // Active interface
     SetInterfaceResult(Result<String, ServerError>), // Is interface set by request?

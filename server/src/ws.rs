@@ -149,8 +149,11 @@ impl WsHandler {
             return Err(tungstenite::Error::ConnectionClosed);
         }
 
+        // Heartbeat system
         if msg.is_ping() {
             let _ = stream.send(Message::Pong(Bytes::new()));
+            log::debug!("WS-{}. Got ping!", self.id);
+            return Ok(());
         }
 
         if msg.is_empty() || msg.is_binary() {

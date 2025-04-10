@@ -41,5 +41,8 @@ pub fn process(ctx: &mut Context, response: Response) {
             let modal = MessageModal::error(&err.to_string());
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
+        Response::SyncSuccessful => {
+            ctx.heartbeat.update();
+        },
     }
 }

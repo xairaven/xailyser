@@ -52,6 +52,15 @@ impl eframe::App for App {
                 if self.auth_component.net_thread.is_some() {
                     self.net_thread = self.auth_component.net_thread.take();
                 }
+                // First connection time
+                if self.context.heartbeat.last_sync.is_none() {
+                    self.context.heartbeat.update();
+                }
+
+                // Heartbeat
+                self.context
+                    .heartbeat
+                    .check(&self.context.config, &self.context.ui_client_requests_tx);
 
                 // Showing the root component.
                 self.root_component.show(ui, &mut self.context);

@@ -1,3 +1,4 @@
+use crate::communication::heartbeat::Heartbeat;
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::ui::modals::Modal;
@@ -22,6 +23,8 @@ pub struct Context {
     pub server_response_rx: Receiver<Response>,
     pub ui_client_requests_tx: Sender<UiClientRequest>,
     pub ui_client_requests_rx: Receiver<UiClientRequest>,
+
+    pub heartbeat: Heartbeat,
 }
 
 impl Context {
@@ -46,6 +49,8 @@ impl Context {
             server_response_rx,
             ui_client_requests_tx,
             ui_client_requests_rx,
+
+            heartbeat: Default::default(),
         }
     }
 }

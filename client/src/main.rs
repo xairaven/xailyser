@@ -38,6 +38,7 @@ fn main() {
 }
 
 mod communication {
+    pub mod heartbeat;
     pub mod request;
     pub mod response;
 }

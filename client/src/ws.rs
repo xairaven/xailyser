@@ -85,6 +85,16 @@ fn receive_messages(
         return Err(tungstenite::Error::ConnectionClosed);
     }
 
+    // Heartbeat
+    if msg.is_pong() {
+        log::debug!("WS-Stream: Received a Pong message.");
+        if let Err(err) = server_response_tx.try_send(Response::SyncSuccessful) {
+            log::error!("WS Channel: Can't send message. Error: {}", err);
+        }
+        return Ok(());
+    }
+
+    // Server don't send ping messages
     if msg.is_ping() {
         if let Err(err) = stream.send(Message::Pong(Bytes::new())) {
             log::error!("WS-Stream: Can't send message. Error: {}", err);
