@@ -5,6 +5,9 @@ use common::messages::Response;
 
 pub fn process(ctx: &mut Context, response: Response) {
     match response {
+        Response::Data(_data) => {
+            todo!()
+        },
         Response::InterfacesList(list) => {
             let modal = MessageModal::info("Successfully got interfaces list!");
             let _ = ctx.modals_tx.try_send(Box::new(modal));
