@@ -14,7 +14,10 @@ license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
+dpi = { path = "../dpi" }
+
 chrono = "0.4.40"
+crossbeam = "0.8.4"
 hex = "0.4.3"
 log = "0.4.27"
 serde = { version = "1.0.219", features = ["derive"] }
