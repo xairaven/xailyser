@@ -5,6 +5,7 @@
 #![deny(unsafe_code)]
 
 pub mod auth;
+pub mod channel;
 pub mod cryptography;
 pub mod logging;
 pub mod messages;
