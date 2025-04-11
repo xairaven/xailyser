@@ -16,6 +16,7 @@ pub enum Request {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
+    Data(dpi::metadata::NetworkFrame),
     SyncSuccessful, // Pong
 
     InterfacesList(Vec<String>), // Available ethernet interfaces
