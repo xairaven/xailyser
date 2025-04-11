@@ -16,6 +16,7 @@ repository = "https://github.com/xairaven/xailyser"
 
 [dependencies]
 common = { path = "../common" }
+dpi = { path = "../dpi" }
 
 bytes = "1.10.1"
 crossbeam = "0.8.4"
