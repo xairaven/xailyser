@@ -1,9 +1,10 @@
-use crate::channels::Channels;
-use crate::context;
 use crate::context::Context;
+use crate::{context, request};
 use bytes::Bytes;
 use common::auth;
 use common::messages::{CONNECTION_TIMEOUT, Request, Response, ServerError};
+use crossbeam::channel::{Receiver, TryRecvError};
+use std::collections::VecDeque;
 use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -17,27 +18,31 @@ use tungstenite::{Message, Utf8Bytes, WebSocket};
 
 pub struct WsHandler {
     id: u16,
-    channels: Channels,
+    frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
     context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
+
+    response_queue: VecDeque<Response>,
 }
 
 type WSStream = WebSocket<TcpStream>;
 
 impl WsHandler {
     pub fn new(
-        id: u16, channels: Channels, context: Arc<Mutex<Context>>,
-        shutdown_flag: Arc<AtomicBool>,
+        id: u16, frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
+        context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
     ) -> Self {
         Self {
             id,
-            channels,
+            frame_receiver,
             context,
             shutdown_flag,
+
+            response_queue: VecDeque::new(),
         }
     }
 
-    pub fn start(&self, tcp_stream: TcpStream) -> Result<(), WsError> {
+    pub fn start(&mut self, tcp_stream: TcpStream) -> Result<(), WsError> {
         let ws_stream = match self.connect(tcp_stream) {
             Ok(value) => {
                 log::info!("WS-{}. Websocket connection established.", self.id);
@@ -88,12 +93,28 @@ impl WsHandler {
             .map_err(|_| WsError::AuthFailed)
     }
 
-    fn send_receive_messages(&self, mut stream: WSStream) {
+    fn send_receive_messages(&mut self, mut stream: WSStream) {
         while !self.shutdown_flag.load(Ordering::Acquire) {
             if self.receive_messages(&mut stream).is_err() {
                 return;
             }
             self.send_messages(&mut stream);
+            loop {
+                match self.frame_receiver.try_recv() {
+                    Ok(data) => {
+                        self.response_queue.push_back(Response::Data(data));
+                    },
+                    Err(err) if err == TryRecvError::Disconnected => {
+                        log::error!(
+                            "WS-{}. Broadcast channel sender disconnected. {}",
+                            self.id,
+                            err
+                        );
+                        break;
+                    },
+                    _ => break,
+                }
+            }
         }
 
         if let Ok(address) = stream.get_ref().peer_addr() {
@@ -113,7 +134,9 @@ impl WsHandler {
         }));
     }
 
-    fn receive_messages(&self, stream: &mut WSStream) -> Result<(), tungstenite::Error> {
+    fn receive_messages(
+        &mut self, stream: &mut WSStream,
+    ) -> Result<(), tungstenite::Error> {
         let msg = match stream.read() {
             Ok(value) => value,
             Err(err) => {
@@ -180,12 +203,12 @@ impl WsHandler {
                     message,
                     stream.get_ref().peer_addr()?
                 );
-                if let Err(err) = self.channels.client_request_tx.try_send(message) {
-                    log::error!(
-                        "WS-{}. Failed to pass command to the Processor: {}",
-                        self.id,
-                        err
-                    );
+
+                // Client request handling:
+                let response =
+                    request::core::process(message, &self.context, &self.shutdown_flag);
+                if let Some(response) = response {
+                    self.response_queue.push_back(response);
                 }
             } else {
                 let message = Response::Error(ServerError::InvalidMessageFormat);
@@ -198,12 +221,12 @@ impl WsHandler {
         Ok(())
     }
 
-    fn send_messages(&self, stream: &mut WSStream) {
-        if let Ok(message) = self.channels.server_response_rx.try_recv() {
-            if let Ok(serialized) = serde_json::to_string(&message) {
+    fn send_messages(&mut self, stream: &mut WSStream) {
+        while let Some(response) = self.response_queue.pop_front() {
+            if let Ok(serialized) = serde_json::to_string(&response) {
                 let _ = stream.send(Message::text(serialized));
             } else {
-                log::error!("WS-{}. Can't serialize message! {:#?}", self.id, message);
+                log::error!("WS-{}. Can't serialize message! {:#?}", self.id, response);
             }
         }
     }

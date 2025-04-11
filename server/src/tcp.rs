@@ -1,7 +1,7 @@
-use crate::channels::Channels;
 use crate::context;
 use crate::context::Context;
 use crate::ws::WsHandler;
+use common::channel::BroadcastChannel;
 use common::messages::CONNECTION_TIMEOUT;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -13,7 +13,7 @@ use thiserror::Error;
 const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 
 pub struct TcpHandler {
-    channels: Channels,
+    frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
     context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
     ws_threads_counter: u16,
@@ -21,10 +21,11 @@ pub struct TcpHandler {
 
 impl TcpHandler {
     pub fn new(
-        channels: Channels, context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
+        frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+        context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
     ) -> Self {
         Self {
-            channels,
+            frame_channel,
             context,
             shutdown_flag,
             ws_threads_counter: 0,
@@ -66,15 +67,22 @@ impl TcpHandler {
                         .name(format!("WS-Connection-{}", thread_counter))
                         .spawn({
                             let context = Arc::clone(&self.context);
-                            let channels = self.channels.clone();
                             let shutdown_flag = Arc::clone(&self.shutdown_flag);
+                            let frame_receiver = match self.frame_channel.lock() {
+                                Ok(mut guard) => guard.add_receiver(),
+                                Err(err) => {
+                                    log::error!("Broadcast channel lock failed: {}", err);
+                                    std::process::exit(1);
+                                },
+                            };
+
                             move || {
                                 log::info!(
                                     "TCP connection attempt found. Started WS thread."
                                 );
                                 if let Err(err) = WsHandler::new(
                                     thread_counter,
-                                    channels,
+                                    frame_receiver,
                                     context,
                                     shutdown_flag,
                                 )

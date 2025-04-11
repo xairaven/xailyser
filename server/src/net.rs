@@ -1,20 +1,26 @@
 use crate::context;
 use crate::context::Context;
 use crate::net::interface::InterfaceError;
+use common::channel::BroadcastChannel;
 use pnet::datalink::DataLinkReceiver;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use thiserror::Error;
 
 pub struct PacketSniffer {
+    frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
     context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
 }
 
 // TODO
 impl PacketSniffer {
-    pub fn new(context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>) -> Self {
+    pub fn new(
+        frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+        context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
+    ) -> Self {
         Self {
+            frame_channel,
             context,
             shutdown_flag,
         }
