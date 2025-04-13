@@ -128,6 +128,17 @@ impl SettingsServerTab {
                         );
                         ui.end_row();
 
+                        if let (Some(active_interface), Some(config_interface)) = (
+                            ctx.interface_active.as_ref(),
+                            ctx.interface_active_config.as_ref(),
+                        ) {
+                            if active_interface != config_interface {
+                                ui.label("Config Interface:");
+                                ui.label(RichText::new(config_interface).italics());
+                                ui.end_row();
+                            }
+                        }
+
                         if let Some(chosen) = &self.interface_current {
                             ui.label("Chosen:");
                             ui.label(RichText::new(chosen).italics());
@@ -143,6 +154,7 @@ impl SettingsServerTab {
                                         err
                                     );
                                 }
+                                self.request_interfaces(ctx);
                                 self.interface_current = None;
                             }
 
@@ -193,12 +205,7 @@ impl SettingsServerTab {
                         ui.label("Request List:");
                         if ui.button("Request").clicked() {
                             self.interfaces_last_request = Some(Local::now());
-                            let _ = ctx.ui_client_requests_tx.try_send(
-                                UiClientRequest::Request(Request::RequestInterfaces),
-                            );
-                            let _ = ctx.ui_client_requests_tx.try_send(
-                                UiClientRequest::Request(Request::RequestActiveInterface),
-                            );
+                            self.request_interfaces(ctx);
                         }
                     });
             });
@@ -218,5 +225,17 @@ impl SettingsServerTab {
                 ui.label("Available Interfaces:\t—");
             }
         });
+    }
+
+    fn request_interfaces(&self, ctx: &mut Context) {
+        let _ = ctx
+            .ui_client_requests_tx
+            .try_send(UiClientRequest::Request(Request::RequestInterfaces));
+        let _ = ctx
+            .ui_client_requests_tx
+            .try_send(UiClientRequest::Request(Request::RequestActiveInterface));
+        let _ = ctx
+            .ui_client_requests_tx
+            .try_send(UiClientRequest::Request(Request::RequestConfigInterface));
     }
 }

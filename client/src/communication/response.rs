@@ -18,6 +18,10 @@ pub fn process(ctx: &mut Context, response: Response) {
             ctx.interface_active = name;
             ctx.interfaces_last_updated = Some(Local::now());
         },
+        Response::InterfaceActiveConfig(name) => {
+            ctx.interface_active_config = name;
+            ctx.interfaces_last_updated = Some(Local::now());
+        },
         Response::SetInterfaceResult(result) => {
             let modal = match result {
                 Ok(interface) => MessageModal::info(&format!(

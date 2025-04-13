@@ -13,6 +13,7 @@ pub struct Context {
 
     pub interfaces_available: Vec<String>,
     pub interface_active: Option<String>,
+    pub interface_active_config: Option<String>,
     pub interfaces_last_updated: Option<DateTime<Local>>,
 
     pub shutdown_flag: Arc<AtomicBool>,
@@ -39,6 +40,7 @@ impl Context {
 
             interfaces_available: vec![],
             interface_active: None,
+            interface_active_config: None,
             interfaces_last_updated: None,
 
             shutdown_flag: Arc::new(Default::default()),
