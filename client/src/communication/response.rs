@@ -9,8 +9,6 @@ pub fn process(ctx: &mut Context, response: Response) {
             todo!()
         },
         Response::InterfacesList(list) => {
-            let modal = MessageModal::info("Successfully got interfaces list!");
-            let _ = ctx.modals_tx.try_send(Box::new(modal));
             ctx.interfaces_available = list;
             ctx.interfaces_last_updated = Some(Local::now());
         },
