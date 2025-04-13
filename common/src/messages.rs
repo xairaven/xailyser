@@ -8,6 +8,7 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_millis(100);
 pub enum Request {
     RequestInterfaces,      // List of available ethernet interfaces
     RequestActiveInterface, // Active Interface
+    RequestConfigInterface, // Active Config Interface
     SetInterface(String),   // Set an ethernet interface
     SaveConfig,             // Save the config
     ChangePassword(String), // Change a password to another (not encrypted)
@@ -21,6 +22,7 @@ pub enum Response {
 
     InterfacesList(Vec<String>), // Available ethernet interfaces
     InterfaceActive(Option<String>), // Active interface
+    InterfaceActiveConfig(Option<String>), // Active config interface
     SetInterfaceResult(Result<String, ServerError>), // Is interface set by request?
     SaveConfigResult(Result<(), ServerError>), // Is config was saved by request?
     ChangePasswordConfirmation,  // Is password changed by request?
