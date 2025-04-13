@@ -37,10 +37,9 @@ impl Context {
         })
     }
 
-    pub fn change_network_interface(&mut self, interface: pcap::Device) {
+    pub fn change_config_network_interface(&mut self, interface: pcap::Device) {
         let name = interface::get_network_interface_name(&interface);
         self.config.interface = Some(name);
-        self.network_interface = Some(interface);
     }
 
     pub fn change_password(&mut self, new_password: String) {

@@ -23,6 +23,11 @@ pub fn process(
 
             Some(Response::InterfaceActive(name))
         },
+        Request::RequestConfigInterface => {
+            let name = context::lock(context, |ctx| ctx.config.interface.clone());
+
+            Some(Response::InterfaceActiveConfig(name))
+        },
         Request::SetInterface(interface_name) => {
             let network_interface =
                 match interface::get_network_interface(&interface_name) {
@@ -36,8 +41,16 @@ pub fn process(
                     },
                 };
 
+            let result = interface::get_capture(network_interface.clone(), 100);
+            if let Err(err) = result {
+                log::error!("Commands: Network Interface error. {err}");
+                let response =
+                    Response::SetInterfaceResult(Err(ServerError::InvalidInterface));
+                return Some(response);
+            }
+
             context::lock(context, |ctx| {
-                ctx.change_network_interface(network_interface);
+                ctx.change_config_network_interface(network_interface);
             });
 
             let response = Response::SetInterfaceResult(Ok(interface_name));
