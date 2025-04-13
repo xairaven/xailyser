@@ -30,6 +30,7 @@ pub enum Response {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerError {
+    FailedToGetInterfaces,
     InvalidMessageFormat,
 
     InvalidInterface,
@@ -48,6 +49,9 @@ impl Display for ServerError {
                 "Failed to change password.".to_string()
             },
             ServerError::FailedToSaveConfig => "Failed to save config.".to_string(),
+            ServerError::FailedToGetInterfaces => {
+                "Failed to get server network interfaces.".to_string()
+            },
         };
 
         write!(f, "{}", msg)

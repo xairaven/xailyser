@@ -1,16 +1,18 @@
 use crate::net;
-use common::messages::Response;
+use common::messages::{Response, ServerError};
 
 pub fn interfaces() -> Response {
-    let interfaces = net::interface::usable_sorted()
-        .into_iter()
-        .map(|interface| {
-            #[cfg(target_os = "windows")]
-            return interface.description;
+    let list = match net::interface::usable_sorted() {
+        Ok(list) => list,
+        Err(err) => {
+            log::error!("Error listing interfaces: {}", err);
+            return Response::Error(ServerError::FailedToGetInterfaces);
+        },
+    };
 
-            #[cfg(target_os = "linux")]
-            return interface.name;
-        })
+    let interfaces = list
+        .into_iter()
+        .map(|interface| net::interface::get_network_interface_name(&interface))
         .collect();
     Response::InterfacesList(interfaces)
 }

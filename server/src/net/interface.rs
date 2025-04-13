@@ -1,26 +1,27 @@
-use pnet::datalink;
-use pnet::datalink::Channel::Ethernet;
-use pnet::datalink::{DataLinkReceiver, NetworkInterface};
 use thiserror::Error;
 
 /// Usable interfaces. <br>
-/// Necessary: Presence of MAC address. <br>
-/// Necessary: Presence of IP (at least 1).
-pub fn usable_sorted() -> Vec<NetworkInterface> {
-    let mut interfaces: Vec<NetworkInterface> = datalink::interfaces()
+/// Necessary: Presence of adresses.
+pub fn usable_sorted() -> Result<Vec<pcap::Device>, InterfaceError> {
+    let mut interfaces: Vec<pcap::Device> = pcap::Device::list()
+        .map_err(InterfaceError::PcapError)?
         .into_iter()
-        .filter(|interface| interface.mac.is_some() && !interface.ips.is_empty())
+        .filter(|device| !device.addresses.is_empty())
         .collect();
 
-    interfaces.sort_by_key(|interface| interface.ips.len());
+    interfaces.sort_by_key(|device| device.addresses.len());
     interfaces.reverse();
 
-    interfaces
+    Ok(interfaces)
 }
 
-pub fn get_network_interface_name(network_interface: &NetworkInterface) -> String {
+pub fn get_network_interface_name(network_interface: &pcap::Device) -> String {
     #[cfg(target_os = "windows")]
-    let name = network_interface.description.clone();
+    let name = if let Some(desc) = &network_interface.desc {
+        desc.clone()
+    } else {
+        network_interface.name.clone()
+    };
 
     #[cfg(target_os = "linux")]
     let name = network_interface.name.clone();
@@ -28,41 +29,34 @@ pub fn get_network_interface_name(network_interface: &NetworkInterface) -> Strin
     name
 }
 
-/// Get `NetworkInterface` by its name.
-pub fn get_network_interface(
-    iface_name: &str,
-) -> Result<NetworkInterface, InterfaceError> {
-    let needed_interface = |iface: &NetworkInterface| {
-        iface.name == iface_name || iface.description == iface_name
+/// Get `Device` by its name.
+pub fn get_network_interface(device_name: &str) -> Result<pcap::Device, InterfaceError> {
+    let needed_interface = |device: &pcap::Device| {
+        device.name == device_name || device.desc.as_deref() == Some(device_name)
     };
 
-    let interfaces = datalink::interfaces();
-    interfaces
+    usable_sorted()?
         .into_iter()
         .find(needed_interface)
         .ok_or(InterfaceError::UnknownInterface)
 }
 
-pub fn get_datalink_channel(
-    interface: &NetworkInterface,
-) -> Result<Box<dyn DataLinkReceiver>, InterfaceError> {
-    let (_, rx) = match datalink::channel(interface, Default::default()) {
-        Ok(Ethernet(tx, rx)) => (tx, rx),
-        Ok(_) => return Err(InterfaceError::UnhandledChannelType),
-        Err(err) => return Err(InterfaceError::UnableCreateChannel(err)),
-    };
-
-    Ok(rx)
+pub fn get_capture(
+    device: pcap::Device, timeout: i32,
+) -> Result<pcap::Capture<pcap::Active>, InterfaceError> {
+    pcap::Capture::from_device(device)
+        .map_err(InterfaceError::PcapError)?
+        .timeout(timeout)
+        .immediate_mode(true)
+        .open()
+        .map_err(InterfaceError::PcapError)
 }
 
 #[derive(Debug, Error)]
 pub enum InterfaceError {
+    #[error("Pcap Library error.")]
+    PcapError(pcap::Error),
+
     #[error("There are no interfaces with config interface name.")]
     UnknownInterface,
-
-    #[error("There are no interfaces with config interface name.")]
-    UnhandledChannelType,
-
-    #[error("Unable to create channel.")]
-    UnableCreateChannel(std::io::Error),
 }
