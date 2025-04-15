@@ -1,12 +1,12 @@
 use crate::net;
-use common::messages::{Response, ServerError};
+use common::messages::ServerError;
 
-pub fn interfaces() -> Response {
+pub fn interfaces() -> Result<Vec<String>, ServerError> {
     let list = match net::interface::usable_sorted() {
         Ok(list) => list,
         Err(err) => {
             log::error!("Error listing interfaces: {}", err);
-            return Response::Error(ServerError::FailedToGetInterfaces);
+            return Err(ServerError::FailedToGetInterfaces);
         },
     };
 
@@ -14,7 +14,7 @@ pub fn interfaces() -> Response {
         .into_iter()
         .map(|interface| net::interface::get_network_interface_name(&interface))
         .collect();
-    Response::InterfacesList(interfaces)
+    Ok(interfaces)
 }
 
 pub fn exit_reboot() {
