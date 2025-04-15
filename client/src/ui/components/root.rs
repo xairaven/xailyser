@@ -51,7 +51,7 @@ impl RootComponent {
 
 impl RootComponent {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let theme = ctx.config.theme.into_aesthetix_theme();
+        let theme = ctx.client_settings.theme.into_aesthetix_theme();
 
         SidePanel::left("MENU_PANEL")
             .resizable(false)
@@ -105,7 +105,7 @@ impl RootComponent {
                                 )
                                 .size(TEXT_SIZE);
 
-                                if ctx.heartbeat.is_timeout(&ctx.config) {
+                                if ctx.heartbeat.is_timeout(&ctx.client_settings) {
                                     text = text.color(Color32::DARK_RED);
                                 } else {
                                     text = text.color(Color32::DARK_GREEN);

@@ -25,7 +25,7 @@ impl Default for AboutTab {
 
 impl AboutTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let theme = ctx.config.theme.into_aesthetix_theme();
+        let theme = ctx.client_settings.theme.into_aesthetix_theme();
 
         let computed_upper_center = ui.ctx().screen_rect().height() / UPPER_CENTER;
         ui.add_space(computed_upper_center);

@@ -58,9 +58,10 @@ impl eframe::App for App {
                 }
 
                 // Heartbeat
-                self.context
-                    .heartbeat
-                    .check(&self.context.config, &self.context.ui_client_requests_tx);
+                self.context.heartbeat.check(
+                    &self.context.client_settings,
+                    &self.context.ui_client_requests_tx,
+                );
 
                 // Showing the root component.
                 self.root_component.show(ui, &mut self.context);

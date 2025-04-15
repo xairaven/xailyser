@@ -9,16 +9,16 @@ pub fn process(ctx: &mut Context, response: Response) {
             todo!()
         },
         Response::InterfacesList(list) => {
-            ctx.interfaces_available = list;
-            ctx.interfaces_last_updated = Some(Local::now());
+            ctx.settings_server.interfaces_available = list;
+            ctx.settings_server.interfaces_last_updated = Some(Local::now());
         },
         Response::InterfaceActive(name) => {
-            ctx.interface_active = name;
-            ctx.interfaces_last_updated = Some(Local::now());
+            ctx.settings_server.interface_active = name;
+            ctx.settings_server.interfaces_last_updated = Some(Local::now());
         },
         Response::InterfaceActiveConfig(name) => {
-            ctx.interface_active_config = name;
-            ctx.interfaces_last_updated = Some(Local::now());
+            ctx.settings_server.interface_active_config = name;
+            ctx.settings_server.interfaces_last_updated = Some(Local::now());
         },
         Response::SetInterfaceResult(result) => {
             let modal = match result {

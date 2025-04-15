@@ -2,6 +2,7 @@ use crate::communication::heartbeat::Heartbeat;
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::ui::modals::Modal;
+use crate::ui::themes::ThemePreference;
 use chrono::{DateTime, Local};
 use common::messages::Response;
 use crossbeam::channel::{Receiver, Sender, unbounded};
@@ -9,23 +10,24 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
 pub struct Context {
+    // Runtime context
+    pub client_settings: ClientSettings,
+    pub settings_server: ServerSettings,
+    pub heartbeat: Heartbeat,
+
+    // Used for saving into config file
     pub config: Config,
 
-    pub interfaces_available: Vec<String>,
-    pub interface_active: Option<String>,
-    pub interface_active_config: Option<String>,
-    pub interfaces_last_updated: Option<DateTime<Local>>,
-
+    // Shutdown flag
     pub shutdown_flag: Arc<AtomicBool>,
 
+    // Channels
     pub modals_tx: Sender<Box<dyn Modal>>,
     pub modals_rx: Receiver<Box<dyn Modal>>,
     pub server_response_tx: Sender<Response>,
     pub server_response_rx: Receiver<Response>,
     pub ui_client_requests_tx: Sender<UiClientRequest>,
     pub ui_client_requests_rx: Receiver<UiClientRequest>,
-
-    pub heartbeat: Heartbeat,
 }
 
 impl Context {
@@ -36,12 +38,14 @@ impl Context {
             unbounded::<UiClientRequest>();
 
         Self {
-            config,
+            client_settings: ClientSettings {
+                theme: config.theme,
+                sync_delay_seconds: config.sync_delay_seconds,
+            },
+            settings_server: Default::default(),
+            heartbeat: Default::default(),
 
-            interfaces_available: vec![],
-            interface_active: None,
-            interface_active_config: None,
-            interfaces_last_updated: None,
+            config,
 
             shutdown_flag: Arc::new(Default::default()),
 
@@ -51,8 +55,19 @@ impl Context {
             server_response_rx,
             ui_client_requests_tx,
             ui_client_requests_rx,
-
-            heartbeat: Default::default(),
         }
     }
+}
+
+#[derive(Default)]
+pub struct ServerSettings {
+    pub interfaces_available: Vec<String>,
+    pub interface_active: Option<String>,
+    pub interface_active_config: Option<String>,
+    pub interfaces_last_updated: Option<DateTime<Local>>,
+}
+
+pub struct ClientSettings {
+    pub theme: ThemePreference,
+    pub sync_delay_seconds: i64,
 }

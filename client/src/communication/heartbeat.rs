@@ -1,5 +1,5 @@
 use crate::communication::request::UiClientRequest;
-use crate::config::Config;
+use crate::context::ClientSettings;
 use chrono::{DateTime, Local};
 use crossbeam::channel::Sender;
 
@@ -13,8 +13,10 @@ pub struct Heartbeat {
 }
 
 impl Heartbeat {
-    pub fn check(&mut self, config: &Config, tx: &Sender<UiClientRequest>) {
-        if self.is_ping_needed(config) {
+    pub fn check(
+        &mut self, client_settings: &ClientSettings, tx: &Sender<UiClientRequest>,
+    ) {
+        if self.is_ping_needed(client_settings) {
             self.try_ping(tx);
         }
     }
@@ -27,17 +29,18 @@ impl Heartbeat {
         }
     }
 
-    fn is_ping_needed(&self, config: &Config) -> bool {
+    fn is_ping_needed(&self, client_settings: &ClientSettings) -> bool {
         if let Some(last_sync) = &self.last_sync {
-            return (Local::now() - last_sync).num_seconds() > config.sync_delay_seconds
+            return (Local::now() - last_sync).num_seconds()
+                > client_settings.sync_delay_seconds
                 && !self.ping_sent;
         }
         false
     }
 
-    pub fn is_timeout(&self, config: &Config) -> bool {
+    pub fn is_timeout(&self, client_settings: &ClientSettings) -> bool {
         if let Some(last_sync) = &self.last_sync {
-            let timeout = config.sync_delay_seconds + PING_TIMEOUT_SECONDS;
+            let timeout = client_settings.sync_delay_seconds + PING_TIMEOUT_SECONDS;
             return (Local::now() - last_sync).num_seconds() > timeout && self.ping_sent;
         }
         false

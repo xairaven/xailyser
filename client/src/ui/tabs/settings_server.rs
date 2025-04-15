@@ -120,7 +120,8 @@ impl SettingsServerTab {
                         ui.label("Active:");
                         ui.label(
                             RichText::new(
-                                ctx.interface_active
+                                ctx.settings_server
+                                    .interface_active
                                     .as_ref()
                                     .unwrap_or(&"None".to_string()),
                             )
@@ -129,8 +130,8 @@ impl SettingsServerTab {
                         ui.end_row();
 
                         if let (Some(active_interface), Some(config_interface)) = (
-                            ctx.interface_active.as_ref(),
-                            ctx.interface_active_config.as_ref(),
+                            ctx.settings_server.interface_active.as_ref(),
+                            ctx.settings_server.interface_active_config.as_ref(),
                         ) {
                             if active_interface != config_interface {
                                 ui.label("Config Interface:");
@@ -170,7 +171,8 @@ impl SettingsServerTab {
                             let mut text = RichText::new("Never").color(Color32::RED);
 
                             let last_request = &self.interfaces_last_request;
-                            let last_update = &ctx.interfaces_last_updated;
+                            let last_update =
+                                &ctx.settings_server.interfaces_last_updated;
 
                             if let (Some(last_request), Some(last_update)) =
                                 (last_request, last_update)
@@ -212,10 +214,10 @@ impl SettingsServerTab {
 
             ui.add_space(16.0);
 
-            if !ctx.interfaces_available.is_empty() {
+            if !ctx.settings_server.interfaces_available.is_empty() {
                 ui.label("Available Interfaces:");
                 ui.vertical_centered_justified(|ui| {
-                    for interface in &ctx.interfaces_available {
+                    for interface in &ctx.settings_server.interfaces_available {
                         if ui.button(RichText::new(interface).monospace()).clicked() {
                             self.interface_current = Some(interface.to_string());
                         }
