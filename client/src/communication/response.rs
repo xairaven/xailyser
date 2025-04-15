@@ -8,17 +8,12 @@ pub fn process(ctx: &mut Context, response: Response) {
         Response::Data(_data) => {
             todo!()
         },
-        Response::InterfacesList(list) => {
-            ctx.settings_server.interfaces_available = list;
-            ctx.settings_server.interfaces_last_updated = Some(Local::now());
-        },
-        Response::InterfaceActive(name) => {
-            ctx.settings_server.interface_active = name;
-            ctx.settings_server.interfaces_last_updated = Some(Local::now());
-        },
-        Response::InterfaceActiveConfig(name) => {
-            ctx.settings_server.interface_active_config = name;
-            ctx.settings_server.interfaces_last_updated = Some(Local::now());
+        Response::ServerSettings(settings) => {
+            ctx.settings_server.interfaces_available = settings.interfaces_available;
+            ctx.settings_server.interface_active = settings.interface_active;
+            ctx.settings_server.interface_config = settings.interface_config;
+
+            ctx.settings_server.last_updated = Some(Local::now());
         },
         Response::SetInterfaceResult(result) => {
             let modal = match result {

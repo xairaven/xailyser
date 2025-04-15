@@ -1,7 +1,7 @@
 use crate::communication::request::UiClientRequest;
 use common::auth::AUTH_HEADER;
 use common::cryptography::encrypt_password;
-use common::messages::{CONNECTION_TIMEOUT, Response};
+use common::messages::{CONNECTION_TIMEOUT, Request, Response};
 use crossbeam::channel::{Receiver, Sender};
 use http::Uri;
 use std::net::{SocketAddr, TcpStream};
@@ -33,6 +33,25 @@ pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError>
         _ => return Err(WsError::UnknownStreamType),
     }?;
     log::info!("WS-Stream: Connected to {}.", address);
+
+    // Requesting server settings after connection
+    let request = UiClientRequest::Request(Request::ServerSettings);
+    match request.into_message() {
+        Ok(value) => {
+            let result = stream.send(value);
+            match result {
+                Ok(_) => log::info!("WS-Stream: Sent connection server settings request"),
+                Err(_) => {
+                    log::error!("WS-Stream: Failed to send connection settings request.")
+                },
+            }
+        },
+        Err(_) => {
+            log::error!(
+                "WS-Stream: Serde. Can't serialize server settings request after connection!"
+            );
+        },
+    };
 
     Ok(stream)
 }

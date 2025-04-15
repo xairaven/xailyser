@@ -11,9 +11,9 @@ pub struct SettingsServerTab {
     reboot_confirm: bool,       // To show confirmation
 
     password_field: String,
-
     interface_current: Option<String>,
-    interfaces_last_request: Option<DateTime<Local>>, // For "Last Updated:"
+
+    last_request: Option<DateTime<Local>>, // For "Last Updated:"
 }
 
 impl SettingsServerTab {
@@ -31,6 +31,9 @@ impl SettingsServerTab {
                         .min_col_width(available_width / GRID_COLUMNS as f32)
                         .num_columns(GRID_COLUMNS)
                         .show(ui, |ui| {
+                            self.request_settings_view(ui, ctx);
+                            ui.end_row();
+
                             self.save_server_config_view(ui, ctx);
                             ui.end_row();
 
@@ -45,6 +48,41 @@ impl SettingsServerTab {
                 },
             );
         });
+    }
+
+    fn request_settings_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        if ui.button("Request Active Settings").clicked() {
+            self.last_request = Some(Local::now());
+            let result = ctx
+                .ui_client_requests_tx
+                .try_send(UiClientRequest::Request(Request::ServerSettings));
+            if let Err(err) = result {
+                log::error!("Server Settings: {}", err);
+            }
+        }
+
+        let req_upd_timestamp =
+            match (&self.last_request, &ctx.settings_server.last_updated) {
+                (Some(req), Some(upd)) => {
+                    let formatted = req.format("%m/%d %H:%M:%S").to_string();
+                    let color = if req > upd {
+                        Color32::RED
+                    } else {
+                        Color32::GREEN
+                    };
+                    RichText::new(formatted).color(color)
+                },
+                (None, Some(upd)) => {
+                    let formatted = upd.format("%m/%d %H:%M:%S").to_string();
+                    RichText::new(formatted).color(Color32::GREEN)
+                },
+                (Some(req), None) => {
+                    let formatted = req.format("%m/%d %H:%M:%S").to_string();
+                    RichText::new(formatted).color(Color32::RED)
+                },
+                (None, None) => RichText::new("Never").color(Color32::RED),
+            };
+        ui.label(req_upd_timestamp);
     }
 
     fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
@@ -131,7 +169,7 @@ impl SettingsServerTab {
 
                         if let (Some(active_interface), Some(config_interface)) = (
                             ctx.settings_server.interface_active.as_ref(),
-                            ctx.settings_server.interface_active_config.as_ref(),
+                            ctx.settings_server.interface_config.as_ref(),
                         ) {
                             if active_interface != config_interface {
                                 ui.label("Config Interface:");
@@ -155,7 +193,12 @@ impl SettingsServerTab {
                                         err
                                     );
                                 }
-                                self.request_interfaces(ctx);
+                                let result = ctx.ui_client_requests_tx.try_send(
+                                    UiClientRequest::Request(Request::ServerSettings),
+                                );
+                                if let Err(err) = result {
+                                    log::error!("Server Settings: {}", err);
+                                }
                                 self.interface_current = None;
                             }
 
@@ -166,49 +209,6 @@ impl SettingsServerTab {
                         }
 
                         ui.end_row();
-                        ui.label("Last Request Update:\t");
-                        {
-                            let mut text = RichText::new("Never").color(Color32::RED);
-
-                            let last_request = &self.interfaces_last_request;
-                            let last_update =
-                                &ctx.settings_server.interfaces_last_updated;
-
-                            if let (Some(last_request), Some(last_update)) =
-                                (last_request, last_update)
-                            {
-                                if last_request > last_update {
-                                    text = RichText::new(
-                                        last_request.format("%m/%d %H:%M:%S").to_string(),
-                                    )
-                                    .color(Color32::RED);
-                                } else {
-                                    text = RichText::new(
-                                        last_update.format("%m/%d %H:%M:%S").to_string(),
-                                    )
-                                    .color(Color32::GREEN);
-                                }
-                            } else if let Some(last_update) = &last_update {
-                                text = RichText::new(
-                                    last_update.format("%m/%d %H:%M:%S").to_string(),
-                                )
-                                .color(Color32::GREEN);
-                            } else if let Some(last_request) = &last_request {
-                                text = RichText::new(
-                                    last_request.format("%m/%d %H:%M:%S").to_string(),
-                                )
-                                .color(Color32::RED);
-                            }
-
-                            ui.label(text);
-                        }
-                        ui.end_row();
-
-                        ui.label("Request List:");
-                        if ui.button("Request").clicked() {
-                            self.interfaces_last_request = Some(Local::now());
-                            self.request_interfaces(ctx);
-                        }
                     });
             });
 
@@ -227,17 +227,5 @@ impl SettingsServerTab {
                 ui.label("Available Interfaces:\t—");
             }
         });
-    }
-
-    fn request_interfaces(&self, ctx: &mut Context) {
-        let _ = ctx
-            .ui_client_requests_tx
-            .try_send(UiClientRequest::Request(Request::RequestInterfaces));
-        let _ = ctx
-            .ui_client_requests_tx
-            .try_send(UiClientRequest::Request(Request::RequestActiveInterface));
-        let _ = ctx
-            .ui_client_requests_tx
-            .try_send(UiClientRequest::Request(Request::RequestConfigInterface));
     }
 }
