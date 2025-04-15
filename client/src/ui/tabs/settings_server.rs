@@ -49,7 +49,7 @@ impl SettingsServerTab {
 
     fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            RichText::new("Save Server Config:").size(16.0).strong(),
+            RichText::new("Save Config:").size(16.0).strong(),
         ));
 
         if ui.button("Apply").clicked() {
