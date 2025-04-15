@@ -1,61 +1,59 @@
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 use std::time::Duration;
+use thiserror::Error;
 
 pub const CONNECTION_TIMEOUT: Duration = Duration::from_millis(100);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Request {
-    RequestInterfaces,      // List of available ethernet interfaces
-    RequestActiveInterface, // Active Interface
-    RequestConfigInterface, // Active Config Interface
-    SetInterface(String),   // Set an ethernet interface
-    SaveConfig,             // Save the config
     ChangePassword(String), // Change a password to another (not encrypted)
-    Reboot, // Reboot server (needed to apply changing password, for example)
+    Reboot,         // Reboot server (needed to apply changing password, for example)
+    SaveConfig,     // Save the config
+    ServerSettings, // Interfaces, etc.
+    SetInterface(String), // Set an ethernet interface
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
+    // Data itself
     Data(dpi::metadata::NetworkFrame),
-    SyncSuccessful, // Pong
 
-    InterfacesList(Vec<String>), // Available ethernet interfaces
-    InterfaceActive(Option<String>), // Active interface
-    InterfaceActiveConfig(Option<String>), // Active config interface
-    SetInterfaceResult(Result<String, ServerError>), // Is interface set by request?
-    SaveConfigResult(Result<(), ServerError>), // Is config was saved by request?
-    ChangePasswordConfirmation,  // Is password changed by request?
+    // Pong (Heartbeat)
+    SyncSuccessful,
 
-    Error(ServerError), // Generic Error.
+    // Settings: Interfaces, etc.
+    ServerSettings(ServerSettings), // Interfaces, etc.
+
+    // Results
+    SaveConfigResult(Result<(), ServerError>),
+    SetInterfaceResult(Result<String, ServerError>),
+    ChangePasswordConfirmation,
+
+    // Error
+    Error(ServerError),
+}
+
+#[derive(Debug, Error, Serialize, Deserialize)]
+pub enum ServerError {
+    #[error("Failed to change password.")]
+    FailedToChangePassword,
+
+    #[error("Failed to get server network interfaces list.")]
+    FailedToGetInterfaces,
+
+    #[error("Failed to save config file.")]
+    FailedToSaveConfig,
+
+    #[error("Invalid message format.")]
+    InvalidMessageFormat,
+
+    #[error("Invalid interface.")]
+    InvalidInterface,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ServerError {
-    FailedToGetInterfaces,
-    InvalidMessageFormat,
-
-    InvalidInterface,
-    FailedToChangePassword,
-    FailedToSaveConfig,
-}
-
-impl Display for ServerError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let msg = match self {
-            ServerError::InvalidMessageFormat => {
-                "Invalid message format. Please, report this to developers.".to_string()
-            },
-            ServerError::InvalidInterface => "Invalid interface.".to_string(),
-            ServerError::FailedToChangePassword => {
-                "Failed to change password.".to_string()
-            },
-            ServerError::FailedToSaveConfig => "Failed to save config.".to_string(),
-            ServerError::FailedToGetInterfaces => {
-                "Failed to get server network interfaces.".to_string()
-            },
-        };
-
-        write!(f, "{}", msg)
-    }
+pub struct ServerSettings {
+    pub interface_active: Option<String>,
+    pub interface_config: Option<String>,
+    pub interfaces_available: Vec<String>,
 }
