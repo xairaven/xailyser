@@ -7,7 +7,7 @@ use thiserror::Error;
 
 const CONFIG_FILENAME: &str = "config.toml";
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub compression: bool,
     pub interface: Option<String>,
