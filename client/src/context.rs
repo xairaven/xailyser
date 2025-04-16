@@ -62,7 +62,8 @@ impl Context {
 
 #[derive(Default)]
 pub struct ServerSettings {
-    pub compression: bool,
+    pub compression_active: bool,
+    pub compression_config: bool,
     pub interfaces_available: Vec<String>,
     pub interface_active: Option<String>,
     pub interface_config: Option<String>,

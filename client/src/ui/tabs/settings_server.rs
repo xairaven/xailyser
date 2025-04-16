@@ -55,13 +55,7 @@ impl SettingsServerTab {
 
     fn request_settings_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         if ui.button("Request Active Settings").clicked() {
-            self.last_request = Some(Local::now());
-            let result = ctx
-                .ui_client_requests_tx
-                .try_send(UiClientRequest::Request(Request::ServerSettings));
-            if let Err(err) = result {
-                log::error!("Server Settings: {}", err);
-            }
+            self.request_server_settings(ctx);
         }
 
         let req_upd_timestamp =
@@ -102,6 +96,7 @@ impl SettingsServerTab {
             } else {
                 log::info!("UI -> WS: Sent 'Save Config' command.");
             }
+            self.request_server_settings(ctx);
         }
     }
 
@@ -141,23 +136,52 @@ impl SettingsServerTab {
         ui.add(egui::Label::new(
             RichText::new("Compression:").size(16.0).strong(),
         ));
+        ui.label(is_enabled_text(ctx.settings_server.compression_active));
 
-        let is_enabled = if ctx.settings_server.compression {
-            RichText::new("Enabled").color(Color32::GREEN)
-        } else {
-            RichText::new("Disabled").color(Color32::RED)
-        };
-        ui.label(is_enabled);
+        if ctx.settings_server.compression_active
+            != ctx.settings_server.compression_config
+        {
+            ui.end_row();
 
-        let action = if ctx.settings_server.compression {
-            "Disable"
-        } else {
-            "Enable"
-        };
-        if ui.button(action).clicked() {
+            ui.label(
+                RichText::new("Compression (Config):")
+                    .size(16.0)
+                    .strong()
+                    .italics(),
+            );
+            ui.label(is_enabled_text(ctx.settings_server.compression_config).italics());
+            if ui
+                .button(action_text(ctx.settings_server.compression_config))
+                .clicked()
+            {
+                let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
+                    Request::SetCompression(!ctx.settings_server.compression_config),
+                ));
+                self.request_server_settings(ctx);
+            }
+        } else if ui
+            .button(action_text(ctx.settings_server.compression_active))
+            .clicked()
+        {
             let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
-                Request::SetCompression(!ctx.settings_server.compression),
+                Request::SetCompression(!ctx.settings_server.compression_active),
             ));
+            self.request_server_settings(ctx);
+        }
+
+        fn is_enabled_text(is_enabled: bool) -> RichText {
+            if is_enabled {
+                RichText::new("Enabled").color(Color32::GREEN)
+            } else {
+                RichText::new("Disabled").color(Color32::RED)
+            }
+        }
+        fn action_text(is_enabled: bool) -> RichText {
+            if is_enabled {
+                RichText::new("Disable")
+            } else {
+                RichText::new("Enable")
+            }
         }
     }
 
@@ -225,12 +249,7 @@ impl SettingsServerTab {
                                         err
                                     );
                                 }
-                                let result = ctx.ui_client_requests_tx.try_send(
-                                    UiClientRequest::Request(Request::ServerSettings),
-                                );
-                                if let Err(err) = result {
-                                    log::error!("Server Settings: {}", err);
-                                }
+                                self.request_server_settings(ctx);
                                 self.interface_current = None;
                             }
 
@@ -259,5 +278,15 @@ impl SettingsServerTab {
                 ui.label("Available Interfaces:\t—");
             }
         });
+    }
+
+    fn request_server_settings(&mut self, ctx: &mut Context) {
+        self.last_request = Some(Local::now());
+        let result = ctx
+            .ui_client_requests_tx
+            .try_send(UiClientRequest::Request(Request::ServerSettings));
+        if let Err(err) = result {
+            log::error!("Server Settings: {}", err);
+        }
     }
 }

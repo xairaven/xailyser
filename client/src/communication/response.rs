@@ -1,4 +1,4 @@
-use crate::context::Context;
+use crate::context::{Context, ServerSettings};
 use crate::ui::modals::message::MessageModal;
 use chrono::Local;
 use common::messages::Response;
@@ -25,13 +25,17 @@ pub fn process(ctx: &mut Context, response: Response) {
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
-        Response::ServerSettings(settings) => {
-            ctx.settings_server.compression = settings.compression;
-            ctx.settings_server.interfaces_available = settings.interfaces_available;
-            ctx.settings_server.interface_active = settings.interface_active;
-            ctx.settings_server.interface_config = settings.interface_config;
+        Response::ServerSettings(dto) => {
+            ctx.settings_server = ServerSettings {
+                compression_active: dto.compression_active,
+                compression_config: dto.compression_config,
 
-            ctx.settings_server.last_updated = Some(Local::now());
+                interfaces_available: dto.interfaces_available,
+                interface_active: dto.interface_active,
+                interface_config: dto.interface_config,
+
+                last_updated: Some(Local::now()),
+            };
         },
         Response::SetCompressionResult(result) => {
             let modal = match result {
