@@ -23,7 +23,7 @@ pub enum Response {
     SyncSuccessful,
 
     // Settings: Interfaces, etc.
-    ServerSettings(ServerSettings), // Interfaces, etc.
+    ServerSettings(ServerSettingsDto), // Interfaces, etc.
 
     // Results
     ChangePasswordConfirmation,
@@ -54,8 +54,9 @@ pub enum ServerError {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ServerSettings {
-    pub compression: bool,
+pub struct ServerSettingsDto {
+    pub compression_active: bool,
+    pub compression_config: bool,
     pub interface_active: Option<String>,
     pub interface_config: Option<String>,
     pub interfaces_available: Vec<String>,
