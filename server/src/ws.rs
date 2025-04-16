@@ -2,6 +2,7 @@ use crate::context::Context;
 use crate::{context, request};
 use bytes::Bytes;
 use common::auth;
+use common::compression::{compress, decompress};
 use common::messages::{CONNECTION_TIMEOUT, Request, Response, ServerError};
 use crossbeam::channel::{Receiver, TryRecvError};
 use std::collections::VecDeque;
@@ -18,11 +19,11 @@ use tungstenite::{Message, Utf8Bytes, WebSocket};
 
 pub struct WsHandler {
     id: u16,
-    frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
+    compression: bool,
     context: Arc<Mutex<Context>>,
-    shutdown_flag: Arc<AtomicBool>,
-
+    frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
     response_queue: VecDeque<Response>,
+    shutdown_flag: Arc<AtomicBool>,
 }
 
 type WSStream = WebSocket<TcpStream>;
@@ -32,8 +33,11 @@ impl WsHandler {
         id: u16, frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
         context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
     ) -> Self {
+        let compression = context::lock(&context, |context| context.compression);
+
         Self {
             id,
+            compression,
             frame_receiver,
             context,
             shutdown_flag,
@@ -138,33 +142,8 @@ impl WsHandler {
         &mut self, stream: &mut WSStream,
     ) -> Result<(), tungstenite::Error> {
         let msg = match stream.read() {
-            Ok(value) => value,
-            Err(err) => {
-                return match err {
-                    tungstenite::Error::ConnectionClosed
-                    | tungstenite::Error::AlreadyClosed => {
-                        log::warn!(
-                            "WS-{}. Connection closed without alerting about it.",
-                            self.id
-                        );
-                        Err(err)
-                    },
-                    tungstenite::Error::Io(err)
-                        if err.kind() == std::io::ErrorKind::WouldBlock =>
-                    {
-                        thread::sleep(CONNECTION_TIMEOUT);
-                        Ok(())
-                    },
-                    tungstenite::Error::Io(err) => {
-                        log::warn!("WS-{}. {}", self.id, err);
-                        Err(tungstenite::Error::Io(err))
-                    },
-                    _ => {
-                        log::error!("WS-{}. {}", self.id, err);
-                        Ok(())
-                    },
-                };
-            },
+            Ok(msg) => msg,
+            Err(err) => return self.handle_read_error(err),
         };
 
         if msg.is_close() {
@@ -179,43 +158,9 @@ impl WsHandler {
             return Ok(());
         }
 
-        if msg.is_empty() || msg.is_binary() {
-            log::warn!("WS-{}. Received empty or binary message.", self.id);
-            let message = Response::Error(ServerError::InvalidMessageFormat);
-            if let Ok(text) = serde_json::to_string(&message) {
-                if let Err(err) = stream.send(Message::Text(Utf8Bytes::from(text))) {
-                    log::error!(
-                        "WS-{}. Failed to send error to client. Cause: {}",
-                        self.id,
-                        err
-                    );
-                }
-            }
-        }
-
-        if msg.is_text() {
-            let deserialized: Result<Request, serde_json::Error> =
-                serde_json::from_str(&msg.to_string());
-            if let Ok(message) = deserialized {
-                log::info!(
-                    "WS-{}. Received message from client: {:#?}. IP: {}",
-                    self.id,
-                    message,
-                    stream.get_ref().peer_addr()?
-                );
-
-                // Client request handling:
-                let response =
-                    request::core::process(message, &self.context, &self.shutdown_flag);
-                if let Some(response) = response {
-                    self.response_queue.push_back(response);
-                }
-            } else {
-                let message = Response::Error(ServerError::InvalidMessageFormat);
-                if let Ok(text) = serde_json::to_string(&message) {
-                    let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
-                }
-            }
+        match self.compression {
+            true => self.handle_binary_compressed(msg, stream)?,
+            false => self.handle_text_uncompressed(msg, stream)?,
         }
 
         Ok(())
@@ -224,11 +169,124 @@ impl WsHandler {
     fn send_messages(&mut self, stream: &mut WSStream) {
         while let Some(response) = self.response_queue.pop_front() {
             if let Ok(serialized) = serde_json::to_string(&response) {
-                let _ = stream.send(Message::text(serialized));
+                if self.compression {
+                    match compress(&serialized) {
+                        Ok(bytes) => {
+                            let _ = stream.send(Message::Binary(Bytes::from(bytes)));
+                        },
+                        Err(_) => {
+                            log::error!(
+                                "WS-{}. Can't compress message! {:#?}",
+                                self.id,
+                                response
+                            );
+                        },
+                    }
+                } else {
+                    let _ = stream.send(Message::text(serialized));
+                }
             } else {
                 log::error!("WS-{}. Can't serialize message! {:#?}", self.id, response);
             }
         }
+    }
+
+    fn handle_read_error(
+        &self, err: tungstenite::Error,
+    ) -> Result<(), tungstenite::Error> {
+        use tungstenite::Error::*;
+        match err {
+            ConnectionClosed | AlreadyClosed => {
+                log::warn!("WS-{}. Connection closed without alerting.", self.id);
+                Err(err)
+            },
+            Io(io_err) if io_err.kind() == std::io::ErrorKind::WouldBlock => {
+                thread::sleep(CONNECTION_TIMEOUT);
+                Ok(())
+            },
+            Io(io_err) => {
+                log::warn!("WS-{}. {}", self.id, io_err);
+                Err(Io(io_err))
+            },
+            _ => {
+                log::error!("WS-{}. {}", self.id, err);
+                Ok(())
+            },
+        }
+    }
+
+    fn handle_binary_compressed(
+        &mut self, msg: Message, stream: &mut WSStream,
+    ) -> Result<(), tungstenite::Error> {
+        if msg.is_empty() || msg.is_text() {
+            log::warn!("WS-{}. Received empty or non-compressed message.", self.id);
+            self.send_error_response(stream)?;
+            return Ok(());
+        }
+
+        if msg.is_binary() {
+            let decompressed = decompress(&msg.into_data())?;
+            self.process_message(&decompressed, stream)?;
+        }
+
+        Ok(())
+    }
+
+    fn handle_text_uncompressed(
+        &mut self, msg: Message, stream: &mut WSStream,
+    ) -> Result<(), tungstenite::Error> {
+        if msg.is_empty() || msg.is_binary() {
+            log::warn!("WS-{}. Received empty or binary message.", self.id);
+            self.send_error_response(stream)?;
+            return Ok(());
+        }
+
+        if msg.is_text() {
+            self.process_message(&msg.to_string(), stream)?;
+        }
+
+        Ok(())
+    }
+
+    fn process_message(
+        &mut self, text: &str, stream: &mut WSStream,
+    ) -> Result<(), tungstenite::Error> {
+        match serde_json::from_str::<Request>(text) {
+            Ok(message) => {
+                log::info!(
+                    "WS-{}. Received message from client: {:#?}. IP: {}",
+                    self.id,
+                    message,
+                    stream.get_ref().peer_addr()?
+                );
+
+                if let Some(response) =
+                    request::core::process(message, &self.context, &self.shutdown_flag)
+                {
+                    self.response_queue.push_back(response);
+                }
+            },
+            Err(_) => {
+                self.send_error_response(stream)?;
+            },
+        }
+
+        Ok(())
+    }
+
+    fn send_error_response(
+        &self, stream: &mut WSStream,
+    ) -> Result<(), tungstenite::Error> {
+        let message = Response::Error(ServerError::InvalidMessageFormat);
+        if let Ok(text) = serde_json::to_string(&message) {
+            if self.compression {
+                let compressed = compress(&text)?;
+                let _ = stream.send(Message::Binary(Bytes::from(compressed)));
+            } else {
+                let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
+            }
+        }
+        Ok(())
     }
 }
 

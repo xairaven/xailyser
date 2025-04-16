@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use thiserror::Error;
 
 pub struct Context {
+    pub compression: bool,
     pub config: Config,
     pub encrypted_password: String,
 
@@ -31,10 +32,15 @@ impl Context {
         };
 
         Ok(Self {
+            compression: config.compression,
             config,
             encrypted_password,
             network_interface: interface,
         })
+    }
+
+    pub fn change_config_compression(&mut self, is_compression_enabled: bool) {
+        self.config.compression = is_compression_enabled;
     }
 
     pub fn change_config_network_interface(&mut self, interface: pcap::Device) {

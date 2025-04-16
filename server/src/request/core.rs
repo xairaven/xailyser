@@ -10,26 +10,63 @@ pub fn process(
     request: Request, context: &Arc<Mutex<Context>>, shutdown_flag: &Arc<AtomicBool>,
 ) -> Option<Response> {
     match request {
+        Request::ChangePassword(password) => {
+            context::lock(context, |ctx| {
+                ctx.change_password(password);
+            });
+
+            Some(Response::ChangePasswordConfirmation)
+        },
+        Request::Reboot => {
+            shutdown_flag.store(true, Ordering::Release);
+            commands::exit_reboot();
+
+            None
+        },
+        Request::SaveConfig => {
+            let response = context::lock(context, |ctx| -> Response {
+                match ctx.config.save_to_file() {
+                    Ok(_) => Response::SaveConfigResult(Ok(())),
+                    Err(_) => {
+                        Response::SaveConfigResult(Err(ServerError::FailedToSaveConfig))
+                    },
+                }
+            });
+            Some(response)
+        },
         Request::ServerSettings => {
-            let available_interfaces = match commands::interfaces() {
+            let interfaces_available = match commands::interfaces() {
                 Ok(interfaces) => interfaces,
                 Err(err) => return Some(Response::Error(err)),
             };
-            let active_interface = context::lock(context, |ctx| {
-                ctx.network_interface
-                    .as_ref()
-                    .map(interface::get_network_interface_name)
-            });
-            let config_interface =
-                context::lock(context, |ctx| ctx.config.interface.clone());
+            let (compression, interface_active, interface_config) =
+                context::lock(context, |ctx| {
+                    let compression = ctx.config.compression;
+                    let interface_active = ctx
+                        .network_interface
+                        .as_ref()
+                        .map(interface::get_network_interface_name);
+                    let interface_config = ctx.config.interface.clone();
+
+                    (compression, interface_active, interface_config)
+                });
 
             let settings = ServerSettings {
-                interface_active: active_interface,
-                interface_config: config_interface,
-                interfaces_available: available_interfaces,
+                compression,
+                interface_active,
+                interface_config,
+                interfaces_available,
             };
 
             Some(Response::ServerSettings(settings))
+        },
+        Request::SetCompression(is_compression_enabled) => {
+            context::lock(context, |ctx| {
+                ctx.change_config_compression(is_compression_enabled);
+            });
+
+            let response = Response::SetCompressionResult(Ok(is_compression_enabled));
+            Some(response)
         },
         Request::SetInterface(interface_name) => {
             let network_interface =
@@ -58,30 +95,6 @@ pub fn process(
 
             let response = Response::SetInterfaceResult(Ok(interface_name));
             Some(response)
-        },
-        Request::ChangePassword(password) => {
-            context::lock(context, |ctx| {
-                ctx.change_password(password);
-            });
-
-            Some(Response::ChangePasswordConfirmation)
-        },
-        Request::SaveConfig => {
-            let response = context::lock(context, |ctx| -> Response {
-                match ctx.config.save_to_file() {
-                    Ok(_) => Response::SaveConfigResult(Ok(())),
-                    Err(_) => {
-                        Response::SaveConfigResult(Err(ServerError::FailedToSaveConfig))
-                    },
-                }
-            });
-            Some(response)
-        },
-        Request::Reboot => {
-            shutdown_flag.store(true, Ordering::Release);
-            commands::exit_reboot();
-
-            None
         },
     }
 }

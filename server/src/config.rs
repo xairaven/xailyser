@@ -9,6 +9,7 @@ const CONFIG_FILENAME: &str = "config.toml";
 
 #[derive(Clone)]
 pub struct Config {
+    pub compression: bool,
     pub interface: Option<String>,
     pub log_format: String,
     pub log_level: LevelFilter,
@@ -19,6 +20,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            compression: true,
             interface: None,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
@@ -34,6 +36,8 @@ impl Serialize for Config {
         S: Serializer,
     {
         let mut state = serializer.serialize_struct("Config", 5)?;
+
+        state.serialize_field("compression", &self.compression)?;
 
         if let Some(interface) = &self.interface {
             state.serialize_field("interface", interface)?;
@@ -74,6 +78,7 @@ impl Config {
 
 #[derive(Deserialize)]
 struct ConfigDto {
+    compression: bool,
     interface: String,
     log_format: String,
     log_level: String,
@@ -90,6 +95,7 @@ impl ConfigDto {
         };
 
         let config = Config {
+            compression: self.compression,
             interface,
             log_format: self.log_format,
             log_level: LevelFilter::from_str(&self.log_level)
