@@ -2,7 +2,7 @@ use crate::context;
 use crate::context::Context;
 use crate::net::interface;
 use crate::request::commands;
-use common::messages::{Request, Response, ServerError, ServerSettings};
+use common::messages::{Request, Response, ServerError, ServerSettingsDto};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -39,26 +39,18 @@ pub fn process(
                 Ok(interfaces) => interfaces,
                 Err(err) => return Some(Response::Error(err)),
             };
-            let (compression, interface_active, interface_config) =
-                context::lock(context, |ctx| {
-                    let compression = ctx.config.compression;
-                    let interface_active = ctx
-                        .network_interface
-                        .as_ref()
-                        .map(interface::get_network_interface_name);
-                    let interface_config = ctx.config.interface.clone();
-
-                    (compression, interface_active, interface_config)
-                });
-
-            let settings = ServerSettings {
-                compression,
-                interface_active,
-                interface_config,
+            let settings_dto = context::lock(context, |ctx| ServerSettingsDto {
+                compression_active: ctx.compression,
+                compression_config: ctx.config.compression,
+                interface_active: ctx
+                    .network_interface
+                    .as_ref()
+                    .map(interface::get_network_interface_name),
+                interface_config: ctx.config.interface.clone(),
                 interfaces_available,
-            };
+            });
 
-            Some(Response::ServerSettings(settings))
+            Some(Response::ServerSettings(settings_dto))
         },
         Request::SetCompression(is_compression_enabled) => {
             context::lock(context, |ctx| {
