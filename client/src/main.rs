@@ -28,7 +28,8 @@ fn main() {
         std::process::exit(1);
     });
 
-    log::info!("Config loaded.");
+    log::info!("Starting...");
+    log::info!("Config loaded: {:#?}", config);
     log::info!("Logger initialized.");
 
     ui::start(config).unwrap_or_else(|err| {
