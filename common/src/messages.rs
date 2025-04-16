@@ -10,6 +10,7 @@ pub enum Request {
     Reboot,         // Reboot server (needed to apply changing password, for example)
     SaveConfig,     // Save the config
     ServerSettings, // Interfaces, etc.
+    SetCompression(bool), // Compression: On or Off
     SetInterface(String), // Set an ethernet interface
 }
 
@@ -25,9 +26,10 @@ pub enum Response {
     ServerSettings(ServerSettings), // Interfaces, etc.
 
     // Results
-    SaveConfigResult(Result<(), ServerError>),
-    SetInterfaceResult(Result<String, ServerError>),
     ChangePasswordConfirmation,
+    SaveConfigResult(Result<(), ServerError>),
+    SetCompressionResult(Result<bool, ServerError>),
+    SetInterfaceResult(Result<String, ServerError>),
 
     // Error
     Error(ServerError),
@@ -53,6 +55,7 @@ pub enum ServerError {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerSettings {
+    pub compression: bool,
     pub interface_active: Option<String>,
     pub interface_config: Option<String>,
     pub interfaces_available: Vec<String>,
