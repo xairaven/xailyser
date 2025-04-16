@@ -2,7 +2,7 @@ use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::themes::ThemePreference;
 use crate::utils;
-use egui::{DragValue, Grid, RichText, TextEdit};
+use egui::{Checkbox, DragValue, Grid, RichText, TextEdit};
 use log::LevelFilter;
 use strum::IntoEnumIterator;
 
@@ -13,6 +13,7 @@ const FIELD_RESTART_NEEDED: &str =
 
 pub struct SettingsClientTab {
     // Fields that applied after restart
+    compression: bool,
     log_format_choice: String,
     log_level_choice: LevelFilter,
 
@@ -24,8 +25,10 @@ pub struct SettingsClientTab {
 impl SettingsClientTab {
     pub fn new(ctx: &Context) -> Self {
         Self {
+            compression: ctx.config.compression,
             log_format_choice: ctx.config.log_format.clone(),
             log_level_choice: ctx.config.log_level,
+
             ping_delay_seconds: ctx.client_settings.sync_delay_seconds,
             theme: ctx.client_settings.theme,
         }
@@ -49,6 +52,9 @@ impl SettingsClientTab {
                             .num_columns(GRID_COLUMNS)
                             .show(ui, |ui| {
                                 self.save_client_config_view(ui, ctx);
+                                ui.end_row();
+
+                                self.compression_view(ui, ctx);
                                 ui.end_row();
 
                                 self.logs_format_view(ui, ctx);
@@ -78,6 +84,7 @@ impl SettingsClientTab {
         ui.horizontal_centered(|ui| {
             if ui.button("Apply").clicked() {
                 // Fields that applied after restart
+                ctx.config.compression = self.compression;
                 ctx.config.log_format = self.log_format_choice.clone();
                 ctx.config.log_level = self.log_level_choice;
 
@@ -98,6 +105,26 @@ impl SettingsClientTab {
                         log::error!("Requested saving client config. Failed to save.")
                     },
                 }
+            }
+        });
+    }
+
+    fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let different_from_config = self.compression != ctx.config.compression;
+
+        let mut label = RichText::new("* Compression:").size(16.0).strong();
+        if different_from_config {
+            label = label.color(FIELD_NOT_APPLIED_COLOR);
+        }
+        ui.add(egui::Label::new(label))
+            .on_hover_text(FIELD_RESTART_NEEDED);
+
+        // Second Column
+        ui.horizontal_centered(|ui| {
+            ui.add(Checkbox::without_text(&mut self.compression));
+
+            if ui.button("🔙").clicked() {
+                self.compression = ctx.config.compression;
             }
         });
     }

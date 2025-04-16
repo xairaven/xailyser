@@ -1,5 +1,6 @@
 use crate::communication::request::UiClientRequest;
 use common::auth::AUTH_HEADER;
+use common::compression::decompress;
 use common::cryptography::encrypt_password;
 use common::messages::{CONNECTION_TIMEOUT, Request, Response};
 use crossbeam::channel::{Receiver, Sender};
@@ -14,7 +15,18 @@ use tungstenite::{Bytes, ClientRequestBuilder, Message, WebSocket};
 
 type WsStream = WebSocket<MaybeTlsStream<TcpStream>>;
 
-pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError> {
+pub struct WsHandler {
+    pub compression: bool,
+    pub shutdown_flag: Arc<AtomicBool>,
+
+    pub stream: WsStream,
+    pub server_response_tx: Sender<Response>,
+    pub ui_client_requests_rx: Receiver<UiClientRequest>,
+}
+
+pub fn connect(
+    address: SocketAddr, password: &str, compression: bool,
+) -> Result<WsStream, WsError> {
     let uri: Uri = format!("ws://{}:{}/socket", address.ip(), address.port())
         .parse()
         .map_err(|_| WsError::FailedParseUri)?;
@@ -36,7 +48,7 @@ pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError>
 
     // Requesting server settings after connection
     let request = UiClientRequest::Request(Request::ServerSettings);
-    match request.into_message() {
+    match request.into_message(compression) {
         Ok(value) => {
             let result = stream.send(value);
             match result {
@@ -56,105 +68,130 @@ pub fn connect(address: SocketAddr, password: &str) -> Result<WsStream, WsError>
     Ok(stream)
 }
 
-pub fn send_receive_messages(
-    mut stream: WsStream, server_response_tx: Sender<Response>,
-    ui_client_requests_rx: Receiver<UiClientRequest>, shutdown_flag: Arc<AtomicBool>,
-) {
-    while !shutdown_flag.load(Ordering::Acquire) {
-        if receive_messages(&mut stream, &server_response_tx).is_err() {
-            return;
-        }
-        send_messages(&mut stream, &ui_client_requests_rx);
-    }
-}
-
-fn receive_messages(
-    stream: &mut WsStream, server_response_tx: &Sender<Response>,
-) -> Result<(), tungstenite::Error> {
-    let msg = match stream.read() {
-        Ok(value) => value,
-        Err(err) => {
-            return match err {
-                tungstenite::Error::ConnectionClosed
-                | tungstenite::Error::AlreadyClosed => {
-                    log::warn!("WS-Stream: Connection closed without alerting about it.");
-                    Err(err)
-                },
-                tungstenite::Error::Io(err)
-                    if err.kind() == std::io::ErrorKind::WouldBlock
-                        || err.kind() == std::io::ErrorKind::TimedOut =>
-                {
-                    thread::sleep(CONNECTION_TIMEOUT);
-                    Ok(())
-                },
-                tungstenite::Error::Io(err) => {
-                    log::warn!("WS-Stream: {}", err);
-                    Err(tungstenite::Error::Io(err))
-                },
-                _ => {
-                    log::error!("WS-Stream: {}", err);
-                    Ok(())
-                },
-            };
-        },
-    };
-
-    if msg.is_close() {
-        log::info!("WS-Stream: Server closed connection.");
-        return Err(tungstenite::Error::ConnectionClosed);
-    }
-
-    // Heartbeat
-    if msg.is_pong() {
-        log::debug!("WS-Stream: Received a Pong message.");
-        if let Err(err) = server_response_tx.try_send(Response::SyncSuccessful) {
-            log::error!("WS Channel: Can't send message. Error: {}", err);
-        }
-        return Ok(());
-    }
-
-    // Server don't send ping messages
-    if msg.is_ping() {
-        if let Err(err) = stream.send(Message::Pong(Bytes::new())) {
-            log::error!("WS-Stream: Can't send message. Error: {}", err);
-        }
-    }
-
-    if msg.is_empty() || msg.is_binary() {
-        log::warn!("WS-Stream: Received empty or binary message.");
-    }
-
-    if msg.is_text() {
-        let deserialized: Result<Response, serde_json::Error> =
-            serde_json::from_str(&msg.to_string());
-        if let Ok(message) = deserialized {
-            if let Err(err) = server_response_tx.try_send(message) {
-                log::error!("WS Channel: Can't send message. Error: {}", err);
-            }
-        } else {
-            log::warn!("Serde: can't deserialize message! {:#?}", msg);
-        }
-    }
-
-    Ok(())
-}
-
-fn send_messages(
-    stream: &mut WsStream, ui_client_requests_rx: &Receiver<UiClientRequest>,
-) {
-    if let Ok(command) = ui_client_requests_rx.try_recv() {
-        let message = match command.into_message() {
-            Ok(value) => value,
-            Err(_) => {
-                log::error!("Serde: Can't serialize message!");
+impl WsHandler {
+    pub fn send_receive_messages(&mut self) {
+        while !self.shutdown_flag.load(Ordering::Acquire) {
+            if self.receive_messages().is_err() {
                 return;
+            }
+            self.send_messages();
+        }
+    }
+
+    fn receive_messages(&mut self) -> Result<(), tungstenite::Error> {
+        let msg = match self.stream.read() {
+            Ok(value) => value,
+            Err(err) => {
+                return match err {
+                    tungstenite::Error::ConnectionClosed
+                    | tungstenite::Error::AlreadyClosed => {
+                        log::warn!(
+                            "WS-Stream: Connection closed without alerting about it."
+                        );
+                        Err(err)
+                    },
+                    tungstenite::Error::Io(err)
+                        if err.kind() == std::io::ErrorKind::WouldBlock
+                            || err.kind() == std::io::ErrorKind::TimedOut =>
+                    {
+                        thread::sleep(CONNECTION_TIMEOUT);
+                        Ok(())
+                    },
+                    tungstenite::Error::Io(err) => {
+                        log::warn!("WS-Stream: {}", err);
+                        Err(tungstenite::Error::Io(err))
+                    },
+                    _ => {
+                        log::error!("WS-Stream: {}", err);
+                        Ok(())
+                    },
+                };
             },
         };
 
-        if let Err(err) = stream.send(message) {
-            log::error!("WS-Stream: Can't send message. Error: {}", err);
+        if msg.is_close() {
+            log::info!("WS-Stream: Server closed connection.");
+            return Err(tungstenite::Error::ConnectionClosed);
+        }
+
+        // Heartbeat
+        if msg.is_pong() {
+            log::debug!("WS-Stream: Received a Pong message.");
+            if let Err(err) = self.server_response_tx.try_send(Response::SyncSuccessful) {
+                log::error!("WS Channel: Can't send message. Error: {}", err);
+            }
+            return Ok(());
+        }
+
+        // Server don't send ping messages
+        if msg.is_ping() {
+            if let Err(err) = self.stream.send(Message::Pong(Bytes::new())) {
+                log::error!("WS-Stream: Can't send message. Error: {}", err);
+            }
+        }
+
+        match self.compression {
+            true => self.handle_binary_compressed(msg),
+            false => self.handle_text_uncompressed(msg),
+        }
+
+        Ok(())
+    }
+
+    fn handle_binary_compressed(&self, msg: Message) {
+        if msg.is_empty() || msg.is_text() {
+            log::warn!("WS-Stream: Received empty or non-compressed message.");
+        }
+
+        if msg.is_binary() {
+            let decompressed = match decompress(&msg.into_data()) {
+                Ok(value) => value,
+                Err(_) => {
+                    log::error!("WS-Stream: Failed to decompress message.");
+                    return;
+                },
+            };
+            self.pass_responses(&decompressed);
+        }
+    }
+
+    fn handle_text_uncompressed(&self, msg: Message) {
+        if msg.is_empty() || msg.is_binary() {
+            log::warn!("WS-Stream: Received empty or binary message.");
+        }
+
+        if msg.is_text() {
+            self.pass_responses(&msg.to_string());
+        }
+    }
+
+    fn pass_responses(&self, text: &str) {
+        let deserialized: Result<Response, serde_json::Error> =
+            serde_json::from_str(text);
+        if let Ok(message) = deserialized {
+            if let Err(err) = self.server_response_tx.try_send(message) {
+                log::error!("WS Channel: Can't send message. Error: {}", err);
+            }
         } else {
-            log::debug!("WS-Stream (Client -> Server): Sent command.");
+            log::warn!("Serde: can't deserialize message! {:#?}", text);
+        }
+    }
+
+    fn send_messages(&mut self) {
+        if let Ok(command) = self.ui_client_requests_rx.try_recv() {
+            let message = match command.into_message(self.compression) {
+                Ok(value) => value,
+                Err(_) => {
+                    log::error!("Serde: Can't serialize message!");
+                    return;
+                },
+            };
+
+            if let Err(err) = self.stream.send(message) {
+                log::error!("WS-Stream: Can't send message. Error: {}", err);
+            } else {
+                log::debug!("WS-Stream (Client -> Server): Sent command.");
+            }
         }
     }
 }

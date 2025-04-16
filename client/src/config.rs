@@ -14,6 +14,7 @@ const CONFIG_FILENAME: &str = "config.toml";
 
 #[derive(Clone)]
 pub struct Config {
+    pub compression: bool,
     pub log_format: String,
     pub log_level: LevelFilter,
     pub theme: ThemePreference,
@@ -23,6 +24,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            compression: true,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
             theme: ThemePreference::default(),
@@ -38,6 +40,7 @@ impl Serialize for Config {
         S: Serializer,
     {
         let mut state = serializer.serialize_struct("Config", 3)?;
+        state.serialize_field("compression", &self.compression)?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
         state.serialize_field("theme", &self.theme.to_string())?;
@@ -95,6 +98,7 @@ impl Config {
 
 #[derive(Deserialize)]
 struct ConfigDto {
+    compression: bool,
     log_format: String,
     log_level: String,
     theme: String,
@@ -104,6 +108,7 @@ struct ConfigDto {
 impl ConfigDto {
     pub fn into_config(self) -> Result<Config, ConfigError> {
         let config = Config {
+            compression: self.compression,
             log_format: self.log_format.trim().to_string(),
             log_level: LevelFilter::from_str(self.log_level.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownLogLevel)?,

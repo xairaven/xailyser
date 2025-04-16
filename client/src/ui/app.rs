@@ -97,7 +97,7 @@ impl eframe::App for App {
         {
             log::error!("Failed to send command (Close connection): {}", err);
         }
-        log::info!("Closing connection.");
+        log::info!("Shutdown started...");
         self.context.shutdown_flag.store(true, Ordering::Release);
 
         if let Some(handle) = self.net_thread.take() {

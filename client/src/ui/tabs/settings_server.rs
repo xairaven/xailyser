@@ -40,6 +40,9 @@ impl SettingsServerTab {
                             self.reboot_view(ui, ctx);
                             ui.end_row();
 
+                            self.compression_view(ui, ctx);
+                            ui.end_row();
+
                             self.change_password_view(ui, ctx);
                             ui.end_row();
                         });
@@ -134,6 +137,30 @@ impl SettingsServerTab {
         }
     }
 
+    fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.add(egui::Label::new(
+            RichText::new("Compression:").size(16.0).strong(),
+        ));
+
+        let is_enabled = if ctx.settings_server.compression {
+            RichText::new("Enabled").color(Color32::GREEN)
+        } else {
+            RichText::new("Disabled").color(Color32::RED)
+        };
+        ui.label(is_enabled);
+
+        let action = if ctx.settings_server.compression {
+            "Disable"
+        } else {
+            "Enable"
+        };
+        if ui.button(action).clicked() {
+            let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
+                Request::SetCompression(!ctx.settings_server.compression),
+            ));
+        }
+    }
+
     fn change_password_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
             RichText::new("Change Password:").size(16.0).strong(),
@@ -167,17 +194,22 @@ impl SettingsServerTab {
                         );
                         ui.end_row();
 
-                        if let (Some(active_interface), Some(config_interface)) = (
-                            ctx.settings_server.interface_active.as_ref(),
-                            ctx.settings_server.interface_config.as_ref(),
-                        ) {
-                            if active_interface != config_interface {
-                                ui.label("Config Interface:");
+                        // Optional "Config Interface" label
+                        if ctx.settings_server.interface_active.as_ref()
+                            != ctx.settings_server.interface_config.as_ref()
+                        {
+                            ui.label("Config Interface:");
+                            if let Some(config_interface) =
+                                &ctx.settings_server.interface_config
+                            {
                                 ui.label(RichText::new(config_interface).italics());
-                                ui.end_row();
+                            } else {
+                                ui.label("None");
                             }
+                            ui.end_row();
                         }
 
+                        // Chosen interface (clicked on button)
                         if let Some(chosen) = &self.interface_current {
                             ui.label("Chosen:");
                             ui.label(RichText::new(chosen).italics());

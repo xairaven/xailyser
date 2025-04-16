@@ -39,6 +39,7 @@ impl Context {
 
         Self {
             client_settings: ClientSettings {
+                compression: config.compression,
                 theme: config.theme,
                 sync_delay_seconds: config.sync_delay_seconds,
             },
@@ -61,6 +62,7 @@ impl Context {
 
 #[derive(Default)]
 pub struct ServerSettings {
+    pub compression: bool,
     pub interfaces_available: Vec<String>,
     pub interface_active: Option<String>,
     pub interface_config: Option<String>,
@@ -69,6 +71,7 @@ pub struct ServerSettings {
 }
 
 pub struct ClientSettings {
+    pub compression: bool,
     pub theme: ThemePreference,
     pub sync_delay_seconds: i64,
 }

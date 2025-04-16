@@ -1,6 +1,7 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ws;
+use crate::ws::WsHandler;
 use egui::{Grid, RichText, TextEdit};
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
@@ -89,23 +90,23 @@ impl AuthComponent {
     }
 
     fn try_connect(&mut self, ctx: &Context, address: SocketAddr, password: &str) {
-        match ws::connect(address, password) {
+        match ws::connect(address, password, ctx.client_settings.compression) {
             Ok(stream) => {
-                let server_response_tx = ctx.server_response_tx.clone();
-                let ui_client_requests_rx = ctx.ui_client_requests_rx.clone();
-                let shutdown_flag = Arc::clone(&ctx.shutdown_flag);
+                let mut ws_handler = WsHandler {
+                    compression: ctx.client_settings.compression,
+                    shutdown_flag: Arc::clone(&ctx.shutdown_flag),
+                    stream,
+                    server_response_tx: ctx.server_response_tx.clone(),
+                    ui_client_requests_rx: ctx.ui_client_requests_rx.clone(),
+                };
+
                 let handle = thread::Builder::new()
                     .name("WS-Thread".to_string())
                     .spawn(move || {
-                        ws::send_receive_messages(
-                            stream,
-                            server_response_tx,
-                            ui_client_requests_rx,
-                            shutdown_flag,
-                        );
+                        ws_handler.send_receive_messages();
                     })
                     .unwrap_or_else(|err| {
-                        log::error!("Failed to spawn TCP thread: {}", err);
+                        log::error!("Failed to spawn WS thread: {}", err);
                         std::process::exit(1);
                     });
 
