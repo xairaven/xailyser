@@ -3,7 +3,7 @@ use log::Record;
 use std::fmt::Arguments;
 use thiserror::Error;
 
-pub const DEFAULT_FORMAT: &str = "[%Y-%m-%D %H:%M %LEVEL] %MESSAGE";
+pub const DEFAULT_FORMAT: &str = "[$Y-$m-$D $H:$M $LEVEL] $MESSAGE";
 
 #[derive(Error, Debug)]
 pub enum LogError {
@@ -39,23 +39,23 @@ pub fn generate_file_name(title: &str) -> String {
 pub fn parse_format(format: String, message: &Arguments, record: &Record) -> String {
     let mut log = format.trim().to_string();
 
-    // Message
-    log = log.replace("%MESSAGE", &message.to_string());
-
-    // Level
-    log = log.replace("%LEVEL", record.level().as_str());
-
-    // Target
-    log = log.replace("%TARGET", record.target());
-
     // Time
     let time = Local::now();
-    log = log.replace("%Y", &format!("{:0>2}", time.year()));
-    log = log.replace("%m", &format!("{:0>2}", time.month()));
-    log = log.replace("%D", &format!("{:0>2}", time.day()));
-    log = log.replace("%H", &format!("{:0>2}", time.hour()));
-    log = log.replace("%M", &format!("{:0>2}", time.minute()));
-    log = log.replace("%S", &format!("{:0>2}", time.second()));
+    log = log.replacen("$Y", &format!("{:0>2}", time.year()), 1);
+    log = log.replacen("$m", &format!("{:0>2}", time.month()), 1);
+    log = log.replacen("$D", &format!("{:0>2}", time.day()), 1);
+    log = log.replacen("$H", &format!("{:0>2}", time.hour()), 1);
+    log = log.replacen("$M", &format!("{:0>2}", time.minute()), 1);
+    log = log.replacen("$S", &format!("{:0>2}", time.second()), 1);
+
+    // Level
+    log = log.replacen("$LEVEL", record.level().as_str(), 1);
+
+    // Target
+    log = log.replacen("$TARGET", record.target(), 1);
+
+    // Message
+    log = log.replacen("$MESSAGE", &message.to_string(), 1);
 
     log
 }
