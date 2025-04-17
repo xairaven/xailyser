@@ -28,7 +28,7 @@ impl App {
         Self {
             net_thread: None,
 
-            auth_component: Default::default(),
+            auth_component: AuthComponent::new(&ctx),
             root_component: RootComponent::new(&ctx),
 
             modals: vec![],
@@ -48,9 +48,11 @@ impl eframe::App for App {
 
             // If authenticated after showing auth component, then showing UI root.
             if self.auth_component.authenticated() {
-                // Taking net-thread join handle from the auth component
+                // Taking net-thread join handle from the auth component (Auth just happened)
                 if self.auth_component.net_thread.is_some() {
                     self.net_thread = self.auth_component.net_thread.take();
+                    self.root_component
+                        .update_client_settings_info(&self.context);
                 }
                 // First connection time
                 if self.context.heartbeat.last_sync.is_none() {
@@ -69,8 +71,8 @@ impl eframe::App for App {
                 // Logout from root component, if requested.
                 if self.root_component.logout_requested() {
                     self.root_component.logout(&self.context);
-                    self.auth_component.logout();
-                    self.context = Context::new(self.context.config.clone());
+                    self.auth_component.logout(&self.context);
+                    self.context.logout();
                 }
             }
 

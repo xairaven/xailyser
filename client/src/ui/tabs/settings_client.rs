@@ -10,10 +10,13 @@ const FIELD_NOT_APPLIED_COLOR: egui::Color32 = egui::Color32::RED;
 const FIELD_NOT_APPLIED_HOVER: &str = "This field is not applied at the moment. Also, don’t forget to save the config file if needed.";
 const FIELD_RESTART_NEEDED: &str =
     "A restart is needed to apply this field. To save — save the config.";
+const FIELD_LOGOUT_NEEDED: &str = "A logout is needed to take effect of this field.";
 
 pub struct SettingsClientTab {
-    // Fields that applied after restart
+    // Fields that taking effect after logout
     compression: bool,
+
+    // Fields that applied after restart
     log_format_choice: String,
     log_level_choice: LevelFilter,
 
@@ -25,7 +28,8 @@ pub struct SettingsClientTab {
 impl SettingsClientTab {
     pub fn new(ctx: &Context) -> Self {
         Self {
-            compression: ctx.config.compression,
+            compression: ctx.client_settings.compression,
+
             log_format_choice: ctx.config.log_format.clone(),
             log_level_choice: ctx.config.log_level,
 
@@ -83,8 +87,10 @@ impl SettingsClientTab {
         // Second Column
         ui.horizontal_centered(|ui| {
             if ui.button("Apply").clicked() {
+                // Fields that taking effect after logout
+                ctx.config.compression = ctx.client_settings.compression;
+
                 // Fields that applied after restart
-                ctx.config.compression = self.compression;
                 ctx.config.log_format = self.log_format_choice.clone();
                 ctx.config.log_level = self.log_level_choice;
 
@@ -110,21 +116,29 @@ impl SettingsClientTab {
     }
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let different_from_config = self.compression != ctx.config.compression;
-
         let mut label = RichText::new("* Compression:").size(16.0).strong();
-        if different_from_config {
+        if self.compression != ctx.client_settings.compression {
             label = label.color(FIELD_NOT_APPLIED_COLOR);
+            ui.add(egui::Label::new(label))
+                .on_hover_text(FIELD_NOT_APPLIED_HOVER);
+        } else {
+            ui.add(egui::Label::new(label))
+                .on_hover_text(FIELD_LOGOUT_NEEDED);
         }
-        ui.add(egui::Label::new(label))
-            .on_hover_text(FIELD_RESTART_NEEDED);
 
         // Second Column
         ui.horizontal_centered(|ui| {
             ui.add(Checkbox::without_text(&mut self.compression));
 
+            if ui.button("Apply").clicked() {
+                log::info!(
+                    "Client Settings: Compression changed to {}",
+                    self.compression
+                );
+                ctx.client_settings.compression = self.compression;
+            }
             if ui.button("🔙").clicked() {
-                self.compression = ctx.config.compression;
+                self.compression = ctx.client_settings.compression;
             }
         });
     }
@@ -201,7 +215,7 @@ impl SettingsClientTab {
             );
 
             if ui.button("Apply").clicked() {
-                log::debug!(
+                log::info!(
                     "Client Settings: Sync Delay seconds changed to {}",
                     self.ping_delay_seconds
                 );
@@ -237,7 +251,7 @@ impl SettingsClientTab {
 
             if ui.button("Apply").clicked() {
                 ctx.client_settings.theme = self.theme;
-                log::debug!("Client Settings: Theme changed to {}", self.theme.title());
+                log::info!("Client Settings: Theme changed to {}", self.theme.title());
                 ui.ctx()
                     .set_style(self.theme.into_aesthetix_theme().custom_style());
             }

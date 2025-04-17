@@ -17,10 +17,10 @@ pub struct RootComponent {
 
     logout_requested: bool,
 
-    status_tab: StatusTab,
-    settings_client_tab: SettingsClientTab,
-    settings_server_tab: SettingsServerTab,
-    about_tab: AboutTab,
+    pub status_tab: StatusTab,
+    pub settings_client_tab: SettingsClientTab,
+    pub settings_server_tab: SettingsServerTab,
+    pub about_tab: AboutTab,
 }
 
 impl RootComponent {
@@ -188,6 +188,12 @@ impl RootComponent {
             .ui_client_requests_tx
             .try_send(UiClientRequest::CloseConnection);
         self.logout_requested = false;
+        self.update_client_settings_info(ctx);
         log::info!("Logged out!");
+    }
+
+    // Synchronizing pre-auth and post-auth settings tabs
+    pub fn update_client_settings_info(&mut self, ctx: &Context) {
+        self.settings_client_tab = SettingsClientTab::new(ctx);
     }
 }

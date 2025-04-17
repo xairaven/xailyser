@@ -35,6 +35,7 @@ mod app;
 
 pub mod components {
     pub mod auth;
+    pub mod preauth_client_settings;
     pub mod root;
 }
 pub mod modals;

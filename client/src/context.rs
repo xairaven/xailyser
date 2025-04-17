@@ -58,6 +58,12 @@ impl Context {
             ui_client_requests_rx,
         }
     }
+
+    pub fn logout(&mut self) {
+        let mut new_context = Context::new(self.config.clone());
+        new_context.client_settings = self.client_settings.clone();
+        *self = new_context;
+    }
 }
 
 #[derive(Default)]
@@ -71,6 +77,7 @@ pub struct ServerSettings {
     pub last_updated: Option<DateTime<Local>>,
 }
 
+#[derive(Clone)]
 pub struct ClientSettings {
     pub compression: bool,
     pub theme: ThemePreference,

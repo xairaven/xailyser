@@ -1,4 +1,5 @@
 use crate::context::Context;
+use crate::ui::components::preauth_client_settings::PreAuthClientSettingsComponent;
 use crate::ui::modals::message::MessageModal;
 use crate::ws;
 use crate::ws::WsHandler;
@@ -9,9 +10,9 @@ use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
 
-#[derive(Default)]
 pub struct AuthComponent {
     pub net_thread: Option<JoinHandle<()>>,
+    pub pre_auth_settings_component: PreAuthClientSettingsComponent,
 
     authenticated: bool,
 
@@ -21,15 +22,36 @@ pub struct AuthComponent {
 }
 
 impl AuthComponent {
+    pub fn new(ctx: &Context) -> Self {
+        Self {
+            pre_auth_settings_component: PreAuthClientSettingsComponent::new(ctx),
+
+            net_thread: None,
+            authenticated: false,
+            ip_text_field: "".to_string(),
+            port_text_field: "".to_string(),
+            password_text_field: "".to_string(),
+        }
+    }
+
     pub fn authenticated(&self) -> bool {
         self.authenticated
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        // Show settings if opened instead of auth window
+        if self.pre_auth_settings_component.is_opened() {
+            self.pre_auth_settings_component.show(ui, ctx);
+            return;
+        }
+
         let window_height = ui.available_size().y;
 
         ui.columns(3, |columns| {
-            columns[1].vertical_centered(|ui| {
+            const MAIN_COLUMN: usize = 1;
+            const RIGHT_COLUMN: usize = 2;
+
+            columns[MAIN_COLUMN].vertical_centered(|ui| {
                 ui.add_space(window_height / 6.0);
 
                 ui.vertical_centered_justified(|ui| {
@@ -86,6 +108,15 @@ impl AuthComponent {
                     }
                 });
             });
+
+            columns[RIGHT_COLUMN].with_layout(
+                egui::Layout::right_to_left(egui::Align::Min),
+                |ui| {
+                    if ui.button("⚙").clicked() {
+                        self.pre_auth_settings_component.open();
+                    }
+                },
+            );
         });
     }
 
@@ -140,9 +171,10 @@ impl AuthComponent {
         Ok(SocketAddr::new(ip_address, port))
     }
 
-    pub fn logout(&mut self) {
+    pub fn logout(&mut self, ctx: &Context) {
         self.authenticated = false;
         self.net_thread = None;
+        self.pre_auth_settings_component.update_tab(ctx);
     }
 }
 
