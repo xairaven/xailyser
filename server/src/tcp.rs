@@ -1,6 +1,6 @@
 use crate::context;
 use crate::context::Context;
-use crate::ws::WsHandler;
+use crate::ws::{WsError, WsHandler};
 use common::channel::BroadcastChannel;
 use common::messages::CONNECTION_TIMEOUT;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
@@ -88,7 +88,21 @@ impl TcpHandler {
                                 )
                                 .start(tcp_stream)
                                 {
-                                    log::error!("{}. Terminated connection.", err);
+                                    match &err {
+                                        WsError::AuthFailed(error_detailed) => {
+                                            log::error!(
+                                                "WS-{}. {}. {}",
+                                                thread_counter,
+                                                err,
+                                                error_detailed
+                                            )
+                                        },
+                                        _ => log::error!(
+                                            "WS-{}. {}. Terminated connection.",
+                                            thread_counter,
+                                            err
+                                        ),
+                                    }
                                 }
                             }
                         })

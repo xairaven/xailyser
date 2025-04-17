@@ -75,26 +75,49 @@ impl WsHandler {
             HeaderValue::from_str(&ctx.encrypted_password)
                 .map_err(|_| WsError::InvalidPasswordHeader)
         })?;
+        let server_compression_header = context::lock(&self.context, |ctx| {
+            HeaderValue::from_str(&ctx.compression.to_string())
+                .map_err(|_| WsError::InvalidCompressionHeader)
+        })?;
 
-        let check_authentication =
-            |req: &server::Request, response: server::Response| match req
-                .headers()
-                .get(auth::AUTH_HEADER)
-            {
-                Some(given_password) if given_password == server_password_header => {
+        let check_authentication = |req: &server::Request, response: server::Response| {
+            let password_header = req.headers().get(auth::AUTH_HEADER);
+            let compression_header = req.headers().get(auth::COMPRESSION_HEADER);
+
+            match password_header {
+                Some(given_password) if given_password == server_password_header => {},
+                Some(_) => {
+                    return Err(server::Response::builder()
+                        .status(StatusCode::UNAUTHORIZED)
+                        .body(Some(auth::errors::WRONG_PASSWORD.to_string()))
+                        .unwrap_or_default());
+                },
+                None => {
+                    return Err(server::Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Some(auth::errors::PASSWORD_HEADER_NOT_FOUND.to_string()))
+                        .unwrap_or_default());
+                },
+            };
+
+            match compression_header {
+                Some(given_compression)
+                    if given_compression == server_compression_header =>
+                {
                     Ok(response)
                 },
                 Some(_) => Err(server::Response::builder()
-                    .status(StatusCode::UNAUTHORIZED)
-                    .body(Some(auth::errors::WRONG_PASSWORD_ERROR.to_string()))
+                    .status(StatusCode::PRECONDITION_FAILED)
+                    .body(Some(auth::errors::WRONG_COMPRESSION.to_string()))
                     .unwrap_or_default()),
                 None => Err(server::Response::builder()
                     .status(StatusCode::BAD_REQUEST)
-                    .body(Some(auth::errors::HEADER_NOT_FOUND_ERROR.to_string()))
+                    .body(Some(auth::errors::COMPRESSION_HEADER_NOT_FOUND.to_string()))
                     .unwrap_or_default()),
-            };
+            }
+        };
         tungstenite::accept_hdr(tcp_stream, check_authentication)
-            .map_err(|_| WsError::AuthFailed)
+            .map_err(|err| WsError::AuthFailed(err.to_string()))
     }
 
     fn send_receive_messages(&mut self, mut stream: WSStream) {
@@ -293,7 +316,10 @@ impl WsHandler {
 #[derive(Debug, Error)]
 pub enum WsError {
     #[error("Authentication failed")]
-    AuthFailed,
+    AuthFailed(String),
+
+    #[error("Invalid compression header")]
+    InvalidCompressionHeader,
 
     #[error("Invalid password header")]
     InvalidPasswordHeader,
