@@ -1,10 +1,10 @@
 use crate::communication::request::UiClientRequest;
-use common::auth::AUTH_HEADER;
+use common::auth::{AUTH_HEADER, COMPRESSION_HEADER};
 use common::compression::decompress;
 use common::cryptography::encrypt_password;
 use common::messages::{CONNECTION_TIMEOUT, Request, Response};
 use crossbeam::channel::{Receiver, Sender};
-use http::Uri;
+use http::{StatusCode, Uri};
 use std::net::{SocketAddr, TcpStream};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -31,8 +31,9 @@ pub fn connect(
         .parse()
         .map_err(|_| WsError::FailedParseUri)?;
     let hashed_password = encrypt_password(password);
-    let request =
-        ClientRequestBuilder::new(uri).with_header(AUTH_HEADER, hashed_password);
+    let request = ClientRequestBuilder::new(uri)
+        .with_header(AUTH_HEADER, hashed_password)
+        .with_header(COMPRESSION_HEADER, compression.to_string());
 
     let mut stream = match tungstenite::connect(request) {
         Ok((stream, _)) => stream,
@@ -228,12 +229,44 @@ impl WsError {
                 tungstenite::Error::Url(_) => {
                     Some("Bad url (or server is not working)".to_string())
                 },
-                tungstenite::Error::Http(_) => {
-                    Some("Unauthorized, or bad headers.".to_string())
+                tungstenite::Error::Http(response) => match response.status() {
+                    StatusCode::UNAUTHORIZED => {
+                        if let Some(body) =
+                            Self::response_body_bytes_to_str(response.body())
+                        {
+                            return Some(format!("Unauthorized: {}", body));
+                        }
+                        Some("Unauthorized.".to_string())
+                    },
+                    StatusCode::PRECONDITION_FAILED => {
+                        if let Some(body) =
+                            Self::response_body_bytes_to_str(response.body())
+                        {
+                            return Some(format!("Precondition failed: {}", body));
+                        }
+                        Some("Some connection precondition failed.".to_string())
+                    },
+                    StatusCode::BAD_REQUEST => {
+                        if let Some(body) =
+                            Self::response_body_bytes_to_str(response.body())
+                        {
+                            return Some(format!("Bad request: {}", body));
+                        }
+                        Some("Bad request. Maybe, some headers absent.".to_string())
+                    },
+                    _ => Some("Connection attempt failed.".to_string()),
                 },
             },
             WsError::BadReadTimeoutDuration(err) => Some(err.to_string()),
             _ => None,
+        }
+    }
+
+    fn response_body_bytes_to_str(body: &Option<Vec<u8>>) -> Option<&str> {
+        if let Some(body_bytes) = body {
+            std::str::from_utf8(body_bytes).ok()
+        } else {
+            None
         }
     }
 }
