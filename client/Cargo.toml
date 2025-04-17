@@ -18,7 +18,6 @@ common = { path = "../common" }
 
 chrono = "0.4.40"
 crossbeam = "0.8.4"
-directories = "6.0.0"
 egui = "0.31.1"
 egui-aesthetix = { git="https://github.com/thebashpotato/egui-aesthetix.git", rev="c26c1dd543819fc46bfebe4cb1f42ee84ed14416", features = ["all_themes"]}
 eframe = { version = "0.31.1", default-features = false, features = [
