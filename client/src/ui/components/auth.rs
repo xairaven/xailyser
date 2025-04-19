@@ -204,6 +204,11 @@ impl AuthFields {
     }
 
     pub fn into_profile(self, title: &str) -> Result<Profile, AuthFieldError> {
+        let title = title.trim();
+        if title.is_empty() {
+            return Err(AuthFieldError::TitleTooShort);
+        }
+
         let password = self.password.trim();
         if password.len() < MIN_PASSWORD_LEN {
             return Err(AuthFieldError::PasswordTooSmall);
@@ -212,7 +217,7 @@ impl AuthFields {
         };
 
         let profile = Profile {
-            title: title.trim().to_string(),
+            title: title.to_string(),
             ip: self
                 .ip
                 .trim()
@@ -235,6 +240,9 @@ const MAX_PASSWORD_LEN: usize = 20;
 
 #[derive(Error, Debug)]
 pub enum AuthFieldError {
+    #[error("Minimal title length is 1 character")]
+    TitleTooShort,
+
     #[error("Failed to parse IP address")]
     WrongIpAddress,
 
