@@ -7,6 +7,7 @@ use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fs;
 use std::str::FromStr;
+use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
 const CONFIG_FILENAME: &str = "config.toml";
@@ -15,6 +16,7 @@ const CONFIG_FILETYPE: FileKind = FileKind::Config;
 #[derive(Debug, Clone)]
 pub struct Config {
     pub compression: bool,
+    pub language: Language,
     pub log_format: String,
     pub log_level: LevelFilter,
     pub theme: ThemePreference,
@@ -25,6 +27,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             compression: true,
+            language: Language::English,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
             theme: ThemePreference::default(),
@@ -41,6 +44,7 @@ impl Serialize for Config {
     {
         let mut state = serializer.serialize_struct("Config", 3)?;
         state.serialize_field("compression", &self.compression)?;
+        state.serialize_field("language", &self.language.to_string())?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
         state.serialize_field("theme", &self.theme.to_string())?;
@@ -83,6 +87,7 @@ impl Config {
 #[derive(Deserialize)]
 struct ConfigDto {
     compression: bool,
+    language: String,
     log_format: String,
     log_level: String,
     theme: String,
@@ -93,6 +98,8 @@ impl ConfigDto {
     pub fn into_config(self) -> Result<Config, ConfigError> {
         let config = Config {
             compression: self.compression,
+            language: Language::from_str(&self.language)
+                .map_err(|_| ConfigError::UnknownLanguage)?,
             log_format: self.log_format.trim().to_string(),
             log_level: LevelFilter::from_str(self.log_level.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
@@ -116,6 +123,9 @@ pub enum ConfigError {
     #[error("TOML Deserialization Error.")]
     TomlDeserializationError(#[from] toml::de::Error),
 
+    #[error("Unknown language.")]
+    UnknownLanguage,
+
     #[error("Unknown log level.")]
     UnknownLogLevel,
 
@@ -131,4 +141,13 @@ impl ConfigError {
             _ => None,
         }
     }
+}
+
+#[derive(Clone, Debug, Display, EnumIter, EnumString, PartialEq)]
+pub enum Language {
+    #[strum(serialize = "English")]
+    English,
+
+    #[strum(serialize = "Ukrainian")]
+    Ukrainian,
 }

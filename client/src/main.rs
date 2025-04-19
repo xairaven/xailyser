@@ -4,9 +4,13 @@
 #![deny(clippy::panic)]
 #![deny(unsafe_code)]
 
+// Defining folder with locales. Path: crate-root/locales
+rust_i18n::i18n!("locales", fallback = "English");
+
 use crate::config::Config;
 
 fn main() {
+    // Reading config
     let config = match Config::from_file() {
         Ok(value) => value,
         Err(err) => {
@@ -19,6 +23,10 @@ fn main() {
         },
     };
 
+    // Setting language
+    rust_i18n::set_locale(&config.language.to_string());
+
+    // Logging setup
     logging::setup(&config.log_level, config.log_format.clone()).unwrap_or_else(|err| {
         let mut message = format!("Logger initialization failed. Error: {err}.");
         if let Some(additional_info) = err.additional_info() {

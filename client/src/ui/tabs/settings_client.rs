@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::themes::ThemePreference;
-use crate::utils;
+use crate::{config, utils};
 use egui::{Checkbox, DragValue, Grid, RichText, TextEdit};
 use log::LevelFilter;
 use strum::IntoEnumIterator;
@@ -17,6 +17,7 @@ pub struct SettingsClientTab {
     compression: bool,
 
     // Fields that applied after restart
+    language: config::Language,
     log_format_choice: String,
     log_level_choice: LevelFilter,
 
@@ -30,6 +31,7 @@ impl SettingsClientTab {
         Self {
             compression: ctx.client_settings.compression,
 
+            language: ctx.config.language.clone(),
             log_format_choice: ctx.config.log_format.clone(),
             log_level_choice: ctx.config.log_level,
 
@@ -59,6 +61,9 @@ impl SettingsClientTab {
                                 ui.end_row();
 
                                 self.compression_view(ui, ctx);
+                                ui.end_row();
+
+                                self.language_view(ui, ctx);
                                 ui.end_row();
 
                                 self.logs_format_view(ui, ctx);
@@ -139,6 +144,40 @@ impl SettingsClientTab {
             }
             if ui.button("🔙").clicked() {
                 self.compression = ctx.client_settings.compression;
+            }
+        });
+    }
+
+    fn language_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let different_from_config = self.language != ctx.config.language;
+
+        let mut label = RichText::new("* Language:").size(16.0).strong();
+        if different_from_config {
+            label = label.color(FIELD_NOT_APPLIED_COLOR);
+        }
+        ui.add(egui::Label::new(label))
+            .on_hover_text(FIELD_RESTART_NEEDED);
+
+        // Second Column
+        ui.horizontal(|ui| {
+            egui::ComboBox::from_label("")
+                .selected_text(self.language.to_string()) // Display the currently selected option.
+                .show_ui(ui, |ui| {
+                    for language in config::Language::iter() {
+                        ui.selectable_value(&mut self.language, language.clone(), language.to_string());
+                    }
+                });
+
+            if ui.button("Apply").clicked() {
+                log::info!(
+                    "Client Settings: Language changed to {}",
+                    self.language
+                );
+                ctx.config.language = self.language.clone();
+            }
+
+            if ui.button("🔙").clicked() {
+                self.language = ctx.config.language.clone();
             }
         });
     }
