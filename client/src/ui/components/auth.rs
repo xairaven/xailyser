@@ -188,46 +188,62 @@ pub struct AuthFields {
 }
 
 impl AuthFields {
-    fn get_address(&self) -> Result<SocketAddr, AddressConversionError> {
+    fn get_address(&self) -> Result<SocketAddr, AuthFieldError> {
         let ip_address: IpAddr = self
             .ip
             .trim()
             .parse()
-            .map_err(|_| AddressConversionError::WrongIpAddress)?;
+            .map_err(|_| AuthFieldError::WrongIpAddress)?;
         let port: u16 = self
             .port
             .trim()
             .parse()
-            .map_err(|_| AddressConversionError::WrongPort)?;
+            .map_err(|_| AuthFieldError::WrongPort)?;
 
         Ok(SocketAddr::new(ip_address, port))
     }
 
-    pub fn into_profile(self, title: &str) -> Result<Profile, AddressConversionError> {
+    pub fn into_profile(self, title: &str) -> Result<Profile, AuthFieldError> {
+        let password = self.password.trim();
+        if password.len() < MIN_PASSWORD_LEN {
+            return Err(AuthFieldError::PasswordTooSmall);
+        } else if password.len() > MAX_PASSWORD_LEN {
+            return Err(AuthFieldError::PasswordTooLarge);
+        };
+
         let profile = Profile {
             title: title.trim().to_string(),
             ip: self
                 .ip
                 .trim()
                 .parse()
-                .map_err(|_| AddressConversionError::WrongIpAddress)?,
+                .map_err(|_| AuthFieldError::WrongIpAddress)?,
             port: self
                 .port
                 .trim()
                 .parse()
-                .map_err(|_| AddressConversionError::WrongPort)?,
-            password: self.password.trim().to_string(),
+                .map_err(|_| AuthFieldError::WrongPort)?,
+            password: password.to_string(),
         };
 
         Ok(profile)
     }
 }
 
+const MIN_PASSWORD_LEN: usize = 4;
+const MAX_PASSWORD_LEN: usize = 20;
+
 #[derive(Error, Debug)]
-pub enum AddressConversionError {
+pub enum AuthFieldError {
     #[error("Failed to parse IP address")]
     WrongIpAddress,
 
     #[error("Failed to parse port")]
     WrongPort,
+
+    #[error("Minimal password length is 4 characters")]
+    PasswordTooSmall,
+
+    #[error("Max password length is 20 characters")]
+    PasswordTooLarge,
 }
