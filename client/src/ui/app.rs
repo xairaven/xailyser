@@ -116,7 +116,7 @@ impl App {
         let mut closed_modals: Vec<usize> = vec![];
 
         for (index, modal) in self.modals.iter_mut().enumerate() {
-            modal.show(ui);
+            modal.show(ui, &mut self.context);
 
             if modal.is_closed() {
                 closed_modals.push(index);

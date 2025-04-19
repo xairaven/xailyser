@@ -1,6 +1,7 @@
 use crate::communication::heartbeat::Heartbeat;
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
+use crate::profiles::ProfilesStorage;
 use crate::ui::modals::Modal;
 use crate::ui::themes::ThemePreference;
 use chrono::{DateTime, Local};
@@ -17,6 +18,8 @@ pub struct Context {
 
     // Used for saving into config file
     pub config: Config,
+    // Connection profiles
+    pub profiles_storage: ProfilesStorage,
 
     // Shutdown flag
     pub shutdown_flag: Arc<AtomicBool>,
@@ -37,6 +40,8 @@ impl Context {
         let (ui_client_requests_tx, ui_client_requests_rx) =
             unbounded::<UiClientRequest>();
 
+        let profiles_storage = ProfilesStorage::from_file().unwrap_or_default();
+
         Self {
             client_settings: ClientSettings {
                 compression: config.compression,
@@ -47,6 +52,7 @@ impl Context {
             heartbeat: Default::default(),
 
             config,
+            profiles_storage,
 
             shutdown_flag: Arc::new(Default::default()),
 

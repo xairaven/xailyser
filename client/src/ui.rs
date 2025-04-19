@@ -35,6 +35,7 @@ mod app;
 
 pub mod components {
     pub mod auth;
+    pub mod connection_profiles;
     pub mod preauth_client_settings;
     pub mod root;
 }

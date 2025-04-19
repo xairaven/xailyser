@@ -1,61 +1,32 @@
-use crate::ui::modals::Modal;
-use egui::{Id, WidgetText};
+use crate::context::Context;
+use crate::ui::modals::{Modal, ModalFields};
+use egui::{Ui, WidgetText};
 
+#[derive(Default)]
 pub struct MessageModal {
-    id: i64,
-    name: String,
+    modal_fields: ModalFields,
     message: WidgetText,
-
-    width: f32,
-
-    is_open: bool,
-}
-
-impl Default for MessageModal {
-    fn default() -> Self {
-        Self {
-            id: rand::random(),
-            name: "Modal".to_string(),
-            message: WidgetText::default(),
-
-            is_open: true,
-
-            width: 100.0,
-        }
-    }
 }
 
 impl Modal for MessageModal {
-    fn show(&mut self, ui: &egui::Ui) {
-        if self.is_open {
-            let modal = egui::Modal::new(Id::new(self.id)).show(ui.ctx(), |ui| {
-                ui.set_width(self.width);
+    fn show_content(&mut self, ui: &mut Ui, _ctx: &mut Context) {
+        ui.label(self.message.clone());
 
-                ui.vertical_centered_justified(|ui| {
-                    ui.heading(&self.name);
-                });
+        ui.add_space(16.0);
 
-                ui.add_space(16.0);
-
-                ui.label(self.message.clone());
-
-                ui.add_space(16.0);
-
-                ui.vertical_centered_justified(|ui| {
-                    if ui.button("Close").clicked() {
-                        self.close()
-                    }
-                });
-            });
-
-            if modal.should_close() {
+        ui.vertical_centered_justified(|ui| {
+            if ui.button("Close").clicked() {
                 self.close()
             }
-        }
+        });
     }
 
-    fn is_closed(&self) -> bool {
-        !self.is_open
+    fn close(&mut self) {
+        self.modal_fields.is_open = false;
+    }
+
+    fn modal_fields(&self) -> &ModalFields {
+        &self.modal_fields
     }
 }
 
@@ -63,19 +34,19 @@ impl MessageModal {
     pub fn error(message: &str) -> Self {
         MessageModal::default()
             .with_message(message)
-            .with_name("Error ❎")
+            .with_title("❎ Error".to_string())
             .with_width(300.0)
     }
 
     pub fn info(message: &str) -> Self {
         MessageModal::default()
             .with_message(message)
-            .with_name("Info ℹ")
+            .with_title("ℹ Info".to_string())
             .with_width(300.0)
     }
 
-    pub fn with_name(mut self, name: &str) -> Self {
-        self.name = name.to_string();
+    pub fn with_title(mut self, title: String) -> Self {
+        self.modal_fields.title = title;
         self
     }
 
@@ -85,11 +56,7 @@ impl MessageModal {
     }
 
     pub fn with_width(mut self, width: f32) -> Self {
-        self.width = width;
+        self.modal_fields.width = width;
         self
-    }
-
-    fn close(&mut self) {
-        self.is_open = false;
     }
 }

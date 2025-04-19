@@ -1,4 +1,6 @@
 use crate::context::Context;
+use crate::profiles::Profile;
+use crate::ui::components::connection_profiles::ConnectionProfilesComponent;
 use crate::ui::components::preauth_client_settings::PreAuthClientSettingsComponent;
 use crate::ui::modals::message::MessageModal;
 use crate::ws;
@@ -11,26 +13,28 @@ use std::thread::JoinHandle;
 use thiserror::Error;
 
 pub struct AuthComponent {
+    // Net thread
     pub net_thread: Option<JoinHandle<()>>,
+
+    // Components
+    pub connection_profiles_component: ConnectionProfilesComponent,
     pub pre_auth_settings_component: PreAuthClientSettingsComponent,
 
+    // Internal fields
     authenticated: bool,
-
-    ip_text_field: String,
-    port_text_field: String,
-    password_text_field: String,
+    auth_fields: AuthFields,
 }
 
 impl AuthComponent {
     pub fn new(ctx: &Context) -> Self {
         Self {
+            net_thread: None,
+
+            connection_profiles_component: Default::default(),
             pre_auth_settings_component: PreAuthClientSettingsComponent::new(ctx),
 
-            net_thread: None,
             authenticated: false,
-            ip_text_field: "".to_string(),
-            port_text_field: "".to_string(),
-            password_text_field: "".to_string(),
+            auth_fields: AuthFields::default(),
         }
     }
 
@@ -42,6 +46,12 @@ impl AuthComponent {
         // Show settings if opened instead of auth window
         if self.pre_auth_settings_component.is_opened() {
             self.pre_auth_settings_component.show(ui, ctx);
+            return;
+        }
+        // Show connection profiles if opened instead of auth window
+        if self.connection_profiles_component.is_opened() {
+            self.connection_profiles_component
+                .show(ui, ctx, &mut self.auth_fields);
             return;
         }
 
@@ -67,21 +77,21 @@ impl AuthComponent {
                     .show(ui, |ui| {
                         ui.label("IP:");
                         ui.add(
-                            TextEdit::singleline(&mut self.ip_text_field)
+                            TextEdit::singleline(&mut self.auth_fields.ip)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
                         ui.label("Port:");
                         ui.add(
-                            TextEdit::singleline(&mut self.port_text_field)
+                            TextEdit::singleline(&mut self.auth_fields.port)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
                         ui.label("Password:");
                         ui.add(
-                            TextEdit::singleline(&mut self.password_text_field)
+                            TextEdit::singleline(&mut self.auth_fields.password)
                                 .password(true)
                                 .desired_width(f32::INFINITY),
                         );
@@ -92,12 +102,12 @@ impl AuthComponent {
 
                 ui.vertical_centered_justified(|ui| {
                     if ui.button("CONNECT").clicked() {
-                        match self.get_address() {
+                        match self.auth_fields.get_address() {
                             Ok(address) => {
                                 self.try_connect(
                                     ctx,
                                     address,
-                                    &self.password_text_field.clone(),
+                                    &self.auth_fields.password.clone(),
                                 );
                             },
                             Err(err) => {
@@ -112,8 +122,15 @@ impl AuthComponent {
             columns[RIGHT_COLUMN].with_layout(
                 egui::Layout::right_to_left(egui::Align::Min),
                 |ui| {
-                    if ui.button("⚙").clicked() {
+                    if ui.button("⚙").on_hover_text("Client Settings").clicked() {
                         self.pre_auth_settings_component.open();
+                    }
+                    if ui
+                        .button("☎")
+                        .on_hover_text("Connection Profiles")
+                        .clicked()
+                    {
+                        self.connection_profiles_component.open();
                     }
                 },
             );
@@ -156,21 +173,6 @@ impl AuthComponent {
         }
     }
 
-    fn get_address(&self) -> Result<SocketAddr, AddressConversionError> {
-        let ip_address: IpAddr = self
-            .ip_text_field
-            .trim()
-            .parse()
-            .map_err(|_| AddressConversionError::WrongIpAddress)?;
-        let port: u16 = self
-            .port_text_field
-            .trim()
-            .parse()
-            .map_err(|_| AddressConversionError::WrongPort)?;
-
-        Ok(SocketAddr::new(ip_address, port))
-    }
-
     pub fn logout(&mut self, ctx: &Context) {
         self.authenticated = false;
         self.net_thread = None;
@@ -178,8 +180,51 @@ impl AuthComponent {
     }
 }
 
+#[derive(Default)]
+pub struct AuthFields {
+    pub ip: String,
+    pub port: String,
+    pub password: String,
+}
+
+impl AuthFields {
+    fn get_address(&self) -> Result<SocketAddr, AddressConversionError> {
+        let ip_address: IpAddr = self
+            .ip
+            .trim()
+            .parse()
+            .map_err(|_| AddressConversionError::WrongIpAddress)?;
+        let port: u16 = self
+            .port
+            .trim()
+            .parse()
+            .map_err(|_| AddressConversionError::WrongPort)?;
+
+        Ok(SocketAddr::new(ip_address, port))
+    }
+
+    pub fn into_profile(self, title: &str) -> Result<Profile, AddressConversionError> {
+        let profile = Profile {
+            title: title.trim().to_string(),
+            ip: self
+                .ip
+                .trim()
+                .parse()
+                .map_err(|_| AddressConversionError::WrongIpAddress)?,
+            port: self
+                .port
+                .trim()
+                .parse()
+                .map_err(|_| AddressConversionError::WrongPort)?,
+            password: self.password.trim().to_string(),
+        };
+
+        Ok(profile)
+    }
+}
+
 #[derive(Error, Debug)]
-enum AddressConversionError {
+pub enum AddressConversionError {
     #[error("Failed to parse IP address")]
     WrongIpAddress,
 
