@@ -129,6 +129,9 @@ impl ProfileModal {
             ProfileOperationMode::Edit(index) => {
                 debug_assert!(ctx.profiles_storage.profiles.len() > index);
                 if ctx.profiles_storage.profiles.len() <= index {
+                    let _ = ctx.modals_tx.try_send(Box::new(MessageModal::error(
+                        "Failed to edit profile",
+                    )));
                     return;
                 }
                 ctx.profiles_storage.profiles[index] = profile;

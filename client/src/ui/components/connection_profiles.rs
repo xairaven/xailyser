@@ -1,4 +1,5 @@
 use crate::context::Context;
+use crate::profiles::Profile;
 use crate::ui::components::auth::AuthFields;
 use crate::ui::modals::connection_profiles::ProfileModal;
 use crate::ui::modals::message::MessageModal;
@@ -7,6 +8,9 @@ use egui::{CentralPanel, Grid, RichText, ScrollArea, TopBottomPanel};
 #[derive(Default)]
 pub struct ConnectionProfilesComponent {
     is_opened: bool,
+
+    // Internal field for removing profiles
+    to_remove: Option<usize>,
 }
 
 impl ConnectionProfilesComponent {
@@ -72,84 +76,99 @@ impl ConnectionProfilesComponent {
                     .fill(theme.bg_primary_color_visuals()),
             )
             .show(ui.ctx(), |ui| {
-                ui.columns(3, |columns| {
-                    const MAIN_COLUMN: usize = 1;
-                    columns[MAIN_COLUMN].vertical(|ui| {
-                        ScrollArea::vertical().show(ui, |ui| {
-                            ui.vertical_centered_justified(|ui| {
-                                if ctx.profiles_storage.profiles.is_empty() {
-                                    ui.label("Empty");
-                                    return;
-                                }
+                ScrollArea::vertical().show(ui, |ui| {
+                    ui.vertical_centered_justified(|ui| {
+                        if ctx.profiles_storage.profiles.is_empty() {
+                            ui.label("Empty");
+                            return;
+                        }
 
-                                let mut to_remove: Option<usize> = None;
-                                for (index, profile) in
-                                    ctx.profiles_storage.profiles.iter().enumerate()
-                                {
-                                    ui.separator();
-
-                                    Grid::new(format!("ProfileView{index}"))
-                                        .num_columns(3)
-                                        .show(ui, |ui| {
-                                            ui.label("Title:");
-                                            ui.label(profile.title.to_string());
-                                            if ui
-                                                .button("✏")
-                                                .on_hover_text("Edit Profile")
-                                                .clicked()
-                                            {
-                                                let modal = ProfileModal::operation_edit(
-                                                    index, profile,
-                                                );
-                                                let _ = ctx
-                                                    .modals_tx
-                                                    .try_send(Box::new(modal));
-                                            }
-                                            ui.end_row();
-
-                                            ui.label("IP:");
-                                            ui.label(profile.ip.to_string());
-                                            if ui
-                                                .button("🗑")
-                                                .on_hover_text("Remove Profile")
-                                                .clicked()
-                                            {
-                                                to_remove = Some(index);
-                                            }
-                                            ui.end_row();
-
-                                            ui.label("Port:");
-                                            ui.label(profile.port.to_string());
-                                            if ui
-                                                .button("▶")
-                                                .on_hover_text("Proceed with Profile")
-                                                .clicked()
-                                            {
-                                                *auth_fields = AuthFields {
-                                                    ip: profile.ip.to_string(),
-                                                    port: profile.port.to_string(),
-                                                    password: profile
-                                                        .password
-                                                        .to_string(),
-                                                };
-                                                self.close();
-                                            }
-                                            ui.end_row();
-
-                                            ui.label("Password:");
-                                            ui.label(&profile.password);
-                                            ui.end_row();
-                                        });
-                                }
-                                // Removing
-                                if let Some(index) = to_remove {
-                                    ctx.profiles_storage.profiles.remove(index);
-                                }
-                            });
-                        });
+                        for (index, profile) in
+                            ctx.profiles_storage.profiles.iter().enumerate()
+                        {
+                            self.show_card(ui, ctx, auth_fields, index, profile);
+                        }
                     });
                 });
             });
+
+        // Removing elements
+        if let Some(index) = self.to_remove.take() {
+            debug_assert!(profiles_amount > index);
+            if profiles_amount <= index {
+                let _ = ctx
+                    .modals_tx
+                    .try_send(Box::new(MessageModal::error("Failed to remove profile")));
+                return;
+            }
+            ctx.profiles_storage.profiles.remove(index);
+        }
+    }
+
+    fn show_card(
+        &mut self, ui: &mut egui::Ui, ctx: &Context, auth_fields: &mut AuthFields,
+        index: usize, profile: &Profile,
+    ) {
+        let theme = ctx.client_settings.theme.into_aesthetix_theme();
+        egui::Frame::group(&egui::Style::default())
+            .fill(ui.visuals().extreme_bg_color)
+            .inner_margin(theme.margin_style())
+            .corner_radius(5.0)
+            .show(ui, |ui| {
+                ui.vertical(|ui| {
+                    ui.columns(3, |columns| {
+                        const LEFT_COLUMN: usize = 0;
+                        const RIGHT_COLUMN: usize = 2;
+                        columns[LEFT_COLUMN].with_layout(
+                            egui::Layout::left_to_right(egui::Align::Min),
+                            |ui| {
+                                ui.heading(&profile.title);
+                            },
+                        );
+
+                        columns[RIGHT_COLUMN].with_layout(
+                            egui::Layout::right_to_left(egui::Align::Min),
+                            |ui| {
+                                ui.horizontal(|ui| {
+                                    if ui.button("✏ Edit").clicked() {
+                                        let modal =
+                                            ProfileModal::operation_edit(index, profile);
+                                        let _ = ctx.modals_tx.try_send(Box::new(modal));
+                                    }
+
+                                    if ui.button("🗑 Delete").clicked() {
+                                        self.to_remove = Some(index);
+                                    }
+
+                                    if ui.button("▶ Use").clicked() {
+                                        *auth_fields = AuthFields {
+                                            ip: profile.ip.to_string(),
+                                            port: profile.port.to_string(),
+                                            password: profile.password.to_string(),
+                                        };
+                                        self.close();
+                                    }
+                                });
+                            },
+                        );
+                    });
+
+                    Grid::new(format!("ConnectionProfile{}", index))
+                        .striped(false)
+                        .num_columns(2)
+                        .show(ui, |ui| {
+                            ui.label(RichText::new("Address: ").strong());
+                            ui.label(format!("{}", profile.ip));
+                            ui.end_row();
+
+                            ui.label(RichText::new("Port: ").strong());
+                            ui.label(format!("{}", profile.port));
+                            ui.end_row();
+                        });
+                });
+            });
+
+        ui.add_space(4.0);
     }
 
     pub fn is_opened(&self) -> bool {
