@@ -3,7 +3,7 @@ use crate::context::Context;
 use crate::net::interface::InterfaceError;
 use common::channel::BroadcastChannel;
 use pcap::{Active, Capture};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -15,21 +15,11 @@ pub struct PacketSniffer {
     frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
     context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
+    ws_active_counter: Arc<AtomicUsize>,
 }
 
 // TODO
 impl PacketSniffer {
-    pub fn new(
-        frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
-        context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
-    ) -> Self {
-        Self {
-            frame_channel,
-            context,
-            shutdown_flag,
-        }
-    }
-
     pub fn start(&self) -> Result<(), NetworkError> {
         let interface = context::lock(&self.context, |ctx| ctx.network_interface.clone())
             .ok_or(NetworkError::NoInterface)?;
@@ -49,16 +39,20 @@ impl PacketSniffer {
                 break;
             }
 
-            match capture.next_packet() {
-                Ok(packet) => {
-                    // TODO: To handle packet.
-                },
-                Err(pcap::Error::TimeoutExpired) => {
-                    thread::sleep(Duration::from_millis(TIMEOUT_MS as u64));
-                },
-                Err(err) => {
-                    return Err(NetworkError::PcapError(err));
-                },
+            if self.ws_active_counter.load(Ordering::Acquire) > 0 {
+                match capture.next_packet() {
+                    Ok(packet) => {
+                        // TODO: To handle packet.
+                    },
+                    Err(pcap::Error::TimeoutExpired) => {
+                        thread::sleep(Duration::from_millis(TIMEOUT_MS as u64));
+                    },
+                    Err(err) => {
+                        return Err(NetworkError::PcapError(err));
+                    },
+                }
+            } else {
+                thread::sleep(Duration::from_millis(TIMEOUT_MS as u64));
             }
         }
 
@@ -78,4 +72,22 @@ pub enum NetworkError {
 
     #[error("Pcap library error.")]
     PcapError(pcap::Error),
+}
+
+pub struct PacketSnifferBuilder {
+    pub frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+    pub context: Arc<Mutex<Context>>,
+    pub shutdown_flag: Arc<AtomicBool>,
+    pub ws_active_counter: Arc<AtomicUsize>,
+}
+
+impl PacketSnifferBuilder {
+    pub fn build(self) -> PacketSniffer {
+        PacketSniffer {
+            frame_channel: self.frame_channel,
+            context: self.context,
+            shutdown_flag: self.shutdown_flag,
+            ws_active_counter: self.ws_active_counter,
+        }
+    }
 }

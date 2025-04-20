@@ -1,10 +1,10 @@
 use crate::context;
 use crate::context::Context;
-use crate::ws::{WsError, WsHandler};
+use crate::ws::{WsError, WsHandlerBuilder};
 use common::channel::BroadcastChannel;
 use common::messages::CONNECTION_TIMEOUT;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
@@ -16,22 +16,11 @@ pub struct TcpHandler {
     frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
     context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
+    ws_active_counter: Arc<AtomicUsize>,
     ws_threads_counter: u16,
 }
 
 impl TcpHandler {
-    pub fn new(
-        frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
-        context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
-    ) -> Self {
-        Self {
-            frame_channel,
-            context,
-            shutdown_flag,
-            ws_threads_counter: 0,
-        }
-    }
-
     pub fn start(&mut self) -> Result<(), TcpError> {
         if self.shutdown_flag.load(Ordering::Acquire) {
             return Ok(());
@@ -75,19 +64,22 @@ impl TcpHandler {
                                     std::process::exit(1);
                                 },
                             };
+                            let ws_active_counter = Arc::clone(&self.ws_active_counter);
 
                             move || {
                                 log::info!(
                                     "TCP connection attempt found. Started WS thread."
                                 );
-                                if let Err(err) = WsHandler::new(
-                                    thread_counter,
+                                let mut ws_handler = WsHandlerBuilder {
+                                    id: thread_counter,
                                     frame_receiver,
                                     context,
                                     shutdown_flag,
-                                )
-                                .start(tcp_stream)
-                                {
+                                    ws_active_counter,
+                                }
+                                .build();
+
+                                if let Err(err) = ws_handler.start(tcp_stream) {
                                     match &err {
                                         WsError::AuthFailed(error_detailed) => {
                                             log::error!(
@@ -145,4 +137,24 @@ pub enum TcpError {
 
     #[error("Failed to set nonblocking mode on the server.")]
     FailedSetNonBlocking(std::io::Error),
+}
+
+pub struct TcpHandlerBuilder {
+    pub frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+    pub context: Arc<Mutex<Context>>,
+    pub shutdown_flag: Arc<AtomicBool>,
+    pub ws_active_counter: Arc<AtomicUsize>,
+}
+
+impl TcpHandlerBuilder {
+    pub fn build(self) -> TcpHandler {
+        TcpHandler {
+            frame_channel: self.frame_channel,
+            context: self.context,
+            shutdown_flag: self.shutdown_flag,
+            ws_active_counter: self.ws_active_counter,
+
+            ws_threads_counter: 0,
+        }
+    }
 }

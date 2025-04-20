@@ -7,7 +7,7 @@ use common::messages::{CONNECTION_TIMEOUT, Request, Response, ServerError};
 use crossbeam::channel::{Receiver, TryRecvError};
 use std::collections::VecDeque;
 use std::net::TcpStream;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use thiserror::Error;
@@ -24,28 +24,13 @@ pub struct WsHandler {
     frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
     response_queue: VecDeque<Response>,
     shutdown_flag: Arc<AtomicBool>,
+
+    _connection_guard: WsConnectionGuard,
 }
 
 type WSStream = WebSocket<TcpStream>;
 
 impl WsHandler {
-    pub fn new(
-        id: u16, frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
-        context: Arc<Mutex<Context>>, shutdown_flag: Arc<AtomicBool>,
-    ) -> Self {
-        let compression = context::lock(&context, |context| context.compression);
-
-        Self {
-            id,
-            compression,
-            frame_receiver,
-            context,
-            shutdown_flag,
-
-            response_queue: VecDeque::new(),
-        }
-    }
-
     pub fn start(&mut self, tcp_stream: TcpStream) -> Result<(), WsError> {
         let ws_stream = match self.connect(tcp_stream) {
             Ok(value) => {
@@ -323,4 +308,47 @@ pub enum WsError {
 
     #[error("Invalid password header")]
     InvalidPasswordHeader,
+}
+
+pub struct WsHandlerBuilder {
+    pub id: u16,
+    pub frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
+    pub context: Arc<Mutex<Context>>,
+    pub shutdown_flag: Arc<AtomicBool>,
+    pub ws_active_counter: Arc<AtomicUsize>,
+}
+
+impl WsHandlerBuilder {
+    pub fn build(self) -> WsHandler {
+        let compression = context::lock(&self.context, |context| context.compression);
+        let connection_guard = WsConnectionGuard::new(self.ws_active_counter);
+
+        WsHandler {
+            id: self.id,
+            compression,
+            context: self.context,
+            frame_receiver: self.frame_receiver,
+            response_queue: VecDeque::new(),
+            shutdown_flag: self.shutdown_flag,
+
+            _connection_guard: connection_guard,
+        }
+    }
+}
+
+pub struct WsConnectionGuard {
+    counter: Arc<AtomicUsize>,
+}
+
+impl WsConnectionGuard {
+    pub fn new(counter: Arc<AtomicUsize>) -> Self {
+        counter.fetch_add(1, Ordering::Release);
+        Self { counter }
+    }
+}
+
+impl Drop for WsConnectionGuard {
+    fn drop(&mut self) {
+        self.counter.fetch_sub(1, Ordering::Release);
+    }
 }
