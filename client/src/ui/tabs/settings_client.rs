@@ -253,7 +253,7 @@ impl SettingsClientTab {
             DragValue::new(&mut self.ping_delay_seconds)
                 .speed(1)
                 .range(1..=i64::MAX)
-                .suffix(t!("Tab.SettingsClient.Suffix.SyncDelay")),
+                .suffix(format!(" {}", t!("Tab.SettingsClient.Suffix.SyncDelay"))),
         );
 
         if ui.button(t!("Button.Apply")).clicked() {

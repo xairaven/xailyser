@@ -91,7 +91,7 @@
   "Tab.SettingsClient.Suffix.SyncDelay": "секунд",
   "Tab.SettingsClient.Note": "* Примітка",
   "Tab.SettingsClient.Note.FieldAppliedImmediately": "Налаштування набуває чинності одразу після застосування.",
-  "Tab.SettingsClient.Note.FieldAppliedAfterLogout": "Налаштування набуде чинності після виходу з системи.",
+  "Tab.SettingsClient.Note.FieldAppliedAfterLogout": "Налаштування набуде чинності після повторного з'єднання.",
   "Tab.SettingsClient.Note.FieldAppliedAfterRestart": "Налаштування набуде чинності після збереження конфігурації та перезапуску програми.",
 
   "Tab.SettingsServer.Label.RequestSettings": "Запитати активні налаштування",
