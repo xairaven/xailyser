@@ -111,7 +111,7 @@ impl AuthComponent {
                             },
                             Err(err) => {
                                 let modal = MessageModal::error(&err.localize());
-                                let _ = ctx.modals_tx.send(Box::new(modal));
+                                let _ = ctx.modals_tx.try_send(Box::new(modal));
                             },
                         }
                     }
@@ -171,7 +171,7 @@ impl AuthComponent {
                 };
 
                 let modal = MessageModal::error(&message);
-                let _ = ctx.modals_tx.send(Box::new(modal));
+                let _ = ctx.modals_tx.try_send(Box::new(modal));
             },
         }
     }
