@@ -10,7 +10,6 @@ use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use thiserror::Error;
 
 pub struct AuthComponent {
     // Net thread
@@ -65,7 +64,7 @@ impl AuthComponent {
                 ui.add_space(window_height / 6.0);
 
                 ui.vertical_centered_justified(|ui| {
-                    ui.label(RichText::new("Login").size(26.0));
+                    ui.label(RichText::new(t!("Component.Auth.Login")).size(26.0));
                 });
 
                 ui.add_space(window_height / 6.0);
@@ -75,21 +74,21 @@ impl AuthComponent {
                     .striped(false)
                     .spacing([20.0, 20.0])
                     .show(ui, |ui| {
-                        ui.label("IP:");
+                        ui.label(format!("{}:", t!("Component.Auth.IP")));
                         ui.add(
                             TextEdit::singleline(&mut self.auth_fields.ip)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
-                        ui.label("Port:");
+                        ui.label(format!("{}:", t!("Component.Auth.Port")));
                         ui.add(
                             TextEdit::singleline(&mut self.auth_fields.port)
                                 .desired_width(f32::INFINITY),
                         );
                         ui.end_row();
 
-                        ui.label("Password:");
+                        ui.label(format!("{}:", t!("Component.Auth.Password")));
                         ui.add(
                             TextEdit::singleline(&mut self.auth_fields.password)
                                 .password(true)
@@ -101,7 +100,7 @@ impl AuthComponent {
                 ui.add_space(window_height / 6.0);
 
                 ui.vertical_centered_justified(|ui| {
-                    if ui.button("CONNECT").clicked() {
+                    if ui.button(t!("Component.Auth.Connect")).clicked() {
                         match self.auth_fields.get_address() {
                             Ok(address) => {
                                 self.try_connect(
@@ -111,7 +110,7 @@ impl AuthComponent {
                                 );
                             },
                             Err(err) => {
-                                let modal = MessageModal::error(&err.to_string());
+                                let modal = MessageModal::error(&err.localize());
                                 let _ = ctx.modals_tx.send(Box::new(modal));
                             },
                         }
@@ -122,12 +121,16 @@ impl AuthComponent {
             columns[RIGHT_COLUMN].with_layout(
                 egui::Layout::right_to_left(egui::Align::Min),
                 |ui| {
-                    if ui.button("⚙").on_hover_text("Client Settings").clicked() {
+                    if ui
+                        .button("⚙")
+                        .on_hover_text(t!("Component.Auth.Hover.ClientSettings"))
+                        .clicked()
+                    {
                         self.pre_auth_settings_component.open();
                     }
                     if ui
                         .button("☎")
-                        .on_hover_text("Connection Profiles")
+                        .on_hover_text(t!("Component.Auth.Hover.ConnectionProfiles"))
                         .clicked()
                     {
                         self.connection_profiles_component.open();
@@ -238,20 +241,31 @@ impl AuthFields {
 const MIN_PASSWORD_LEN: usize = 4;
 const MAX_PASSWORD_LEN: usize = 20;
 
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum AuthFieldError {
-    #[error("Minimal title length is 1 character")]
-    TitleTooShort,
-
-    #[error("Failed to parse IP address")]
-    WrongIpAddress,
-
-    #[error("Failed to parse port")]
-    WrongPort,
-
-    #[error("Minimal password length is 4 characters")]
-    PasswordTooSmall,
-
-    #[error("Max password length is 20 characters")]
     PasswordTooLarge,
+    PasswordTooSmall,
+    TitleTooShort,
+    WrongIpAddress,
+    WrongPort,
+}
+
+impl AuthFieldError {
+    pub fn localize(&self) -> String {
+        match self {
+            AuthFieldError::TitleTooShort => {
+                t!("Component.Auth.Error.TitleTooShort").to_string()
+            },
+            AuthFieldError::WrongIpAddress => {
+                t!("Component.Auth.Error.WrongIpAddress").to_string()
+            },
+            AuthFieldError::WrongPort => t!("Component.Auth.Error.WrongPort").to_string(),
+            AuthFieldError::PasswordTooSmall => {
+                t!("Component.Auth.Error.PasswordTooSmall").to_string()
+            },
+            AuthFieldError::PasswordTooLarge => {
+                t!("Component.Auth.Error.PasswordTooLarge").to_string()
+            },
+        }
+    }
 }

@@ -4,6 +4,9 @@
 #![deny(clippy::panic)]
 #![deny(unsafe_code)]
 
+#[macro_use]
+extern crate rust_i18n;
+
 // Defining folder with locales. Path: crate-root/locales
 rust_i18n::i18n!("locales", fallback = "English");
 

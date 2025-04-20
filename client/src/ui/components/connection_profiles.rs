@@ -35,13 +35,23 @@ impl ConnectionProfilesComponent {
                     columns[LEFT_COLUMN].with_layout(
                         egui::Layout::left_to_right(egui::Align::Min),
                         |ui| {
-                            if ui.button("➕").on_hover_text("Add new profile").clicked()
+                            if ui
+                                .button("➕")
+                                .on_hover_text(t!(
+                                    "Component.ConnectionProfiles.Hover.Add"
+                                ))
+                                .clicked()
                             {
                                 let _ = ctx
                                     .modals_tx
                                     .try_send(Box::new(ProfileModal::operation_add()));
                             }
-                            if ui.button("💾").on_hover_text("Save profiles").clicked()
+                            if ui
+                                .button("💾")
+                                .on_hover_text(t!(
+                                    "Component.ConnectionProfiles.Hover.Save"
+                                ))
+                                .clicked()
                             {
                                 self.save_profiles(ctx);
                             }
@@ -51,7 +61,8 @@ impl ConnectionProfilesComponent {
                     columns[MAIN_COLUMN].vertical_centered(|ui| {
                         ui.heading(
                             RichText::new(format!(
-                                "☎ Connection Profiles: {}",
+                                "{}: {}",
+                                t!("Component.ConnectionProfiles.Heading"),
                                 profiles_amount
                             ))
                             .size(25.0),
@@ -79,7 +90,7 @@ impl ConnectionProfilesComponent {
                 ScrollArea::vertical().show(ui, |ui| {
                     ui.vertical_centered_justified(|ui| {
                         if ctx.profiles_storage.profiles.is_empty() {
-                            ui.label("Empty");
+                            ui.label(t!("Component.ConnectionProfiles.EmptyLabel"));
                             return;
                         }
 
@@ -96,9 +107,9 @@ impl ConnectionProfilesComponent {
         if let Some(index) = self.to_remove.take() {
             debug_assert!(profiles_amount > index);
             if profiles_amount <= index {
-                let _ = ctx
-                    .modals_tx
-                    .try_send(Box::new(MessageModal::error("Failed to remove profile")));
+                let _ = ctx.modals_tx.try_send(Box::new(MessageModal::error(&t!(
+                    "Component.ConnectionProfiles.Modal.ErrorRemove"
+                ))));
                 return;
             }
             ctx.profiles_storage.profiles.remove(index);
@@ -130,17 +141,37 @@ impl ConnectionProfilesComponent {
                             egui::Layout::right_to_left(egui::Align::Min),
                             |ui| {
                                 ui.horizontal(|ui| {
-                                    if ui.button("✏ Edit").clicked() {
+                                    if ui
+                                        .button(format!(
+                                            "✏ {}",
+                                            t!("Component.ConnectionProfiles.Card.Edit")
+                                        ))
+                                        .clicked()
+                                    {
                                         let modal =
                                             ProfileModal::operation_edit(index, profile);
                                         let _ = ctx.modals_tx.try_send(Box::new(modal));
                                     }
 
-                                    if ui.button("🗑 Delete").clicked() {
+                                    if ui
+                                        .button(format!(
+                                            "🗑 {}",
+                                            t!(
+                                                "Component.ConnectionProfiles.Card.Delete"
+                                            )
+                                        ))
+                                        .clicked()
+                                    {
                                         self.to_remove = Some(index);
                                     }
 
-                                    if ui.button("▶ Use").clicked() {
+                                    if ui
+                                        .button(format!(
+                                            "▶ {}",
+                                            t!("Component.ConnectionProfiles.Card.Use")
+                                        ))
+                                        .clicked()
+                                    {
                                         *auth_fields = AuthFields {
                                             ip: profile.ip.to_string(),
                                             port: profile.port.to_string(),
@@ -157,11 +188,23 @@ impl ConnectionProfilesComponent {
                         .striped(false)
                         .num_columns(2)
                         .show(ui, |ui| {
-                            ui.label(RichText::new("Address: ").strong());
+                            ui.label(
+                                RichText::new(format!(
+                                    "{}: ",
+                                    t!("Component.ConnectionProfiles.Card.Address")
+                                ))
+                                .strong(),
+                            );
                             ui.label(format!("{}", profile.ip));
                             ui.end_row();
 
-                            ui.label(RichText::new("Port: ").strong());
+                            ui.label(
+                                RichText::new(format!(
+                                    "{}: ",
+                                    t!("Component.ConnectionProfiles.Card.Port")
+                                ))
+                                .strong(),
+                            );
                             ui.label(format!("{}", profile.port));
                             ui.end_row();
                         });
@@ -186,7 +229,9 @@ impl ConnectionProfilesComponent {
     fn save_profiles(&mut self, ctx: &mut Context) {
         let modal = if let Err(err) = ctx.profiles_storage.save_to_file() {
             let mut text = format!(
-                "Failed to save connection profiles.\nAdditional Info: {}.",
+                "{}\n{}: {}.",
+                t!("Component.ConnectionProfiles.Modal.ErrorSave"),
+                t!("Error.AdditionalInfo"),
                 err
             );
             if let Some(additional_info) = err.additional_info() {
@@ -194,7 +239,7 @@ impl ConnectionProfilesComponent {
             }
             MessageModal::error(&text)
         } else {
-            MessageModal::info("Successfully saved connection profiles!")
+            MessageModal::info(&t!("Message.Success.ProfilesSaved"))
         };
         let _ = ctx.modals_tx.try_send(Box::new(modal));
     }

@@ -29,7 +29,10 @@ impl PreAuthClientSettingsComponent {
                     const RIGHT_COLUMN: usize = 2;
 
                     columns[MAIN_COLUMN].vertical_centered(|ui| {
-                        ui.heading(RichText::new("⚙ Client Settings").size(25.0));
+                        ui.heading(
+                            RichText::new(format!("⚙ {}", t!("Tabs.ClientSettings")))
+                                .size(25.0),
+                        );
                     });
 
                     columns[RIGHT_COLUMN].with_layout(

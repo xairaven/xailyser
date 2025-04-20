@@ -54,7 +54,10 @@ impl SettingsServerTab {
     }
 
     fn request_settings_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        if ui.button("Request Active Settings").clicked() {
+        if ui
+            .button(t!("Tab.SettingsServer.Label.RequestSettings"))
+            .clicked()
+        {
             self.request_server_settings(ctx);
         }
 
@@ -77,17 +80,21 @@ impl SettingsServerTab {
                     let formatted = req.format("%m/%d %H:%M:%S").to_string();
                     RichText::new(formatted).color(Color32::RED)
                 },
-                (None, None) => RichText::new("Never").color(Color32::RED),
+                (None, None) => {
+                    RichText::new(t!("Text.LastUpdate.Never")).color(Color32::RED)
+                },
             };
         ui.label(req_upd_timestamp);
     }
 
     fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            RichText::new("Save Config:").size(16.0).strong(),
+            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.SaveConfig")))
+                .size(16.0)
+                .strong(),
         ));
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             if let Err(err) = ctx
                 .ui_client_requests_tx
                 .try_send(UiClientRequest::Request(Request::SaveConfig))
@@ -102,17 +109,18 @@ impl SettingsServerTab {
 
     fn reboot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            RichText::new("Restart the server:")
+            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.RestartServer")))
                 .size(16.0)
                 .strong(),
-        )).on_hover_text("After confirmation, you may not receive a message about the reboot.\nMonitor the server status.");
+        ))
+        .on_hover_text(t!("Tab.SettingsServer.Note.RestartServer"));
 
         if !self.reboot_confirm {
-            if ui.button("Apply").clicked() {
+            if ui.button(t!("Button.Apply")).clicked() {
                 self.reboot_confirm = true;
             }
         } else {
-            if ui.button("CONFIRM").clicked() {
+            if ui.button(t!("Button.Confirm")).clicked() {
                 self.reboot_confirm = false;
                 self.reboot_requested = true;
 
@@ -126,7 +134,7 @@ impl SettingsServerTab {
                 }
             }
 
-            if ui.button("Cancel").clicked() {
+            if ui.button(t!("Button.Cancel")).clicked() {
                 self.reboot_confirm = false;
             }
         }
@@ -134,7 +142,9 @@ impl SettingsServerTab {
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            RichText::new("Compression:").size(16.0).strong(),
+            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.Compression")))
+                .size(16.0)
+                .strong(),
         ));
         ui.label(is_enabled_text(ctx.settings_server.compression_active));
 
@@ -144,10 +154,13 @@ impl SettingsServerTab {
             ui.end_row();
 
             ui.label(
-                RichText::new("Compression (Config):")
-                    .size(16.0)
-                    .strong()
-                    .italics(),
+                RichText::new(format!(
+                    "{}:",
+                    t!("Tab.SettingsServer.Label.CompressionConfig")
+                ))
+                .size(16.0)
+                .strong()
+                .italics(),
             );
             ui.label(is_enabled_text(ctx.settings_server.compression_config).italics());
             if ui
@@ -171,28 +184,33 @@ impl SettingsServerTab {
 
         fn is_enabled_text(is_enabled: bool) -> RichText {
             if is_enabled {
-                RichText::new("Enabled").color(Color32::GREEN)
+                RichText::new(t!("Button.State.Enabled")).color(Color32::GREEN)
             } else {
-                RichText::new("Disabled").color(Color32::RED)
+                RichText::new(t!("Button.State.Disabled")).color(Color32::RED)
             }
         }
         fn action_text(is_enabled: bool) -> RichText {
             if is_enabled {
-                RichText::new("Disable")
+                RichText::new(t!("Button.Action.Disable"))
             } else {
-                RichText::new("Enable")
+                RichText::new(t!("Button.Action.Enable"))
             }
         }
     }
 
     fn change_password_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            RichText::new("Change Password:").size(16.0).strong(),
+            RichText::new(format!(
+                "{}:",
+                t!("Tab.SettingsServer.Label.ChangePassword")
+            ))
+            .size(16.0)
+            .strong(),
         ));
 
         ui.add(TextEdit::singleline(&mut self.password_field));
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
                 Request::ChangePassword(self.password_field.take()),
             ));
@@ -200,84 +218,98 @@ impl SettingsServerTab {
     }
 
     fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.collapsing(RichText::new("Interfaces:").size(16.0).strong(), |ui| {
-            utils::ui::with_temp_spacing_y(ui, 4.0, |ui| {
-                Grid::new("Settings.Interfaces.Status.Grid")
-                    .striped(false)
-                    .num_columns(3)
-                    .show(ui, |ui| {
-                        ui.label("Active:");
-                        ui.label(
-                            RichText::new(
-                                ctx.settings_server
-                                    .interface_active
-                                    .as_ref()
-                                    .unwrap_or(&"None".to_string()),
-                            )
-                            .strong(),
-                        );
-                        ui.end_row();
+        ui.collapsing(
+            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.Interfaces")))
+                .size(16.0)
+                .strong(),
+            |ui| {
+                utils::ui::with_temp_spacing_y(ui, 4.0, |ui| {
+                    Grid::new("Settings.Interfaces.Status.Grid")
+                        .striped(false)
+                        .num_columns(3)
+                        .show(ui, |ui| {
+                            ui.label(format!("{}:", t!("Text.Active")));
+                            ui.label(
+                                RichText::new(
+                                    ctx.settings_server
+                                        .interface_active
+                                        .as_ref()
+                                        .unwrap_or(&t!("Text.None").to_string()),
+                                )
+                                .strong(),
+                            );
+                            ui.end_row();
 
-                        // Optional "Config Interface" label
-                        if ctx.settings_server.interface_active.as_ref()
-                            != ctx.settings_server.interface_config.as_ref()
-                        {
-                            ui.label("Config Interface:");
-                            if let Some(config_interface) =
-                                &ctx.settings_server.interface_config
+                            // Optional "Config Interface" label
+                            if ctx.settings_server.interface_active.as_ref()
+                                != ctx.settings_server.interface_config.as_ref()
                             {
-                                ui.label(RichText::new(config_interface).italics());
-                            } else {
-                                ui.label("None");
-                            }
-                            ui.end_row();
-                        }
-
-                        // Chosen interface (clicked on button)
-                        if let Some(chosen) = &self.interface_current {
-                            ui.label("Chosen:");
-                            ui.label(RichText::new(chosen).italics());
-
-                            if ui.button("Apply").clicked() {
-                                if let Err(err) = ctx.ui_client_requests_tx.try_send(
-                                    UiClientRequest::Request(Request::SetInterface(
-                                        chosen.clone(),
-                                    )),
-                                ) {
-                                    log::error!(
-                                        "Failed to send request (SetInterface): {}",
-                                        err
-                                    );
+                                ui.label(format!(
+                                    "{}:",
+                                    t!("Tab.SettingsServer.Label.InterfaceConfig")
+                                ));
+                                if let Some(config_interface) =
+                                    &ctx.settings_server.interface_config
+                                {
+                                    ui.label(RichText::new(config_interface).italics());
+                                } else {
+                                    ui.label(t!("Text.None"));
                                 }
-                                self.request_server_settings(ctx);
-                                self.interface_current = None;
+                                ui.end_row();
                             }
 
-                            if ui.button("Reset").clicked() {
-                                self.interface_current = None;
+                            // Chosen interface (clicked on button)
+                            if let Some(chosen) = &self.interface_current {
+                                ui.label(format!("{}:", t!("Text.Chosen")));
+                                ui.label(RichText::new(chosen).italics());
+
+                                if ui.button(t!("Button.Apply")).clicked() {
+                                    if let Err(err) = ctx.ui_client_requests_tx.try_send(
+                                        UiClientRequest::Request(Request::SetInterface(
+                                            chosen.clone(),
+                                        )),
+                                    ) {
+                                        log::error!(
+                                            "Failed to send request (SetInterface): {}",
+                                            err
+                                        );
+                                    }
+                                    self.request_server_settings(ctx);
+                                    self.interface_current = None;
+                                }
+
+                                if ui.button(t!("Button.Reset")).clicked() {
+                                    self.interface_current = None;
+                                }
+                                ui.end_row();
                             }
+
                             ui.end_row();
-                        }
-
-                        ui.end_row();
-                    });
-            });
-
-            ui.add_space(16.0);
-
-            if !ctx.settings_server.interfaces_available.is_empty() {
-                ui.label("Available Interfaces:");
-                ui.vertical_centered_justified(|ui| {
-                    for interface in &ctx.settings_server.interfaces_available {
-                        if ui.button(RichText::new(interface).monospace()).clicked() {
-                            self.interface_current = Some(interface.to_string());
-                        }
-                    }
+                        });
                 });
-            } else {
-                ui.label("Available Interfaces:\t—");
-            }
-        });
+
+                ui.add_space(16.0);
+
+                if !ctx.settings_server.interfaces_available.is_empty() {
+                    ui.label(format!(
+                        "{}:",
+                        t!("Tab.SettingsServer.Label.Interfaces.Available")
+                    ));
+                    ui.vertical_centered_justified(|ui| {
+                        for interface in &ctx.settings_server.interfaces_available {
+                            if ui.button(RichText::new(interface).monospace()).clicked() {
+                                self.interface_current = Some(interface.to_string());
+                            }
+                        }
+                    });
+                } else {
+                    ui.label(format!(
+                        "{}:\t—",
+                        "Tab.SettingsServer.Label.Interfaces.Available"
+                    ));
+                }
+            },
+        );
     }
 
     fn request_server_settings(&mut self, ctx: &mut Context) {

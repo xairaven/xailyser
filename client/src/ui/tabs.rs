@@ -1,27 +1,30 @@
-use strum_macros::{Display, EnumIter};
+use rust_i18n::t;
+use strum_macros::EnumIter;
 
-#[derive(
-    Default, Copy, Clone, Display, EnumIter, PartialEq, Eq, PartialOrd, Ord, Debug,
-)]
+#[derive(Default, Copy, Clone, EnumIter, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Tab {
     #[default]
-    #[strum(to_string = "🏠 Status")]
     Status,
-
-    #[strum(to_string = "⚙ Client Settings")]
     ClientSettings,
-
-    #[strum(to_string = "⚙ Server Settings")]
     ServerSettings,
-
-    #[strum(to_string = "ℹ About")]
     About,
-
-    #[strum(to_string = "🔓 Logout")]
     Logout,
-
-    #[strum(to_string = "🗙 Exit")]
     Exit,
+}
+
+impl std::fmt::Display for Tab {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let text = match self {
+            Tab::Status => format!("🏠 {}", t!("Tabs.Status")),
+            Tab::ClientSettings => format!("⚙ {}", t!("Tabs.ClientSettings")),
+            Tab::ServerSettings => format!("⚙ {}", t!("Tabs.ServerSettings")),
+            Tab::About => format!("ℹ {}", t!("Tabs.About")),
+            Tab::Logout => format!("🔓 {}", t!("Tabs.Logout")),
+            Tab::Exit => format!("🗙 {}", t!("Tabs.Exit")),
+        };
+
+        write!(f, "{}", text)
+    }
 }
 
 pub mod about;

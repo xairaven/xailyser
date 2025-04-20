@@ -151,3 +151,12 @@ pub enum Language {
     #[strum(serialize = "Ukrainian")]
     Ukrainian,
 }
+
+impl Language {
+    pub fn localize(&self) -> String {
+        match self {
+            Language::English => t!("Language.English").to_string(),
+            Language::Ukrainian => t!("Language.Ukrainian").to_string(),
+        }
+    }
+}

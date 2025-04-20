@@ -1,7 +1,7 @@
 use crate::config::Config;
 use app::App;
 
-pub const MIN_WINDOW_WIDTH: f32 = 900.0;
+pub const MIN_WINDOW_WIDTH: f32 = 950.0;
 pub const MIN_WINDOW_HEIGHT: f32 = 550.0;
 const WINDOW_TITLE: &str = "Xailyser";
 

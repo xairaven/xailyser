@@ -15,7 +15,7 @@ impl Modal for MessageModal {
         ui.add_space(16.0);
 
         ui.vertical_centered_justified(|ui| {
-            if ui.button("Close").clicked() {
+            if ui.button(t!("Button.Close")).clicked() {
                 self.close()
             }
         });
@@ -34,14 +34,14 @@ impl MessageModal {
     pub fn error(message: &str) -> Self {
         MessageModal::default()
             .with_message(message)
-            .with_title("❎ Error".to_string())
+            .with_title(format!("❎ {}", t!("Modal.Title.Error")))
             .with_width(300.0)
     }
 
     pub fn info(message: &str) -> Self {
         MessageModal::default()
             .with_message(message)
-            .with_title("ℹ Info".to_string())
+            .with_title(format!("ℹ {}", t!("Modal.Title.Info")))
             .with_width(300.0)
     }
 

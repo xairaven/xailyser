@@ -35,20 +35,20 @@ impl AboutTab {
                     .size(30.0)
                     .color(theme.fg_success_text_color_visuals()),
             ));
-            ui.label("Client-server analyser of network traffic on a home network");
+            ui.label(t!("Tab.About.Description"));
 
             ui.add_space(20.0);
 
-            ui.label("Developer: Alex Kovalov");
+            ui.label(t!("Tab.About.Developer"));
 
             ui.add_space(20.0);
 
             ui.hyperlink_to(
-                "Check out the code on GitHub!",
+                t!("Tab.About.CheckGithub"),
                 "https://github.com/xairaven/xailyser",
             );
             ui.hyperlink_to(
-                "*Latest release*",
+                format!("*{}*", t!("Tab.About.LatestRelease")),
                 "https://github.com/xairaven/xailyser/releases",
             );
         });

@@ -21,3 +21,14 @@ pub fn setup(log_level: &LevelFilter, format: String) -> Result<(), LogError> {
         .apply()
         .map_err(LogError::SetLoggerError)
 }
+
+pub fn localize_log_level(log_level: &LevelFilter) -> String {
+    match log_level {
+        LevelFilter::Off => t!("Logging.Level.Off").to_string(),
+        LevelFilter::Error => t!("Logging.Level.Error").to_string(),
+        LevelFilter::Warn => t!("Logging.Level.Warn").to_string(),
+        LevelFilter::Info => t!("Logging.Level.Info").to_string(),
+        LevelFilter::Debug => t!("Logging.Level.Debug").to_string(),
+        LevelFilter::Trace => t!("Logging.Level.Trace").to_string(),
+    }
+}

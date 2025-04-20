@@ -1,27 +1,25 @@
 use crate::context::{Context, ServerSettings};
 use crate::ui::modals::message::MessageModal;
 use chrono::Local;
-use common::messages::Response;
+use common::messages::{Response, ServerError};
 
 pub fn process(ctx: &mut Context, response: Response) {
     match response {
         Response::ChangePasswordConfirmation => {
-            let modal = MessageModal::info(
-                "Successfully changed password! Don't forget to save the config, if needed.",
-            );
+            let modal = MessageModal::info(&t!("Response.PasswordChange.Success"));
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
         Response::Data(_data) => {
             todo!()
         },
         Response::Error(err) => {
-            let modal = MessageModal::error(&err.to_string());
+            let modal = MessageModal::error(&localize_server_errors(&err));
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
         Response::SaveConfigResult(result) => {
             let modal = match result {
-                Ok(_) => MessageModal::info("Successfully saved the config!"),
-                Err(err) => MessageModal::error(&err.to_string()),
+                Ok(_) => MessageModal::info(&t!("Response.SaveConfig.Success")),
+                Err(err) => MessageModal::error(&localize_server_errors(&err)),
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
@@ -40,26 +38,47 @@ pub fn process(ctx: &mut Context, response: Response) {
         Response::SetCompressionResult(result) => {
             let modal = match result {
                 Ok(compression) => {
-                    let is_enabled = if compression { "enabled" } else { "disabled" };
-                    MessageModal::info(&format!(
-                        "Compression {is_enabled}! Changes will take effect after saving config and reboot."
-                    ))
+                    let text: String = if compression {
+                        t!("Response.SetCompression.Success.On").to_string()
+                    } else {
+                        t!("Response.SetCompression.Success.Off").to_string()
+                    };
+                    MessageModal::info(&text)
                 },
-                Err(err) => MessageModal::error(&err.to_string()),
+                Err(err) => MessageModal::error(&localize_server_errors(&err)),
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
         Response::SetInterfaceResult(result) => {
             let modal = match result {
-                Ok(interface) => MessageModal::info(&format!(
-                    "Interface set: {interface}! Changes will take effect after saving config and reboot."
+                Ok(interface) => MessageModal::info(&t!(
+                    "Response.SetInterface.Success",
+                    "interface" = interface
                 )),
-                Err(err) => MessageModal::error(&err.to_string()),
+                Err(err) => MessageModal::error(&localize_server_errors(&err)),
             };
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
         Response::SyncSuccessful => {
             ctx.heartbeat.update();
+        },
+    }
+}
+
+fn localize_server_errors(err: &ServerError) -> String {
+    match err {
+        ServerError::FailedToChangePassword => {
+            t!("Response.Error.PasswordChange").to_string()
+        },
+        ServerError::FailedToGetInterfaces => {
+            t!("Response.Error.InterfacesGet").to_string()
+        },
+        ServerError::FailedToSaveConfig => t!("Response.Error.ConfigSave").to_string(),
+        ServerError::InvalidMessageFormat => {
+            t!("Response.Error.InvalidMessageFormat").to_string()
+        },
+        ServerError::InvalidInterface => {
+            t!("Response.Error.InvalidInterface").to_string()
         },
     }
 }

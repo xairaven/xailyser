@@ -25,26 +25,26 @@ impl Modal for ProfileModal {
             .striped(false)
             .spacing([20.0, 20.0])
             .show(ui, |ui| {
-                ui.label("Name:");
+                ui.label(format!("{}:", t!("Component.Auth.Title")));
                 ui.add(
                     TextEdit::singleline(&mut self.title).desired_width(f32::INFINITY),
                 );
                 ui.end_row();
 
-                ui.label("IP:");
+                ui.label(format!("{}:", t!("Component.Auth.IP")));
                 ui.add(
                     TextEdit::singleline(&mut self.auth.ip).desired_width(f32::INFINITY),
                 );
                 ui.end_row();
 
-                ui.label("Port:");
+                ui.label(format!("{}:", t!("Component.Auth.Port")));
                 ui.add(
                     TextEdit::singleline(&mut self.auth.port)
                         .desired_width(f32::INFINITY),
                 );
                 ui.end_row();
 
-                ui.label("Password:");
+                ui.label(format!("{}:", t!("Component.Auth.Password")));
                 ui.add(
                     TextEdit::singleline(&mut self.auth.password)
                         .password(true)
@@ -57,12 +57,12 @@ impl Modal for ProfileModal {
 
         ui.columns(2, |columns| {
             columns[0].vertical_centered_justified(|ui| {
-                if ui.button("Save").clicked() {
+                if ui.button(t!("Button.Save")).clicked() {
                     self.save(ctx)
                 }
             });
             columns[1].vertical_centered_justified(|ui| {
-                if ui.button("Close").clicked() {
+                if ui.button(t!("Button.Close")).clicked() {
                     self.close()
                 }
             });
@@ -85,7 +85,7 @@ impl ProfileModal {
             auth: Default::default(),
 
             modal: ModalFields::default()
-                .with_title("➕ Add Profile".to_string())
+                .with_title(format!("➕ {}", t!("Modal.Title.AddProfile")))
                 .with_width(300.0),
 
             mode: ProfileOperationMode::Add,
@@ -101,7 +101,7 @@ impl ProfileModal {
                 password: existing.password.clone(),
             },
             modal: ModalFields::default()
-                .with_title("✏ Edit Profile".to_string())
+                .with_title(format!("✏ {}", t!("Modal.Title.EditProfile")))
                 .with_width(300.0),
             mode: ProfileOperationMode::Edit(index),
         }
@@ -116,7 +116,11 @@ impl ProfileModal {
         let profile = match fields.into_profile(&self.title) {
             Ok(value) => value,
             Err(err) => {
-                let text = format!("Failed to save profile: {}", err);
+                let text = format!(
+                    "{}: {}",
+                    t!("Modal.Error.FailedSaveProfile"),
+                    err.localize()
+                );
                 let _ = ctx.modals_tx.try_send(Box::new(MessageModal::error(&text)));
                 return;
             },
@@ -129,9 +133,12 @@ impl ProfileModal {
             ProfileOperationMode::Edit(index) => {
                 debug_assert!(ctx.profiles_storage.profiles.len() > index);
                 if ctx.profiles_storage.profiles.len() <= index {
-                    let _ = ctx.modals_tx.try_send(Box::new(MessageModal::error(
-                        "Failed to edit profile",
-                    )));
+                    let _ =
+                        ctx.modals_tx
+                            .try_send(Box::new(MessageModal::error(&format!(
+                                "{}",
+                                t!("Modal.Error.FailedEditProfile")
+                            ))));
                     return;
                 }
                 ctx.profiles_storage.profiles[index] = profile;

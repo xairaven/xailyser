@@ -1,19 +1,12 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::themes::ThemePreference;
-use crate::{config, utils};
+use crate::{config, logging, utils};
 use egui::{Checkbox, DragValue, Grid, RichText, TextEdit};
 use log::LevelFilter;
 use strum::IntoEnumIterator;
 
 const FIELD_NOT_APPLIED_COLOR: egui::Color32 = egui::Color32::RED;
-const FIELD_NOT_APPLIED_HOVER: &str = "This field is differ from set up. Also, don’t forget to save the config file if needed.";
-
-const NOTE: &str = "* Note (Hover)";
-const NOTE_FIELD_APPLIED_IMMEDIATELY: &str = "The field takes effect after applying.";
-const NOTE_FIELD_APPLIED_AFTER_LOGOUT: &str = "The field takes effect after logout.";
-const NOTE_FIELD_APPLIED_AFTER_RESTART: &str =
-    "The field takes effect after config save & app restart.";
 
 pub struct SettingsClientTab {
     // Fields that taking effect after logout
@@ -87,13 +80,15 @@ impl SettingsClientTab {
 
     fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(
-            RichText::new("Save Config:").size(16.0).strong(),
+            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.SaveConfig")))
+                .size(16.0)
+                .strong(),
         ));
 
-        // Invisible element, lol
+        // Invisible element
         ui.label("");
 
-        if ui.button("Save").clicked() {
+        if ui.button(t!("Button.Save")).clicked() {
             // Fields that taking effect after logout
             ctx.config.compression = ctx.client_settings.compression;
 
@@ -102,9 +97,10 @@ impl SettingsClientTab {
             ctx.config.sync_delay_seconds = ctx.client_settings.sync_delay_seconds;
 
             let modal = match ctx.config.save_to_file() {
-                Ok(_) => MessageModal::info("Successfully saved client config!"),
+                Ok(_) => MessageModal::info(&t!("Message.Success.ClientConfigSaved")),
                 Err(err) => MessageModal::error(&format!(
-                    "Failed to save client config into file! {}",
+                    "{} {}",
+                    t!("Error.FailedSaveClientConfigIntoFile"),
                     err
                 )),
             };
@@ -119,18 +115,21 @@ impl SettingsClientTab {
         // Another invisible element, lol
         ui.label("");
 
-        ui.label(RichText::new(NOTE).italics())
-            .on_hover_text("Setting just saves the config file.");
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Hover.SettingSavesConfig"));
     }
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new("Compression:").size(16.0).strong();
+        let label =
+            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.Compression")))
+                .size(16.0)
+                .strong();
         let not_applied = self.compression != ctx.client_settings.compression;
         Self::label_not_applied(ui, label, not_applied);
 
         ui.add(Checkbox::without_text(&mut self.compression));
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             log::info!(
                 "Client Settings: Compression changed to {}",
                 self.compression
@@ -141,28 +140,31 @@ impl SettingsClientTab {
             self.compression = ctx.client_settings.compression;
         }
 
-        ui.label(RichText::new(NOTE).italics())
-            .on_hover_text(NOTE_FIELD_APPLIED_AFTER_LOGOUT);
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterLogout"));
     }
 
     fn language_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new("Language:").size(16.0).strong();
+        let label =
+            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.Language")))
+                .size(16.0)
+                .strong();
         let not_applied = self.language != ctx.config.language;
         Self::label_not_applied(ui, label, not_applied);
 
         ui.with_layout(
             egui::Layout::top_down(egui::Align::Min), |ui| {
                 egui::ComboBox::from_label("")
-                    .selected_text(self.language.to_string()) // Display the currently selected option.
+                    .selected_text(self.language.localize()) // Display the currently selected option.
                     .show_ui(ui, |ui| {
                         for language in config::Language::iter() {
-                            ui.selectable_value(&mut self.language, language.clone(), language.to_string());
+                            ui.selectable_value(&mut self.language, language.clone(), language.localize());
                         }
                     });
             }
         );
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             log::info!("Client Settings: Language changed to {}", self.language);
             ctx.config.language = self.language.clone();
         }
@@ -171,12 +173,15 @@ impl SettingsClientTab {
             self.language = ctx.config.language.clone();
         }
 
-        ui.label(RichText::new(NOTE).italics())
-            .on_hover_text(NOTE_FIELD_APPLIED_AFTER_RESTART);
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
     }
 
     fn logs_format_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new("Log Format:").size(16.0).strong();
+        let label =
+            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.LogFormat")))
+                .size(16.0)
+                .strong();
         let not_applied = !self
             .log_format_choice
             .eq_ignore_ascii_case(&ctx.config.log_format);
@@ -184,7 +189,7 @@ impl SettingsClientTab {
 
         ui.add(TextEdit::multiline(&mut self.log_format_choice));
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             log::info!(
                 "Client Settings: Log Format changed to {}",
                 self.log_format_choice
@@ -196,30 +201,33 @@ impl SettingsClientTab {
             self.log_format_choice = ctx.config.log_format.clone();
         }
 
-        ui.label(RichText::new(NOTE).italics())
-            .on_hover_text(NOTE_FIELD_APPLIED_AFTER_RESTART);
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
     }
 
     fn logs_level_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new("Log Level:").size(16.0).strong();
+        let label =
+            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.LogLevel")))
+                .size(16.0)
+                .strong();
         let not_applied = self.log_level_choice != ctx.config.log_level;
         Self::label_not_applied(ui, label, not_applied);
 
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
             egui::ComboBox::from_id_salt("Settings.Client.Log.Level.ComboBox")
-                .selected_text(format!("{:?}", &mut self.log_level_choice))
+                .selected_text(logging::localize_log_level(&self.log_level_choice))
                 .show_ui(ui, |ui| {
                     for level_filter in LevelFilter::iter() {
                         ui.selectable_value(
                             &mut self.log_level_choice,
                             level_filter,
-                            level_filter.to_string(),
+                            logging::localize_log_level(&level_filter),
                         );
                     }
                 });
         });
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             log::info!("Client Settings: Log Level changed to {}", self.language);
             ctx.config.log_level = self.log_level_choice;
         }
@@ -228,12 +236,15 @@ impl SettingsClientTab {
             self.log_level_choice = ctx.config.log_level;
         }
 
-        ui.label(RichText::new(NOTE).italics())
-            .on_hover_text(NOTE_FIELD_APPLIED_AFTER_RESTART);
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
     }
 
     fn ping_delay_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new("Sync Delay:").size(16.0).strong();
+        let label =
+            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.SyncDelay")))
+                .size(16.0)
+                .strong();
         let not_applied =
             self.ping_delay_seconds != ctx.client_settings.sync_delay_seconds;
         Self::label_not_applied(ui, label, not_applied);
@@ -242,10 +253,10 @@ impl SettingsClientTab {
             DragValue::new(&mut self.ping_delay_seconds)
                 .speed(1)
                 .range(1..=i64::MAX)
-                .suffix(" seconds"),
+                .suffix(t!("Tab.SettingsClient.Suffix.SyncDelay")),
         );
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             log::info!(
                 "Client Settings: Sync Delay seconds changed to {}",
                 self.ping_delay_seconds
@@ -257,12 +268,14 @@ impl SettingsClientTab {
             self.ping_delay_seconds = ctx.client_settings.sync_delay_seconds;
         }
 
-        ui.label(RichText::new(NOTE).italics())
-            .on_hover_text(NOTE_FIELD_APPLIED_IMMEDIATELY);
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
     }
 
     fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new("Theme:").size(16.0).strong();
+        let label = RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.Theme")))
+            .size(16.0)
+            .strong();
         let not_applied = self.theme != ctx.client_settings.theme;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -277,7 +290,7 @@ impl SettingsClientTab {
                 });
         });
 
-        if ui.button("Apply").clicked() {
+        if ui.button(t!("Button.Apply")).clicked() {
             ctx.client_settings.theme = self.theme;
             log::info!("Client Settings: Theme changed to {}", self.theme.title());
             ui.ctx()
@@ -288,15 +301,15 @@ impl SettingsClientTab {
             self.theme = ctx.client_settings.theme;
         }
 
-        ui.label(RichText::new(NOTE).italics())
-            .on_hover_text(NOTE_FIELD_APPLIED_IMMEDIATELY);
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
     }
 
     fn label_not_applied(ui: &mut egui::Ui, mut label: RichText, is_different: bool) {
         if is_different {
             label = label.color(FIELD_NOT_APPLIED_COLOR);
             ui.add(egui::Label::new(label))
-                .on_hover_text(FIELD_NOT_APPLIED_HOVER);
+                .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"));
         } else {
             ui.add(egui::Label::new(label));
         }

@@ -68,7 +68,11 @@ impl RootComponent {
                     egui::Layout::top_down_justified(egui::Align::Center),
                     |ui| {
                         ui.add_space(15.0);
-                        ui.heading(RichText::new("Dashboard").size(25.0).strong());
+                        ui.heading(
+                            RichText::new(t!("Component.Root.Dashboard"))
+                                .size(25.0)
+                                .strong(),
+                        );
                         egui::warn_if_debug_build(ui);
                     },
                 );
@@ -87,14 +91,14 @@ impl RootComponent {
                         const TEXT_SIZE: f32 = 10.0;
 
                         ui.label(
-                            RichText::new("Last Update: ")
+                            RichText::new(format!("{}: ", t!("Text.LastUpdate")))
                                 .size(TEXT_SIZE)
                                 .color(Color32::GRAY),
                         );
                         match &ctx.heartbeat.last_sync {
                             None => {
                                 ui.label(
-                                    RichText::new("Never")
+                                    RichText::new(t!("Text.LastUpdate.Never"))
                                         .size(TEXT_SIZE)
                                         .color(Color32::DARK_RED),
                                 );
@@ -173,7 +177,7 @@ impl RootComponent {
             RichText::new(
                 self.tabs
                     .get(&self.active_tab)
-                    .unwrap_or(&String::from("Tab")),
+                    .unwrap_or(&String::from(t!("Tabs.Placeholder"))),
             )
             .size(25.0),
         );

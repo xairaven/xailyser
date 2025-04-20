@@ -5,6 +5,6 @@ pub struct StatusTab;
 
 impl StatusTab {
     pub fn show(&mut self, ui: &mut egui::Ui, _ctx: &mut Context) {
-        ui.label("Something");
+        ui.label("PLACEHOLDER");
     }
 }
