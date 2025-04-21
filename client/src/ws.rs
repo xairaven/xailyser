@@ -84,9 +84,12 @@ impl WsHandler {
             Ok(value) => value,
             Err(err) => {
                 return match err {
-                    tungstenite::Error::ConnectionClosed
-                    | tungstenite::Error::AlreadyClosed => {
-                        log::warn!(
+                    tungstenite::Error::ConnectionClosed => {
+                        log::info!("WS-Stream: Connection closed.");
+                        Err(err)
+                    },
+                    tungstenite::Error::AlreadyClosed => {
+                        log::error!(
                             "WS-Stream: Connection closed without alerting about it."
                         );
                         Err(err)
