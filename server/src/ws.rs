@@ -204,7 +204,11 @@ impl WsHandler {
     ) -> Result<(), tungstenite::Error> {
         use tungstenite::Error::*;
         match err {
-            ConnectionClosed | AlreadyClosed => {
+            ConnectionClosed => {
+                log::info!("WS-{}. Connection closed.", self.id);
+                Err(err)
+            },
+            AlreadyClosed => {
                 log::warn!("WS-{}. Connection closed without alerting.", self.id);
                 Err(err)
             },
