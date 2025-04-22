@@ -18,6 +18,7 @@ pub struct SettingsClientTab {
     log_level_choice: LevelFilter,
 
     // Fields that applied by button
+    drop_unparsed_frames: bool,
     ping_delay_seconds: i64,
     theme: ThemePreference,
 }
@@ -31,6 +32,7 @@ impl SettingsClientTab {
             log_format_choice: ctx.config.log_format.clone(),
             log_level_choice: ctx.config.log_level,
 
+            drop_unparsed_frames: ctx.client_settings.drop_unparsed_frames,
             ping_delay_seconds: ctx.client_settings.sync_delay_seconds,
             theme: ctx.client_settings.theme,
         }
@@ -55,6 +57,9 @@ impl SettingsClientTab {
                                 ui.end_row();
 
                                 self.compression_view(ui, ctx);
+                                ui.end_row();
+
+                                self.drop_unparsed_view(ui, ctx);
                                 ui.end_row();
 
                                 self.language_view(ui, ctx);
@@ -93,6 +98,7 @@ impl SettingsClientTab {
             ctx.config.compression = ctx.client_settings.compression;
 
             // Fields that applied by button
+            ctx.config.drop_unparsed_frames = ctx.client_settings.drop_unparsed_frames;
             ctx.config.theme = ctx.client_settings.theme;
             ctx.config.sync_delay_seconds = ctx.client_settings.sync_delay_seconds;
 
@@ -142,6 +148,39 @@ impl SettingsClientTab {
 
         ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterLogout"));
+    }
+
+    fn drop_unparsed_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let label = RichText::new(format!(
+            "{}:",
+            t!("Tab.SettingsClient.Label.DropUnparsedFrames")
+        ))
+        .size(16.0)
+        .strong();
+        let not_applied =
+            self.drop_unparsed_frames != ctx.client_settings.drop_unparsed_frames;
+        Self::label_not_applied_with_note(
+            ui,
+            label,
+            not_applied,
+            "Tab.SettingsClient.Label.DropUnparsedFrames.Note",
+        );
+
+        ui.add(Checkbox::without_text(&mut self.drop_unparsed_frames));
+
+        if ui.button(t!("Button.Apply")).clicked() {
+            log::info!(
+                "Client Settings: `Drop Unparsed Frames` changed to {}",
+                self.drop_unparsed_frames
+            );
+            ctx.client_settings.drop_unparsed_frames = self.drop_unparsed_frames;
+        }
+        if ui.button("🔙").clicked() {
+            self.drop_unparsed_frames = ctx.client_settings.drop_unparsed_frames;
+        }
+
+        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
     }
 
     fn language_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
@@ -312,6 +351,18 @@ impl SettingsClientTab {
                 .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"));
         } else {
             ui.add(egui::Label::new(label));
+        }
+    }
+
+    fn label_not_applied_with_note(
+        ui: &mut egui::Ui, mut label: RichText, is_different: bool, note_id: &str,
+    ) {
+        if is_different {
+            label = label.color(FIELD_NOT_APPLIED_COLOR);
+            ui.add(egui::Label::new(label))
+                .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"));
+        } else {
+            ui.add(egui::Label::new(label)).on_hover_text(t!(note_id));
         }
     }
 }

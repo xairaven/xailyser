@@ -16,6 +16,7 @@ const CONFIG_FILETYPE: FileKind = FileKind::Config;
 #[derive(Debug, Clone)]
 pub struct Config {
     pub compression: bool,
+    pub drop_unparsed_frames: bool,
     pub language: Language,
     pub log_format: String,
     pub log_level: LevelFilter,
@@ -27,6 +28,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             compression: true,
+            drop_unparsed_frames: true,
             language: Language::English,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
@@ -44,6 +46,7 @@ impl Serialize for Config {
     {
         let mut state = serializer.serialize_struct("Config", 3)?;
         state.serialize_field("compression", &self.compression)?;
+        state.serialize_field("drop_unparsed_frames", &self.drop_unparsed_frames)?;
         state.serialize_field("language", &self.language.to_string())?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
@@ -87,6 +90,7 @@ impl Config {
 #[derive(Deserialize)]
 struct ConfigDto {
     compression: bool,
+    drop_unparsed_frames: bool,
     language: String,
     log_format: String,
     log_level: String,
@@ -98,6 +102,7 @@ impl ConfigDto {
     pub fn into_config(self) -> Result<Config, ConfigError> {
         let config = Config {
             compression: self.compression,
+            drop_unparsed_frames: self.drop_unparsed_frames,
             language: Language::from_str(&self.language)
                 .map_err(|_| ConfigError::UnknownLanguage)?,
             log_format: self.log_format.trim().to_string(),

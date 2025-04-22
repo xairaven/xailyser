@@ -45,6 +45,7 @@ impl Context {
         Self {
             client_settings: ClientSettings {
                 compression: config.compression,
+                drop_unparsed_frames: config.drop_unparsed_frames,
                 theme: config.theme,
                 sync_delay_seconds: config.sync_delay_seconds,
             },
@@ -86,6 +87,7 @@ pub struct ServerSettings {
 #[derive(Clone)]
 pub struct ClientSettings {
     pub compression: bool,
-    pub theme: ThemePreference,
+    pub drop_unparsed_frames: bool,
     pub sync_delay_seconds: i64,
+    pub theme: ThemePreference,
 }

@@ -2,6 +2,7 @@ use crate::context::{Context, ServerSettings};
 use crate::ui::modals::message::MessageModal;
 use chrono::Local;
 use common::messages::{Response, ServerError};
+use dpi::metadata::NetworkFrame;
 
 pub fn process(ctx: &mut Context, response: Response) {
     match response {
@@ -9,8 +10,18 @@ pub fn process(ctx: &mut Context, response: Response) {
             let modal = MessageModal::info(&t!("Response.PasswordChange.Success"));
             let _ = ctx.modals_tx.try_send(Box::new(modal));
         },
-        Response::Data(_data) => {
-            todo!()
+        Response::Data(data) => {
+            match data {
+                NetworkFrame::Parsed(parsed) => {
+                    // TODO: Process parsed metadata
+                },
+                NetworkFrame::RawPacket(raw) => {
+                    if !ctx.client_settings.drop_unparsed_frames {
+                        // TODO: Handle raw packets
+                    }
+                    // Else - pass
+                },
+            }
         },
         Response::Error(err) => {
             let modal = MessageModal::error(&localize_server_errors(&err));

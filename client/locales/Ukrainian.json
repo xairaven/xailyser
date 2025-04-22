@@ -83,6 +83,8 @@
   "Tab.SettingsClient.Hover.SettingSavesConfig": "Це налаштування лише зберігає файл конфігурації.",
   "Tab.SettingsClient.Label.SaveConfig": "Зберегти конфігурацію",
   "Tab.SettingsClient.Label.Compression": "Стиснення",
+  "Tab.SettingsClient.Label.DropUnparsedFrames": "Відкинути нерозібрані пакети",
+  "Tab.SettingsClient.Label.DropUnparsedFrames.Note": "Якщо цей параметр увімкнено, клієнт відкидає всі необроблені кадри. Це знижує навантаження на клієнт. Однак найкраще також вимкнути відповідну опцію («Надсилання необроблених кадрів») у налаштуваннях сервера.",
   "Tab.SettingsClient.Label.Language": "Мова",
   "Tab.SettingsClient.Label.LogFormat": "Формат логування",
   "Tab.SettingsClient.Label.LogLevel": "Рівень логування",
