@@ -18,7 +18,6 @@ pub struct PacketSniffer {
     ws_active_counter: Arc<AtomicUsize>,
 }
 
-// TODO
 impl PacketSniffer {
     pub fn start(&self) -> Result<(), NetworkError> {
         let interface = context::lock(&self.context, |ctx| ctx.network_interface.clone())
@@ -42,7 +41,21 @@ impl PacketSniffer {
             if self.ws_active_counter.load(Ordering::Acquire) > 0 {
                 match capture.next_packet() {
                     Ok(packet) => {
-                        // TODO: To handle packet.
+                        let frame = dpi::process(packet);
+
+                        match self.frame_channel.lock() {
+                            Ok(mut guard) => {
+                                guard.send(frame);
+                            },
+                            Err(err) => {
+                                log::error!(
+                                    "Net: Poison error on frame channel: {}",
+                                    err
+                                );
+                                self.shutdown_flag.store(true, Ordering::Release);
+                                return Err(NetworkError::PoisonError(err.to_string()));
+                            },
+                        }
                     },
                     Err(pcap::Error::TimeoutExpired) => {
                         thread::sleep(Duration::from_millis(TIMEOUT_MS as u64));
@@ -72,6 +85,9 @@ pub enum NetworkError {
 
     #[error("Pcap library error.")]
     PcapError(pcap::Error),
+
+    #[error("Mutex is poisoned.")]
+    PoisonError(String),
 }
 
 pub struct PacketSnifferBuilder {
