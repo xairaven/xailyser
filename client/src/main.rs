@@ -59,7 +59,4 @@ mod context;
 mod logging;
 mod profiles;
 mod ui;
-mod utils {
-    pub mod ui;
-}
 mod ws;

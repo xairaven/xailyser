@@ -1,9 +1,10 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
-use crate::utils;
+use crate::ui::styles;
+use crate::ui::styles::{colors, spacing};
 use chrono::{DateTime, Local};
 use common::messages::Request;
-use egui::{Color32, Grid, RichText, TextBuffer, TextEdit};
+use egui::{Grid, RichText, TextBuffer, TextEdit};
 
 #[derive(Default)]
 pub struct SettingsServerTab {
@@ -22,7 +23,7 @@ impl SettingsServerTab {
         let available_width = ui.available_width();
 
         egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.add_space(20.0);
+            ui.add_space(styles::space::SMALL);
             ui.with_layout(
                 egui::Layout::top_down_justified(egui::Align::Center),
                 |ui| {
@@ -64,35 +65,33 @@ impl SettingsServerTab {
         let req_upd_timestamp =
             match (&self.last_request, &ctx.settings_server.last_updated) {
                 (Some(req), Some(upd)) => {
-                    let formatted = req.format("%m/%d %H:%M:%S").to_string();
+                    let formatted = req.format(styles::TIME_FORMAT).to_string();
                     let color = if req > upd {
-                        Color32::RED
+                        colors::OUTDATED
                     } else {
-                        Color32::GREEN
+                        colors::UPDATED
                     };
                     RichText::new(formatted).color(color)
                 },
                 (None, Some(upd)) => {
-                    let formatted = upd.format("%m/%d %H:%M:%S").to_string();
-                    RichText::new(formatted).color(Color32::GREEN)
+                    let formatted = upd.format(styles::TIME_FORMAT).to_string();
+                    RichText::new(formatted).color(colors::UPDATED)
                 },
                 (Some(req), None) => {
-                    let formatted = req.format("%m/%d %H:%M:%S").to_string();
-                    RichText::new(formatted).color(Color32::RED)
+                    let formatted = req.format(styles::TIME_FORMAT).to_string();
+                    RichText::new(formatted).color(colors::OUTDATED)
                 },
                 (None, None) => {
-                    RichText::new(t!("Text.LastUpdate.Never")).color(Color32::RED)
+                    RichText::new(t!("Text.LastUpdate.Never")).color(colors::OUTDATED)
                 },
             };
         ui.label(req_upd_timestamp);
     }
 
     fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.SaveConfig")))
-                .size(16.0)
-                .strong(),
-        ));
+        ui.add(egui::Label::new(styles::heading::normal(&t!(
+            "Tab.SettingsServer.Label.SaveConfig"
+        ))));
 
         if ui.button(t!("Button.Apply")).clicked() {
             if let Err(err) = ctx
@@ -108,11 +107,9 @@ impl SettingsServerTab {
     }
 
     fn reboot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.RestartServer")))
-                .size(16.0)
-                .strong(),
-        ))
+        ui.add(egui::Label::new(styles::heading::normal(&t!(
+            "Tab.SettingsServer.Label.RestartServer"
+        ))))
         .on_hover_text(t!("Tab.SettingsServer.Note.RestartServer"));
 
         if !self.reboot_confirm {
@@ -141,11 +138,9 @@ impl SettingsServerTab {
     }
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.Compression")))
-                .size(16.0)
-                .strong(),
-        ));
+        ui.add(egui::Label::new(styles::heading::normal(&t!(
+            "Tab.SettingsServer.Label.Compression"
+        ))));
         ui.label(is_enabled_text(ctx.settings_server.compression_active));
 
         if ctx.settings_server.compression_active
@@ -184,9 +179,9 @@ impl SettingsServerTab {
 
         fn is_enabled_text(is_enabled: bool) -> RichText {
             if is_enabled {
-                RichText::new(t!("Button.State.Enabled")).color(Color32::GREEN)
+                RichText::new(t!("Button.State.Enabled")).color(colors::ENABLED)
             } else {
-                RichText::new(t!("Button.State.Disabled")).color(Color32::RED)
+                RichText::new(t!("Button.State.Disabled")).color(colors::DISABLED)
             }
         }
         fn action_text(is_enabled: bool) -> RichText {
@@ -199,14 +194,9 @@ impl SettingsServerTab {
     }
 
     fn change_password_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new(format!(
-                "{}:",
-                t!("Tab.SettingsServer.Label.ChangePassword")
-            ))
-            .size(16.0)
-            .strong(),
-        ));
+        ui.add(egui::Label::new(styles::heading::normal(&t!(
+            "Tab.SettingsServer.Label.ChangePassword"
+        ))));
 
         ui.add(TextEdit::singleline(&mut self.password_field));
 
@@ -219,11 +209,9 @@ impl SettingsServerTab {
 
     fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.collapsing(
-            RichText::new(format!("{}:", t!("Tab.SettingsServer.Label.Interfaces")))
-                .size(16.0)
-                .strong(),
+            styles::heading::normal(&t!("Tab.SettingsServer.Label.Interfaces")),
             |ui| {
-                utils::ui::with_temp_spacing_y(ui, 4.0, |ui| {
+                spacing::with_temp_y(ui, 4.0, |ui| {
                     Grid::new("Settings.Interfaces.Status.Grid")
                         .striped(false)
                         .num_columns(3)

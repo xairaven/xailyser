@@ -1,12 +1,13 @@
 use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui;
+use crate::ui::styles;
 use crate::ui::tabs::Tab;
 use crate::ui::tabs::about::AboutTab;
 use crate::ui::tabs::settings_client::SettingsClientTab;
 use crate::ui::tabs::settings_server::SettingsServerTab;
 use crate::ui::tabs::status::StatusTab;
-use egui::{CentralPanel, Color32, RichText, SidePanel};
+use egui::{CentralPanel, RichText, SidePanel};
 use std::collections::BTreeMap;
 
 pub const MENU_PANEL_MIN_WIDTH: f32 = ui::MIN_WINDOW_WIDTH * 0.25;
@@ -68,11 +69,9 @@ impl RootComponent {
                     egui::Layout::top_down_justified(egui::Align::Center),
                     |ui| {
                         ui.add_space(15.0);
-                        ui.heading(
-                            RichText::new(t!("Component.Root.Dashboard"))
-                                .size(25.0)
-                                .strong(),
-                        );
+                        ui.heading(styles::heading::huge(&t!(
+                            "Component.Root.Dashboard"
+                        )));
                         egui::warn_if_debug_build(ui);
                     },
                 );
@@ -88,31 +87,29 @@ impl RootComponent {
 
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     ui.horizontal(|ui| {
-                        const TEXT_SIZE: f32 = 10.0;
-
                         ui.label(
                             RichText::new(format!("{}: ", t!("Text.LastUpdate")))
-                                .size(TEXT_SIZE)
-                                .color(Color32::GRAY),
+                                .size(styles::text::SMALL)
+                                .color(styles::colors::SILENT),
                         );
                         match &ctx.heartbeat.last_sync {
                             None => {
                                 ui.label(
                                     RichText::new(t!("Text.LastUpdate.Never"))
-                                        .size(TEXT_SIZE)
-                                        .color(Color32::DARK_RED),
+                                        .size(styles::text::SMALL)
+                                        .color(styles::colors::OUTDATED_DARK),
                                 );
                             },
                             Some(last_sync) => {
                                 let mut text = RichText::new(
-                                    last_sync.format("%m/%d %H:%M:%S").to_string(),
+                                    last_sync.format(styles::TIME_FORMAT).to_string(),
                                 )
-                                .size(TEXT_SIZE);
+                                .size(styles::text::SMALL);
 
                                 if ctx.heartbeat.is_timeout(&ctx.client_settings) {
-                                    text = text.color(Color32::DARK_RED);
+                                    text = text.color(styles::colors::OUTDATED_DARK);
                                 } else {
-                                    text = text.color(Color32::DARK_GREEN);
+                                    text = text.color(styles::colors::UPDATED_DARK);
                                 }
                                 ui.label(text);
                             },
@@ -120,8 +117,10 @@ impl RootComponent {
 
                         if ui
                             .add(
-                                egui::Button::new(RichText::new("🔃").size(TEXT_SIZE))
-                                    .frame(false),
+                                egui::Button::new(
+                                    RichText::new("🔃").size(styles::text::SMALL),
+                                )
+                                .frame(false),
                             )
                             .clicked()
                         {
@@ -172,14 +171,14 @@ impl RootComponent {
     }
 
     fn tab_heading(&self, ui: &mut egui::Ui) {
-        ui.add_space(13.0);
+        ui.add_space(styles::space::TAB);
         ui.heading(
             RichText::new(
                 self.tabs
                     .get(&self.active_tab)
                     .unwrap_or(&String::from(t!("Tabs.Placeholder"))),
             )
-            .size(25.0),
+            .size(styles::heading::HUGE),
         );
     }
 

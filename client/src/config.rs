@@ -1,5 +1,5 @@
 use crate::communication::heartbeat;
-use crate::ui::themes::ThemePreference;
+use crate::ui::styles::themes;
 use common::io::FileKind;
 use common::logging;
 use log::LevelFilter;
@@ -20,7 +20,7 @@ pub struct Config {
     pub language: Language,
     pub log_format: String,
     pub log_level: LevelFilter,
-    pub theme: ThemePreference,
+    pub theme: themes::Preference,
     pub sync_delay_seconds: i64,
 }
 
@@ -32,7 +32,7 @@ impl Default for Config {
             language: Language::English,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
-            theme: ThemePreference::default(),
+            theme: themes::Preference::default(),
 
             sync_delay_seconds: heartbeat::DEFAULT_PING_DELAY_SECONDS,
         }
@@ -108,7 +108,7 @@ impl ConfigDto {
             log_format: self.log_format.trim().to_string(),
             log_level: LevelFilter::from_str(self.log_level.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
-            theme: ThemePreference::from_str(self.theme.to_ascii_lowercase().trim())
+            theme: themes::Preference::from_str(self.theme.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownTheme)?,
             sync_delay_seconds: self.sync_delay_seconds,
         };

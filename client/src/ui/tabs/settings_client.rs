@@ -1,12 +1,11 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
-use crate::ui::themes::ThemePreference;
-use crate::{config, logging, utils};
+use crate::ui::styles;
+use crate::ui::styles::{colors, spacing, themes};
+use crate::{config, logging};
 use egui::{Checkbox, DragValue, Grid, RichText, TextEdit};
 use log::LevelFilter;
 use strum::IntoEnumIterator;
-
-const FIELD_NOT_APPLIED_COLOR: egui::Color32 = egui::Color32::RED;
 
 pub struct SettingsClientTab {
     // Fields that taking effect after logout
@@ -20,7 +19,7 @@ pub struct SettingsClientTab {
     // Fields that applied by button
     drop_unparsed_frames: bool,
     ping_delay_seconds: i64,
-    theme: ThemePreference,
+    theme: themes::Preference,
 }
 
 impl SettingsClientTab {
@@ -46,11 +45,11 @@ impl SettingsClientTab {
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
             .show(ui, |ui| {
-                ui.add_space(10.0);
+                ui.add_space(styles::space::SMALL);
                 ui.with_layout(
                     egui::Layout::top_down_justified(egui::Align::Center),
                     |ui| {
-                        utils::ui::with_temp_spacing_y(ui, 20.0, |ui| {
+                        spacing::with_temp_y(ui, spacing::GRID, |ui| {
                             Grid::new("Settings.Grid")
                                 .striped(false)
                                 .num_columns(GRID_COLUMNS)
@@ -86,7 +85,7 @@ impl SettingsClientTab {
     }
 
     fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(Self::heading_label(&t!(
+        ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.SettingsClient.Label.SaveConfig"
         ))));
 
@@ -126,7 +125,7 @@ impl SettingsClientTab {
     }
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.Compression"));
+        let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Compression"));
         let not_applied = self.compression != ctx.client_settings.compression;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -149,7 +148,7 @@ impl SettingsClientTab {
 
     fn drop_unparsed_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label =
-            Self::heading_label(&t!("Tab.SettingsClient.Label.DropUnparsedFrames"));
+            styles::heading::normal(&t!("Tab.SettingsClient.Label.DropUnparsedFrames"));
         let not_applied =
             self.drop_unparsed_frames != ctx.client_settings.drop_unparsed_frames;
         Self::label_not_applied_with_note(
@@ -177,7 +176,7 @@ impl SettingsClientTab {
     }
 
     fn language_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.Language"));
+        let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Language"));
         let not_applied = self.language != ctx.config.language;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -207,7 +206,7 @@ impl SettingsClientTab {
     }
 
     fn logs_format_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.LogFormat"));
+        let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.LogFormat"));
         let not_applied = !self
             .log_format_choice
             .eq_ignore_ascii_case(&ctx.config.log_format);
@@ -232,7 +231,7 @@ impl SettingsClientTab {
     }
 
     fn logs_level_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.LogLevel"));
+        let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.LogLevel"));
         let not_applied = self.log_level_choice != ctx.config.log_level;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -264,7 +263,7 @@ impl SettingsClientTab {
     }
 
     fn ping_delay_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.SyncDelay"));
+        let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.SyncDelay"));
         let not_applied =
             self.ping_delay_seconds != ctx.client_settings.sync_delay_seconds;
         Self::label_not_applied(ui, label, not_applied);
@@ -293,7 +292,7 @@ impl SettingsClientTab {
     }
 
     fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.Theme"));
+        let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Theme"));
         let not_applied = self.theme != ctx.client_settings.theme;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -302,7 +301,7 @@ impl SettingsClientTab {
                 .width(200.0)
                 .selected_text(self.theme.title())
                 .show_ui(ui, |ui| {
-                    for theme in ThemePreference::iter() {
+                    for theme in themes::Preference::iter() {
                         ui.selectable_value(&mut self.theme, theme, theme.title());
                     }
                 });
@@ -325,7 +324,7 @@ impl SettingsClientTab {
 
     fn label_not_applied(ui: &mut egui::Ui, mut label: RichText, is_different: bool) {
         if is_different {
-            label = label.color(FIELD_NOT_APPLIED_COLOR);
+            label = label.color(colors::FIELD_NOT_APPLIED);
             ui.add(egui::Label::new(label))
                 .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"));
         } else {
@@ -337,15 +336,11 @@ impl SettingsClientTab {
         ui: &mut egui::Ui, mut label: RichText, is_different: bool, note_id: &str,
     ) {
         if is_different {
-            label = label.color(FIELD_NOT_APPLIED_COLOR);
+            label = label.color(colors::FIELD_NOT_APPLIED);
             ui.add(egui::Label::new(label))
                 .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"));
         } else {
             ui.add(egui::Label::new(label)).on_hover_text(t!(note_id));
         }
-    }
-
-    fn heading_label(title: &str) -> RichText {
-        RichText::new(format!("{}:", title)).size(14.0).strong()
     }
 }

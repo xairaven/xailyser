@@ -3,7 +3,7 @@ use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::profiles::ProfilesStorage;
 use crate::ui::modals::Modal;
-use crate::ui::themes::ThemePreference;
+use crate::ui::styles::themes;
 use chrono::{DateTime, Local};
 use common::messages::Response;
 use crossbeam::channel::{Receiver, Sender, unbounded};
@@ -89,5 +89,5 @@ pub struct ClientSettings {
     pub compression: bool,
     pub drop_unparsed_frames: bool,
     pub sync_delay_seconds: i64,
-    pub theme: ThemePreference,
+    pub theme: themes::Preference,
 }
