@@ -46,7 +46,7 @@ impl SettingsClientTab {
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
             .show(ui, |ui| {
-                ui.add_space(20.0);
+                ui.add_space(10.0);
                 ui.with_layout(
                     egui::Layout::top_down_justified(egui::Align::Center),
                     |ui| {
@@ -86,11 +86,9 @@ impl SettingsClientTab {
     }
 
     fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.add(egui::Label::new(
-            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.SaveConfig")))
-                .size(16.0)
-                .strong(),
-        ));
+        ui.add(egui::Label::new(Self::heading_label(&t!(
+            "Tab.SettingsClient.Label.SaveConfig"
+        ))));
 
         // Invisible element
         ui.label("");
@@ -128,10 +126,7 @@ impl SettingsClientTab {
     }
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label =
-            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.Compression")))
-                .size(16.0)
-                .strong();
+        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.Compression"));
         let not_applied = self.compression != ctx.client_settings.compression;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -153,12 +148,8 @@ impl SettingsClientTab {
     }
 
     fn drop_unparsed_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new(format!(
-            "{}:",
-            t!("Tab.SettingsClient.Label.DropUnparsedFrames")
-        ))
-        .size(16.0)
-        .strong();
+        let label =
+            Self::heading_label(&t!("Tab.SettingsClient.Label.DropUnparsedFrames"));
         let not_applied =
             self.drop_unparsed_frames != ctx.client_settings.drop_unparsed_frames;
         Self::label_not_applied_with_note(
@@ -186,10 +177,7 @@ impl SettingsClientTab {
     }
 
     fn language_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label =
-            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.Language")))
-                .size(16.0)
-                .strong();
+        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.Language"));
         let not_applied = self.language != ctx.config.language;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -219,10 +207,7 @@ impl SettingsClientTab {
     }
 
     fn logs_format_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label =
-            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.LogFormat")))
-                .size(16.0)
-                .strong();
+        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.LogFormat"));
         let not_applied = !self
             .log_format_choice
             .eq_ignore_ascii_case(&ctx.config.log_format);
@@ -247,10 +232,7 @@ impl SettingsClientTab {
     }
 
     fn logs_level_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label =
-            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.LogLevel")))
-                .size(16.0)
-                .strong();
+        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.LogLevel"));
         let not_applied = self.log_level_choice != ctx.config.log_level;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -282,10 +264,7 @@ impl SettingsClientTab {
     }
 
     fn ping_delay_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label =
-            RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.SyncDelay")))
-                .size(16.0)
-                .strong();
+        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.SyncDelay"));
         let not_applied =
             self.ping_delay_seconds != ctx.client_settings.sync_delay_seconds;
         Self::label_not_applied(ui, label, not_applied);
@@ -314,9 +293,7 @@ impl SettingsClientTab {
     }
 
     fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label = RichText::new(format!("{}:", t!("Tab.SettingsClient.Label.Theme")))
-            .size(16.0)
-            .strong();
+        let label = Self::heading_label(&t!("Tab.SettingsClient.Label.Theme"));
         let not_applied = self.theme != ctx.client_settings.theme;
         Self::label_not_applied(ui, label, not_applied);
 
@@ -366,5 +343,9 @@ impl SettingsClientTab {
         } else {
             ui.add(egui::Label::new(label)).on_hover_text(t!(note_id));
         }
+    }
+
+    fn heading_label(title: &str) -> RichText {
+        RichText::new(format!("{}:", title)).size(14.0).strong()
     }
 }
