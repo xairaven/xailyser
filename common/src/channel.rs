@@ -31,6 +31,7 @@ impl<T: Clone> BroadcastChannel<T> {
                 disconnected.push(index);
             }
         }
+        disconnected.reverse();
         for index in disconnected {
             self.senders.remove(index);
         }
