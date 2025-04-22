@@ -43,44 +43,46 @@ impl SettingsClientTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         const GRID_COLUMNS: usize = 5;
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.add_space(20.0);
-            ui.with_layout(
-                egui::Layout::top_down_justified(egui::Align::Center),
-                |ui| {
-                    utils::ui::with_temp_spacing_y(ui, 20.0, |ui| {
-                        Grid::new("Settings.Grid")
-                            .striped(false)
-                            .num_columns(GRID_COLUMNS)
-                            .show(ui, |ui| {
-                                self.save_client_config_view(ui, ctx);
-                                ui.end_row();
+        egui::ScrollArea::vertical()
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.add_space(20.0);
+                ui.with_layout(
+                    egui::Layout::top_down_justified(egui::Align::Center),
+                    |ui| {
+                        utils::ui::with_temp_spacing_y(ui, 20.0, |ui| {
+                            Grid::new("Settings.Grid")
+                                .striped(false)
+                                .num_columns(GRID_COLUMNS)
+                                .show(ui, |ui| {
+                                    self.save_client_config_view(ui, ctx);
+                                    ui.end_row();
 
-                                self.compression_view(ui, ctx);
-                                ui.end_row();
+                                    self.compression_view(ui, ctx);
+                                    ui.end_row();
 
-                                self.drop_unparsed_view(ui, ctx);
-                                ui.end_row();
+                                    self.drop_unparsed_view(ui, ctx);
+                                    ui.end_row();
 
-                                self.language_view(ui, ctx);
-                                ui.end_row();
+                                    self.language_view(ui, ctx);
+                                    ui.end_row();
 
-                                self.logs_format_view(ui, ctx);
-                                ui.end_row();
+                                    self.logs_format_view(ui, ctx);
+                                    ui.end_row();
 
-                                self.logs_level_view(ui, ctx);
-                                ui.end_row();
+                                    self.logs_level_view(ui, ctx);
+                                    ui.end_row();
 
-                                self.ping_delay_view(ui, ctx);
-                                ui.end_row();
+                                    self.ping_delay_view(ui, ctx);
+                                    ui.end_row();
 
-                                self.theme_view(ui, ctx);
-                                ui.end_row();
-                            });
-                    });
-                },
-            );
-        });
+                                    self.theme_view(ui, ctx);
+                                    ui.end_row();
+                                });
+                        });
+                    },
+                );
+            });
     }
 
     fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
