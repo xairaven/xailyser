@@ -4,13 +4,19 @@
 #![deny(clippy::panic)]
 #![deny(unsafe_code)]
 
-use crate::wrapper::OwnedPacket;
+use crate::wrapper::{OwnedPacket, PacketHeader};
 
-pub fn process(packet: pcap::Packet) -> metadata::NetworkFrame {
+pub fn process(packet: pcap::Packet, unparsed_needed: bool) -> metadata::NetworkFrame {
     // TODO: Parsing
 
-    let packet = OwnedPacket::from(packet);
-    metadata::NetworkFrame::RawPacket(packet)
+    // Sending just metadata instead of full bytes vector
+    if unparsed_needed {
+        let raw_packet = OwnedPacket::from(packet);
+        metadata::NetworkFrame::RawPacket(raw_packet)
+    } else {
+        let raw_metadata = PacketHeader::from(packet.header);
+        metadata::NetworkFrame::RawMetadata(raw_metadata)
+    }
 }
 
 pub mod metadata;
