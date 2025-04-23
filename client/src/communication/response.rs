@@ -134,6 +134,8 @@ mod process {
             interface_active: dto.interface_active,
             interface_config: dto.interface_config,
 
+            link_type: dto.link_type.map(pcap::Linktype),
+
             send_unparsed_frames_active: dto.send_unparsed_frames_active,
             send_unparsed_frames_config: dto.send_unparsed_frames_config,
 
