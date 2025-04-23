@@ -68,10 +68,13 @@
   "Response.SetCompression.Success.On": "Compression is enabled! Changes will take effect after saving config and reboot.",
   "Response.SetCompression.Success.Off": "Compression is disabled! Changes will take effect after saving config and reboot.",
   "Response.SetInterface.Success": "Interface set: %{interface}! Changes will take effect after saving config and reboot.",
+  "Response.SetSendUnparsedFrames.Success.On": "Sending unparsed frames is enabled! Changes will take effect after saving config and reboot.",
+  "Response.SetSendUnparsedFrames.Success.Off": "Sending unparsed frames is disabled! Changes will take effect after saving config and reboot.",
   "Response.Error.ConfigSave": "Failed to save config file.",
   "Response.Error.InterfacesGet": "Failed to get server network interfaces list.",
   "Response.Error.InvalidMessageFormat": "Invalid message format.",
   "Response.Error.InvalidInterface": "Invalid interface.",
+  "Response.Error.MutexPoisoned": "Unexpected error appeared while blocking some memory.",
   "Response.Error.PasswordChange": "Failed to change password.",
 
   "Tab.About.Description": "Client-server analyser of network traffic on a home network",
