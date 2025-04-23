@@ -121,7 +121,7 @@ impl WsHandler {
         // Heartbeat
         if msg.is_pong() {
             log::debug!("WS-Stream: Received a Pong message.");
-            if let Err(err) = self.server_response_tx.try_send(Response::SyncSuccessful) {
+            if let Err(err) = self.server_response_tx.try_send(Response::SuccessSync) {
                 log::error!("WS Channel: Can't send message. Error: {}", err);
             }
             return Ok(());
