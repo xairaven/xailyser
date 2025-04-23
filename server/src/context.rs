@@ -9,8 +9,8 @@ pub struct Context {
     pub compression: bool,
     pub config: Config,
     pub encrypted_password: String,
-
     pub network_interface: Option<pcap::Device>,
+    pub send_unparsed_frames: bool,
 }
 
 impl Context {
@@ -33,14 +33,12 @@ impl Context {
 
         Ok(Self {
             compression: config.compression,
-            config,
             encrypted_password,
             network_interface: interface,
-        })
-    }
+            send_unparsed_frames: config.send_unparsed_frames,
 
-    pub fn change_config_compression(&mut self, is_compression_enabled: bool) {
-        self.config.compression = is_compression_enabled;
+            config,
+        })
     }
 
     pub fn change_config_network_interface(&mut self, interface: pcap::Device) {

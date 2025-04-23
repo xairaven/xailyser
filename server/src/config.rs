@@ -15,6 +15,7 @@ pub struct Config {
     pub log_level: LevelFilter,
     pub password: String,
     pub port: u16,
+    pub send_unparsed_frames: bool,
 }
 
 impl Default for Config {
@@ -26,6 +27,7 @@ impl Default for Config {
             log_level: LevelFilter::Info,
             password: String::new(),
             port: 8080,
+            send_unparsed_frames: false,
         }
     }
 }
@@ -49,6 +51,7 @@ impl Serialize for Config {
         state.serialize_field("log_level", &self.log_level.to_string())?;
         state.serialize_field("password", &self.password)?;
         state.serialize_field("port", &self.port)?;
+        state.serialize_field("send_unparsed_frames", &self.send_unparsed_frames)?;
         state.end()
     }
 }
@@ -84,6 +87,7 @@ struct ConfigDto {
     log_level: String,
     password: String,
     port: u16,
+    send_unparsed_frames: bool,
 }
 
 impl ConfigDto {
@@ -102,6 +106,7 @@ impl ConfigDto {
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
             password: self.password,
             port: self.port,
+            send_unparsed_frames: self.send_unparsed_frames,
         };
 
         Ok(config)

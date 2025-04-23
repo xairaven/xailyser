@@ -13,16 +13,15 @@ const TIMEOUT_MS: i32 = 100;
 
 pub struct PacketSniffer {
     frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
-    context: Arc<Mutex<Context>>,
+    device: Option<pcap::Device>,
+    send_unparsed_frames: bool,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
 }
 
 impl PacketSniffer {
     pub fn start(&self) -> Result<(), NetworkError> {
-        let interface = context::lock(&self.context, |ctx| ctx.network_interface.clone())
-            .ok_or(NetworkError::NoInterface)?;
-
+        let interface = self.device.clone().ok_or(NetworkError::NoInterface)?;
         let capture = interface::get_capture(interface, TIMEOUT_MS)
             .map_err(NetworkError::InterfaceError)?;
 
@@ -41,7 +40,7 @@ impl PacketSniffer {
             if self.ws_active_counter.load(Ordering::Acquire) > 0 {
                 match capture.next_packet() {
                     Ok(packet) => {
-                        let frame = dpi::process(packet);
+                        let frame = dpi::process(packet, self.send_unparsed_frames);
 
                         match self.frame_channel.lock() {
                             Ok(mut guard) => {
@@ -99,9 +98,14 @@ pub struct PacketSnifferBuilder {
 
 impl PacketSnifferBuilder {
     pub fn build(self) -> PacketSniffer {
+        let device = context::lock(&self.context, |ctx| ctx.network_interface.clone());
+        let send_unparsed_frames =
+            context::lock(&self.context, |ctx| ctx.send_unparsed_frames);
+
         PacketSniffer {
             frame_channel: self.frame_channel,
-            context: self.context,
+            device,
+            send_unparsed_frames,
             shutdown_flag: self.shutdown_flag,
             ws_active_counter: self.ws_active_counter,
         }
