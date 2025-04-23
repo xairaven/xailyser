@@ -12,6 +12,7 @@ pub enum Request {
     ServerSettings, // Interfaces, etc.
     SetCompression(bool), // Compression: On or Off
     SetInterface(String), // Set an ethernet interface
+    SetSendUnparsedFrames(bool), // Set "Send unparsed frames" option
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,16 +21,17 @@ pub enum Response {
     Data(dpi::metadata::NetworkFrame),
 
     // Pong (Heartbeat)
-    SyncSuccessful,
+    SuccessSync,
 
     // Settings: Interfaces, etc.
     ServerSettings(ServerSettingsDto), // Interfaces, etc.
 
-    // Results
-    ChangePasswordConfirmation,
-    SaveConfigResult(Result<(), ServerError>),
-    SetCompressionResult(Result<bool, ServerError>),
-    SetInterfaceResult(Result<String, ServerError>),
+    // Success
+    SuccessChangePassword,
+    SuccessSaveConfig,
+    SuccessSetCompression(bool),
+    SuccessSetInterface(String),
+    SuccessSetSendUnparsedFrames(bool),
 
     // Error
     Error(ServerError),
@@ -51,6 +53,9 @@ pub enum ServerError {
 
     #[error("Invalid interface.")]
     InvalidInterface,
+
+    #[error("Mutex poisoned.")]
+    MutexPoisoned,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,4 +65,6 @@ pub struct ServerSettingsDto {
     pub interface_active: Option<String>,
     pub interface_config: Option<String>,
     pub interfaces_available: Vec<String>,
+    pub send_unparsed_frames_active: bool,
+    pub send_unparsed_frames_config: bool,
 }
