@@ -289,7 +289,9 @@ impl SettingsServerTab {
             .clicked()
         {
             let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
-                Request::SetSendUnparsedFrames(!ctx.settings_server.send_unparsed_frames_config),
+                Request::SetSendUnparsedFrames(
+                    !ctx.settings_server.send_unparsed_frames_config,
+                ),
             ));
             self.request_server_settings(ctx);
         }
