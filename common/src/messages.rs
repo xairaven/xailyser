@@ -65,6 +65,7 @@ pub struct ServerSettingsDto {
     pub interface_active: Option<String>,
     pub interface_config: Option<String>,
     pub interfaces_available: Vec<String>,
+    pub link_type: Option<i32>,
     pub send_unparsed_frames_active: bool,
     pub send_unparsed_frames_config: bool,
 }
