@@ -59,4 +59,10 @@ impl MessageModal {
         self.modal_fields.width = width;
         self
     }
+
+    pub fn try_send_by(self, tx: &crossbeam::channel::Sender<Box<dyn Modal>>) {
+        if let Err(err) = tx.try_send(Box::new(self)) {
+            log::error!("Failed to send modal: {}", err);
+        }
+    }
 }
