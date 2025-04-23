@@ -134,6 +134,9 @@ mod process {
             interface_active: dto.interface_active,
             interface_config: dto.interface_config,
 
+            send_unparsed_frames_active: dto.send_unparsed_frames_active,
+            send_unparsed_frames_config: dto.send_unparsed_frames_config,
+
             last_updated: Some(Local::now()),
         };
     }

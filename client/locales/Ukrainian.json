@@ -98,15 +98,16 @@
   "Tab.SettingsClient.Note.FieldAppliedAfterLogout": "Налаштування набуде чинності після повторного з'єднання.",
   "Tab.SettingsClient.Note.FieldAppliedAfterRestart": "Налаштування набуде чинності після збереження конфігурації та перезапуску програми.",
 
+  "Tab.SettingsServer.Hover.FieldDifferFromConfig": "Конфігурація серверу містить інше значення. Щоб застосувати його - збережіть конфігурацію і перезапустіть сервер.",
   "Tab.SettingsServer.Label.RequestSettings": "Запитати активні налаштування",
   "Tab.SettingsServer.Label.SaveConfig": "Зберегти конфігурацію",
   "Tab.SettingsServer.Label.RestartServer": "Перезапустити сервер",
   "Tab.SettingsServer.Label.Compression": "Стиснення",
-  "Tab.SettingsServer.Label.CompressionConfig": "Стиснення (конфігурація)",
   "Tab.SettingsServer.Label.ChangePassword": "Змінити пароль",
   "Tab.SettingsServer.Label.Interfaces": "Інтерфейси",
   "Tab.SettingsServer.Label.Interfaces.Available": "Доступні інтерфейси",
   "Tab.SettingsServer.Label.InterfaceConfig": "Інтерфейс в конфігурації",
+  "Tab.SettingsServer.Label.SendUnparsedFrames": "Відправка необроблених фреймів",
   "Tab.SettingsServer.Note.RestartServer": "Після підтвердження ви можете не отримати повідомлення про перезапуск.\nСлідкуйте за станом сервера.",
 
   "Tabs.Placeholder": "Вкладка",

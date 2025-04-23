@@ -98,15 +98,16 @@
   "Tab.SettingsClient.Note.FieldAppliedAfterLogout": "The field takes effect after logout.",
   "Tab.SettingsClient.Note.FieldAppliedAfterRestart": "The field takes effect after config save & app restart.",
 
+  "Tab.SettingsServer.Hover.FieldDifferFromConfig": "Server config has another value. To take effects - save config & restart the server.",
   "Tab.SettingsServer.Label.RequestSettings": "Request Active Settings",
   "Tab.SettingsServer.Label.SaveConfig": "Save Config",
   "Tab.SettingsServer.Label.RestartServer": "Restart the server",
   "Tab.SettingsServer.Label.Compression": "Compression",
-  "Tab.SettingsServer.Label.CompressionConfig": "Compression (Config)",
   "Tab.SettingsServer.Label.ChangePassword": "Change Password",
   "Tab.SettingsServer.Label.Interfaces": "Interfaces",
   "Tab.SettingsServer.Label.Interfaces.Available": "Available Interfaces",
   "Tab.SettingsServer.Label.InterfaceConfig": "Config Interface",
+  "Tab.SettingsServer.Label.SendUnparsedFrames": "Sending Unparsed Frames",
   "Tab.SettingsServer.Note.RestartServer": "After confirmation, you may not receive a message about the reboot.\nMonitor the server status.",
 
   "Tabs.Placeholder": "Tab",

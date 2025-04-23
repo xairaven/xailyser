@@ -46,6 +46,9 @@ impl SettingsServerTab {
 
                             self.change_password_view(ui, ctx);
                             ui.end_row();
+
+                            self.sending_unparsed_frames_view(ui, ctx);
+                            ui.end_row();
                         });
 
                     self.interfaces_view(ui, ctx);
@@ -138,58 +141,25 @@ impl SettingsServerTab {
     }
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let differ = ctx.settings_server.compression_active
+            != ctx.settings_server.compression_config;
+
         ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.SettingsServer.Label.Compression"
         ))));
-        ui.label(is_enabled_text(ctx.settings_server.compression_active));
+        let is_enabled_text =
+            styles::text::is_enabled(ctx.settings_server.compression_active);
+        Self::different_from_config(ui, is_enabled_text, differ);
 
-        if ctx.settings_server.compression_active
-            != ctx.settings_server.compression_config
-        {
-            ui.end_row();
-
-            ui.label(
-                RichText::new(format!(
-                    "{}:",
-                    t!("Tab.SettingsServer.Label.CompressionConfig")
-                ))
-                .size(16.0)
-                .strong()
-                .italics(),
-            );
-            ui.label(is_enabled_text(ctx.settings_server.compression_config).italics());
-            if ui
-                .button(action_text(ctx.settings_server.compression_config))
-                .clicked()
-            {
-                let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
-                    Request::SetCompression(!ctx.settings_server.compression_config),
-                ));
-                self.request_server_settings(ctx);
-            }
-        } else if ui
-            .button(action_text(ctx.settings_server.compression_active))
+        // We don't care what active field is - changes take effect only on config
+        if ui
+            .button(styles::text::action(ctx.settings_server.compression_config))
             .clicked()
         {
             let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
-                Request::SetCompression(!ctx.settings_server.compression_active),
+                Request::SetCompression(!ctx.settings_server.compression_config),
             ));
             self.request_server_settings(ctx);
-        }
-
-        fn is_enabled_text(is_enabled: bool) -> RichText {
-            if is_enabled {
-                RichText::new(t!("Button.State.Enabled")).color(colors::ENABLED)
-            } else {
-                RichText::new(t!("Button.State.Disabled")).color(colors::DISABLED)
-            }
-        }
-        fn action_text(is_enabled: bool) -> RichText {
-            if is_enabled {
-                RichText::new(t!("Button.Action.Disable"))
-            } else {
-                RichText::new(t!("Button.Action.Enable"))
-            }
         }
     }
 
@@ -298,6 +268,42 @@ impl SettingsServerTab {
                 }
             },
         );
+    }
+
+    fn sending_unparsed_frames_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let differ = ctx.settings_server.send_unparsed_frames_active
+            != ctx.settings_server.send_unparsed_frames_config;
+
+        ui.add(egui::Label::new(styles::heading::normal(&t!(
+            "Tab.SettingsServer.Label.SendUnparsedFrames"
+        ))));
+        let is_enabled_text =
+            styles::text::is_enabled(ctx.settings_server.send_unparsed_frames_active);
+        Self::different_from_config(ui, is_enabled_text, differ);
+
+        // We don't care what active field is - changes take effect only on config
+        if ui
+            .button(styles::text::action(
+                ctx.settings_server.send_unparsed_frames_config,
+            ))
+            .clicked()
+        {
+            let _ = ctx.ui_client_requests_tx.try_send(UiClientRequest::Request(
+                Request::SetSendUnparsedFrames(!ctx.settings_server.send_unparsed_frames_config),
+            ));
+            self.request_server_settings(ctx);
+        }
+    }
+
+    fn different_from_config(
+        ui: &mut egui::Ui, label: RichText, is_different: bool,
+    ) -> egui::Response {
+        if is_different {
+            ui.add(egui::Label::new(label.italics()))
+                .on_hover_text(t!("Tab.SettingsServer.Hover.FieldDifferFromConfig"))
+        } else {
+            ui.add(egui::Label::new(label))
+        }
     }
 
     fn request_server_settings(&mut self, ctx: &mut Context) {

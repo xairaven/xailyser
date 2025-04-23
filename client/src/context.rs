@@ -80,6 +80,8 @@ pub struct ServerSettings {
     pub interfaces_available: Vec<String>,
     pub interface_active: Option<String>,
     pub interface_config: Option<String>,
+    pub send_unparsed_frames_active: bool,
+    pub send_unparsed_frames_config: bool,
 
     pub last_updated: Option<DateTime<Local>>,
 }
