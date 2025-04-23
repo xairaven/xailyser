@@ -102,20 +102,22 @@ impl SettingsClientTab {
             ctx.config.theme = ctx.client_settings.theme;
             ctx.config.sync_delay_seconds = ctx.client_settings.sync_delay_seconds;
 
-            let modal = match ctx.config.save_to_file() {
-                Ok(_) => MessageModal::info(&t!("Message.Success.ClientConfigSaved")),
-                Err(err) => MessageModal::error(&format!(
-                    "{} {}",
-                    t!("Error.FailedSaveClientConfigIntoFile"),
-                    err
-                )),
-            };
-            match ctx.modals_tx.try_send(Box::new(modal)) {
-                Ok(_) => log::info!("Requested saving client config. Saved"),
-                Err(_) => {
-                    log::error!("Requested saving client config. Failed to save.")
+            match ctx.config.save_to_file() {
+                Ok(_) => {
+                    log::info!("Client Settings: Successfully saved client config.");
+                    MessageModal::info(&t!("Message.Success.ClientConfigSaved"))
+                        .try_send_by(&ctx.modals_tx);
                 },
-            }
+                Err(err) => {
+                    log::error!("Client Settings: Failed to save client config: {}", err);
+                    MessageModal::error(&format!(
+                        "{} {}",
+                        t!("Error.FailedSaveClientConfigIntoFile"),
+                        err
+                    ))
+                    .try_send_by(&ctx.modals_tx);
+                },
+            };
         }
     }
 
