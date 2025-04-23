@@ -48,16 +48,22 @@ pub fn start(config: Config) {
                     .name("Network-Sniffing-Thread".to_owned())
                     .spawn(move || {
                         log::info!("Packet sniffing thread started.");
-                        let packet_sniffer = PacketSnifferBuilder {
+                        let result = PacketSnifferBuilder {
                             frame_channel,
                             context,
                             shutdown_flag: shutdown_flag.clone(),
                             ws_active_counter,
                         }
                         .build();
-
-                        let result = packet_sniffer.start();
-                        if let Err(err) = result {
+                        let mut sniffer = match result {
+                            Ok(value) => value,
+                            Err(err) => {
+                                log::error!("Network Error: {}", err);
+                                shutdown_flag.store(true, Ordering::Release);
+                                return;
+                            },
+                        };
+                        if let Err(err) = sniffer.listen() {
                             log::error!("Network Error: {}", err);
                             shutdown_flag.store(true, Ordering::Release);
                         }

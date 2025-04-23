@@ -9,6 +9,7 @@ pub struct Context {
     pub compression: bool,
     pub config: Config,
     pub encrypted_password: String,
+    pub link_type: Option<pcap::Linktype>,
     pub network_interface: Option<pcap::Device>,
     pub send_unparsed_frames: bool,
 }
@@ -34,6 +35,7 @@ impl Context {
         Ok(Self {
             compression: config.compression,
             encrypted_password,
+            link_type: None,
             network_interface: interface,
             send_unparsed_frames: config.send_unparsed_frames,
 

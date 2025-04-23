@@ -50,6 +50,7 @@ pub fn process(
                         .map(interface::get_network_interface_name),
                     interface_config: ctx.config.interface.clone(),
                     interfaces_available,
+                    link_type: ctx.link_type.map(|lt| lt.0),
                     send_unparsed_frames_active: ctx.send_unparsed_frames,
                     send_unparsed_frames_config: ctx.config.send_unparsed_frames,
                 };

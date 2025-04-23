@@ -12,25 +12,15 @@ use thiserror::Error;
 const TIMEOUT_MS: i32 = 100;
 
 pub struct PacketSniffer {
+    capture: Capture<Active>,
     frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
-    device: Option<pcap::Device>,
     send_unparsed_frames: bool,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
 }
 
 impl PacketSniffer {
-    pub fn start(&self) -> Result<(), NetworkError> {
-        let interface = self.device.clone().ok_or(NetworkError::NoInterface)?;
-        let capture = interface::get_capture(interface, TIMEOUT_MS)
-            .map_err(NetworkError::InterfaceError)?;
-
-        self.listen(capture)?;
-
-        Ok(())
-    }
-
-    pub fn listen(&self, mut capture: Capture<Active>) -> Result<(), NetworkError> {
+    pub fn listen(&mut self) -> Result<(), NetworkError> {
         loop {
             if self.shutdown_flag.load(Ordering::Acquire) {
                 log::info!("Shutting down net-capturing thread.");
@@ -38,7 +28,7 @@ impl PacketSniffer {
             }
 
             if self.ws_active_counter.load(Ordering::Acquire) > 0 {
-                match capture.next_packet() {
+                match self.capture.next_packet() {
                     Ok(packet) => {
                         let frame = dpi::process(packet, self.send_unparsed_frames);
 
@@ -97,17 +87,27 @@ pub struct PacketSnifferBuilder {
 }
 
 impl PacketSnifferBuilder {
-    pub fn build(self) -> PacketSniffer {
-        let device = context::lock(&self.context, |ctx| ctx.network_interface.clone());
+    pub fn build(self) -> Result<PacketSniffer, NetworkError> {
+        let interface = context::lock(&self.context, |ctx| ctx.network_interface.clone())
+            .ok_or(NetworkError::NoInterface)?;
+        let capture = interface::get_capture(interface, TIMEOUT_MS)
+            .map_err(NetworkError::InterfaceError)?;
+
+        let link_type = capture.get_datalink();
+        context::lock(&self.context, |ctx| {
+            ctx.link_type = Some(link_type);
+        });
+
         let send_unparsed_frames =
             context::lock(&self.context, |ctx| ctx.send_unparsed_frames);
 
-        PacketSniffer {
+        let sniffer = PacketSniffer {
+            capture,
             frame_channel: self.frame_channel,
-            device,
             send_unparsed_frames,
             shutdown_flag: self.shutdown_flag,
             ws_active_counter: self.ws_active_counter,
-        }
+        };
+        Ok(sniffer)
     }
 }
