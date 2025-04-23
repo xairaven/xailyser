@@ -81,7 +81,26 @@ pub mod spacing {
 }
 
 pub mod text {
+    use crate::ui::styles::colors;
+    use egui::RichText;
+
     pub const SMALL: f32 = 10.0;
+
+    pub fn is_enabled(is_enabled: bool) -> RichText {
+        if is_enabled {
+            RichText::new(t!("Button.State.Enabled")).color(colors::ENABLED)
+        } else {
+            RichText::new(t!("Button.State.Disabled")).color(colors::DISABLED)
+        }
+    }
+
+    pub fn action(is_enabled: bool) -> RichText {
+        if is_enabled {
+            RichText::new(t!("Button.Action.Disable"))
+        } else {
+            RichText::new(t!("Button.Action.Enable"))
+        }
+    }
 }
 
 pub mod themes {
