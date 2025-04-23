@@ -87,7 +87,8 @@ impl SettingsClientTab {
     fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.SettingsClient.Label.SaveConfig"
-        ))));
+        ))))
+        .on_hover_text(t!("Tab.SettingsClient.Hover.SettingSavesConfig"));
 
         // Invisible element
         ui.label("");
@@ -116,18 +117,13 @@ impl SettingsClientTab {
                 },
             }
         }
-
-        // Another invisible element, lol
-        ui.label("");
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Hover.SettingSavesConfig"));
     }
 
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Compression"));
         let not_applied = self.compression != ctx.client_settings.compression;
-        Self::label_not_applied(ui, label, not_applied);
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterLogout"));
 
         ui.add(Checkbox::without_text(&mut self.compression));
 
@@ -141,9 +137,6 @@ impl SettingsClientTab {
         if ui.button("🔙").clicked() {
             self.compression = ctx.client_settings.compression;
         }
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterLogout"));
     }
 
     fn drop_unparsed_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
@@ -151,12 +144,9 @@ impl SettingsClientTab {
             styles::heading::normal(&t!("Tab.SettingsClient.Label.DropUnparsedFrames"));
         let not_applied =
             self.drop_unparsed_frames != ctx.client_settings.drop_unparsed_frames;
-        Self::label_not_applied_with_note(
-            ui,
-            label,
-            not_applied,
-            "Tab.SettingsClient.Label.DropUnparsedFrames.Note",
-        );
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Label.DropUnparsedFrames.Note"))
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
 
         ui.add(Checkbox::without_text(&mut self.drop_unparsed_frames));
 
@@ -170,15 +160,13 @@ impl SettingsClientTab {
         if ui.button("🔙").clicked() {
             self.drop_unparsed_frames = ctx.client_settings.drop_unparsed_frames;
         }
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
     }
 
     fn language_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Language"));
         let not_applied = self.language != ctx.config.language;
-        Self::label_not_applied(ui, label, not_applied);
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
 
         ui.with_layout(
             egui::Layout::top_down(egui::Align::Min), |ui| {
@@ -200,9 +188,6 @@ impl SettingsClientTab {
         if ui.button("🔙").clicked() {
             self.language = ctx.config.language.clone();
         }
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
     }
 
     fn logs_format_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
@@ -210,7 +195,8 @@ impl SettingsClientTab {
         let not_applied = !self
             .log_format_choice
             .eq_ignore_ascii_case(&ctx.config.log_format);
-        Self::label_not_applied(ui, label, not_applied);
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
 
         ui.add(TextEdit::multiline(&mut self.log_format_choice));
 
@@ -225,15 +211,13 @@ impl SettingsClientTab {
         if ui.button("🔙").clicked() {
             self.log_format_choice = ctx.config.log_format.clone();
         }
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
     }
 
     fn logs_level_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.LogLevel"));
         let not_applied = self.log_level_choice != ctx.config.log_level;
-        Self::label_not_applied(ui, label, not_applied);
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
 
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
             egui::ComboBox::from_id_salt("Settings.Client.Log.Level.ComboBox")
@@ -257,16 +241,14 @@ impl SettingsClientTab {
         if ui.button("🔙").clicked() {
             self.log_level_choice = ctx.config.log_level;
         }
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
     }
 
     fn ping_delay_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.SyncDelay"));
         let not_applied =
             self.ping_delay_seconds != ctx.client_settings.sync_delay_seconds;
-        Self::label_not_applied(ui, label, not_applied);
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
 
         ui.add(
             DragValue::new(&mut self.ping_delay_seconds)
@@ -286,15 +268,13 @@ impl SettingsClientTab {
         if ui.button("🔙").clicked() {
             self.ping_delay_seconds = ctx.client_settings.sync_delay_seconds;
         }
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
     }
 
     fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Theme"));
         let not_applied = self.theme != ctx.client_settings.theme;
-        Self::label_not_applied(ui, label, not_applied);
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
 
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
             egui::ComboBox::from_id_salt("Settings.Theme.ComboBox")
@@ -317,30 +297,17 @@ impl SettingsClientTab {
         if ui.button("🔙").clicked() {
             self.theme = ctx.client_settings.theme;
         }
-
-        ui.label(RichText::new(t!("Tab.SettingsClient.Note")).italics())
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
     }
 
-    fn label_not_applied(ui: &mut egui::Ui, mut label: RichText, is_different: bool) {
+    fn label_not_applied(
+        ui: &mut egui::Ui, mut label: RichText, is_different: bool,
+    ) -> egui::Response {
         if is_different {
             label = label.color(colors::FIELD_NOT_APPLIED);
             ui.add(egui::Label::new(label))
-                .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"));
+                .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"))
         } else {
-            ui.add(egui::Label::new(label));
-        }
-    }
-
-    fn label_not_applied_with_note(
-        ui: &mut egui::Ui, mut label: RichText, is_different: bool, note_id: &str,
-    ) {
-        if is_different {
-            label = label.color(colors::FIELD_NOT_APPLIED);
             ui.add(egui::Label::new(label))
-                .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"));
-        } else {
-            ui.add(egui::Label::new(label)).on_hover_text(t!(note_id));
         }
     }
 }

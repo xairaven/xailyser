@@ -91,7 +91,6 @@
   "Tab.SettingsClient.Label.SyncDelay": "Затримка синхронізації",
   "Tab.SettingsClient.Label.Theme": "Тема",
   "Tab.SettingsClient.Suffix.SyncDelay": "секунд",
-  "Tab.SettingsClient.Note": "* Примітка",
   "Tab.SettingsClient.Note.FieldAppliedImmediately": "Налаштування набуває чинності одразу після застосування.",
   "Tab.SettingsClient.Note.FieldAppliedAfterLogout": "Налаштування набуде чинності після повторного з'єднання.",
   "Tab.SettingsClient.Note.FieldAppliedAfterRestart": "Налаштування набуде чинності після збереження конфігурації та перезапуску програми.",

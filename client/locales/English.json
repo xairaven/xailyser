@@ -91,7 +91,6 @@
   "Tab.SettingsClient.Label.SyncDelay": "Sync Delay",
   "Tab.SettingsClient.Label.Theme": "Theme",
   "Tab.SettingsClient.Suffix.SyncDelay": "seconds",
-  "Tab.SettingsClient.Note": "* Note (Hover)",
   "Tab.SettingsClient.Note.FieldAppliedImmediately": "The field takes effect after applying.",
   "Tab.SettingsClient.Note.FieldAppliedAfterLogout": "The field takes effect after logout.",
   "Tab.SettingsClient.Note.FieldAppliedAfterRestart": "The field takes effect after config save & app restart.",
