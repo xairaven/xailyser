@@ -17,9 +17,11 @@ pub struct SettingsClientTab {
     log_level_choice: LevelFilter,
 
     // Fields that applied by button
-    drop_unparsed_frames: bool,
     ping_delay_seconds: i64,
     theme: themes::Preference,
+    unparsed_frames_drop: bool,
+    unparsed_frames_threshold_enabled: bool,
+    unparsed_frames_threshold: usize,
 }
 
 impl SettingsClientTab {
@@ -31,9 +33,18 @@ impl SettingsClientTab {
             log_format_choice: ctx.config.log_format.clone(),
             log_level_choice: ctx.config.log_level,
 
-            drop_unparsed_frames: ctx.client_settings.drop_unparsed_frames,
             ping_delay_seconds: ctx.client_settings.sync_delay_seconds,
             theme: ctx.client_settings.theme,
+
+            unparsed_frames_drop: ctx.client_settings.unparsed_frames_drop,
+            unparsed_frames_threshold_enabled: ctx
+                .client_settings
+                .unparsed_frames_threshold
+                .is_some(),
+            unparsed_frames_threshold: ctx
+                .client_settings
+                .unparsed_frames_threshold
+                .unwrap_or(0),
         }
     }
 }
@@ -60,9 +71,6 @@ impl SettingsClientTab {
                                     self.compression_view(ui, ctx);
                                     ui.end_row();
 
-                                    self.drop_unparsed_view(ui, ctx);
-                                    ui.end_row();
-
                                     self.language_view(ui, ctx);
                                     ui.end_row();
 
@@ -76,6 +84,12 @@ impl SettingsClientTab {
                                     ui.end_row();
 
                                     self.theme_view(ui, ctx);
+                                    ui.end_row();
+
+                                    self.unparsed_drop_view(ui, ctx);
+                                    ui.end_row();
+
+                                    self.unparsed_threshold_view(ui, ctx);
                                     ui.end_row();
                                 });
                         });
@@ -98,9 +112,11 @@ impl SettingsClientTab {
             ctx.config.compression = ctx.client_settings.compression;
 
             // Fields that applied by button
-            ctx.config.drop_unparsed_frames = ctx.client_settings.drop_unparsed_frames;
             ctx.config.theme = ctx.client_settings.theme;
             ctx.config.sync_delay_seconds = ctx.client_settings.sync_delay_seconds;
+            ctx.config.unparsed_frames_drop = ctx.client_settings.unparsed_frames_drop;
+            ctx.config.unparsed_frames_threshold =
+                ctx.client_settings.unparsed_frames_threshold;
 
             match ctx.config.save_to_file() {
                 Ok(_) => {
@@ -138,29 +154,6 @@ impl SettingsClientTab {
         }
         if ui.button("🔙").clicked() {
             self.compression = ctx.client_settings.compression;
-        }
-    }
-
-    fn drop_unparsed_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let label =
-            styles::heading::normal(&t!("Tab.SettingsClient.Label.DropUnparsedFrames"));
-        let not_applied =
-            self.drop_unparsed_frames != ctx.client_settings.drop_unparsed_frames;
-        Self::label_not_applied(ui, label, not_applied)
-            .on_hover_text(t!("Tab.SettingsClient.Label.DropUnparsedFrames.Note"))
-            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
-
-        ui.add(Checkbox::without_text(&mut self.drop_unparsed_frames));
-
-        if ui.button(t!("Button.Apply")).clicked() {
-            log::info!(
-                "Client Settings: `Drop Unparsed Frames` changed to {}",
-                self.drop_unparsed_frames
-            );
-            ctx.client_settings.drop_unparsed_frames = self.drop_unparsed_frames;
-        }
-        if ui.button("🔙").clicked() {
-            self.drop_unparsed_frames = ctx.client_settings.drop_unparsed_frames;
         }
     }
 
@@ -298,6 +291,76 @@ impl SettingsClientTab {
 
         if ui.button("🔙").clicked() {
             self.theme = ctx.client_settings.theme;
+        }
+    }
+
+    fn unparsed_drop_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let label =
+            styles::heading::normal(&t!("Tab.SettingsClient.Label.UnparsedFramesDrop"));
+        let not_applied =
+            self.unparsed_frames_drop != ctx.client_settings.unparsed_frames_drop;
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesDrop.Note"))
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+
+        ui.add(Checkbox::without_text(&mut self.unparsed_frames_drop));
+
+        if ui.button(t!("Button.Apply")).clicked() {
+            log::info!(
+                "Client Settings: `Drop Unparsed Frames` changed to {}",
+                self.unparsed_frames_drop
+            );
+            ctx.client_settings.unparsed_frames_drop = self.unparsed_frames_drop;
+        }
+        if ui.button("🔙").clicked() {
+            self.unparsed_frames_drop = ctx.client_settings.unparsed_frames_drop;
+        }
+    }
+
+    fn unparsed_threshold_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let setting = into_setting(
+            self.unparsed_frames_threshold_enabled,
+            self.unparsed_frames_threshold,
+        );
+        let label = styles::heading::normal(&t!(
+            "Tab.SettingsClient.Label.UnparsedFramesThreshold"
+        ));
+        let not_applied = setting != ctx.client_settings.unparsed_frames_threshold;
+        Self::label_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesThreshold.Note"))
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+
+        ui.horizontal_centered(|ui| {
+            ui.add(Checkbox::without_text(
+                &mut self.unparsed_frames_threshold_enabled,
+            ));
+            ui.add_enabled(
+                self.unparsed_frames_threshold_enabled,
+                DragValue::new(&mut self.unparsed_frames_threshold)
+                    .speed(1)
+                    .range(1..=i64::MAX)
+                    .suffix(format!(" {}", t!("Tab.SettingsClient.Suffix.Frames"))),
+            );
+        });
+
+        if ui.button(t!("Button.Apply")).clicked() {
+            log::info!(
+                "Client Settings: `Unparsed Frames Threshold` changed to {}:{}",
+                self.unparsed_frames_threshold_enabled,
+                self.unparsed_frames_threshold,
+            );
+            ctx.client_settings.unparsed_frames_threshold = setting;
+            ctx.net_storage.raw.set_threshold(setting);
+        }
+        if ui.button("🔙").clicked() {
+            self.unparsed_frames_threshold_enabled =
+                ctx.client_settings.unparsed_frames_threshold.is_some();
+            self.unparsed_frames_threshold =
+                ctx.client_settings.unparsed_frames_threshold.unwrap_or(0);
+        }
+
+        fn into_setting(is_enabled: bool, amount: usize) -> Option<usize> {
+            if is_enabled { Some(amount) } else { None }
         }
     }
 

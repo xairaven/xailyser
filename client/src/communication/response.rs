@@ -110,7 +110,7 @@ mod process {
                 // TODO: Process parsed metadata
             },
             NetworkFrame::RawPacket(raw_packet) => {
-                if !ctx.client_settings.drop_unparsed_frames {
+                if !ctx.client_settings.unparsed_frames_drop {
                     ctx.net_storage.raw.add_frame(raw_packet);
                     // TODO: Handle raw packets
                 }

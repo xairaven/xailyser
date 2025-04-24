@@ -16,25 +16,26 @@ const CONFIG_FILETYPE: FileKind = FileKind::Config;
 #[derive(Debug, Clone)]
 pub struct Config {
     pub compression: bool,
-    pub drop_unparsed_frames: bool,
     pub language: Language,
     pub log_format: String,
     pub log_level: LevelFilter,
     pub theme: themes::Preference,
     pub sync_delay_seconds: i64,
+    pub unparsed_frames_drop: bool,
+    pub unparsed_frames_threshold: Option<usize>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             compression: true,
-            drop_unparsed_frames: true,
             language: Language::English,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
             theme: themes::Preference::default(),
-
             sync_delay_seconds: heartbeat::DEFAULT_PING_DELAY_SECONDS,
+            unparsed_frames_drop: true,
+            unparsed_frames_threshold: Some(10000),
         }
     }
 }
@@ -46,12 +47,19 @@ impl Serialize for Config {
     {
         let mut state = serializer.serialize_struct("Config", 3)?;
         state.serialize_field("compression", &self.compression)?;
-        state.serialize_field("drop_unparsed_frames", &self.drop_unparsed_frames)?;
         state.serialize_field("language", &self.language.to_string())?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
         state.serialize_field("theme", &self.theme.to_string())?;
         state.serialize_field("sync_delay_seconds", &self.sync_delay_seconds)?;
+
+        state.serialize_field("unparsed_frames_drop", &self.unparsed_frames_drop)?;
+        let threshold = match &self.unparsed_frames_threshold {
+            Some(value) => &value.to_string(),
+            None => "none",
+        };
+        state.serialize_field("unparsed_frames_threshold", threshold)?;
+
         state.end()
     }
 }
@@ -90,19 +98,19 @@ impl Config {
 #[derive(Deserialize)]
 struct ConfigDto {
     compression: bool,
-    drop_unparsed_frames: bool,
     language: String,
     log_format: String,
     log_level: String,
     theme: String,
     sync_delay_seconds: i64,
+    unparsed_frames_drop: bool,
+    unparsed_frames_threshold: String,
 }
 
 impl ConfigDto {
     pub fn into_config(self) -> Result<Config, ConfigError> {
         let config = Config {
             compression: self.compression,
-            drop_unparsed_frames: self.drop_unparsed_frames,
             language: Language::from_str(&self.language)
                 .map_err(|_| ConfigError::UnknownLanguage)?,
             log_format: self.log_format.trim().to_string(),
@@ -111,6 +119,9 @@ impl ConfigDto {
             theme: themes::Preference::from_str(self.theme.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownTheme)?,
             sync_delay_seconds: self.sync_delay_seconds,
+            unparsed_frames_drop: self.unparsed_frames_drop,
+            unparsed_frames_threshold: usize::from_str(&self.unparsed_frames_threshold)
+                .ok(),
         };
 
         Ok(config)

@@ -1,18 +1,42 @@
+use std::collections::VecDeque;
 use std::path::PathBuf;
 
-#[derive(Default)]
 pub struct RawStorage {
-    metadata: Vec<dpi::wrapper::PacketHeader>,
-    frames: Vec<dpi::wrapper::OwnedPacket>,
+    metadata: VecDeque<dpi::wrapper::PacketHeader>,
+    frames: VecDeque<dpi::wrapper::OwnedPacket>,
+
+    threshold: Option<usize>,
 }
 
 impl RawStorage {
+    pub fn new(threshold: Option<usize>) -> Self {
+        Self {
+            metadata: Default::default(),
+            frames: Default::default(),
+            threshold,
+        }
+    }
+
     pub fn add_frame(&mut self, frame: dpi::wrapper::OwnedPacket) {
-        self.frames.push(frame);
+        self.frames.push_back(frame);
+        if let Some(threshold) = self.threshold {
+            if self.frames.len() > threshold {
+                self.frames.pop_front();
+            }
+        }
     }
 
     pub fn add_metadata(&mut self, frame: dpi::wrapper::PacketHeader) {
-        self.metadata.push(frame);
+        self.metadata.push_back(frame);
+        if let Some(threshold) = self.threshold {
+            if self.metadata.len() > threshold {
+                self.metadata.pop_front();
+            }
+        }
+    }
+
+    pub fn set_threshold(&mut self, threshold: Option<usize>) {
+        self.threshold = threshold;
     }
 
     pub fn frames_amount(&self) -> usize {
