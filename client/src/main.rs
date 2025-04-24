@@ -57,6 +57,7 @@ mod communication {
 mod config;
 mod context;
 mod logging;
+mod net;
 mod profiles;
 mod ui;
 mod ws;

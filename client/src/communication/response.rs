@@ -111,11 +111,13 @@ mod process {
             },
             NetworkFrame::RawPacket(raw_packet) => {
                 if !ctx.client_settings.drop_unparsed_frames {
+                    ctx.net_storage.raw.add_frame(raw_packet);
                     // TODO: Handle raw packets
                 }
                 // Else - pass
             },
             NetworkFrame::RawMetadata(raw_metadata) => {
+                ctx.net_storage.raw.add_metadata(raw_metadata);
                 // TODO: Handle raw metadata
             },
         }

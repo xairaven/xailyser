@@ -42,6 +42,8 @@
 
   "Error.AdditionalInfo": "Additional Info",
   "Error.FailedSaveClientConfigIntoFile": "Failed to save client config into file!",
+  "Error.FailedUnpackLinkType": "Failed to get interface's link-type. Check server's interface.",
+  "Error.Pcap": "Error occurred in PCAP library",
 
   "Language.English": "English",
   "Language.Ukrainian": "Ukrainian",

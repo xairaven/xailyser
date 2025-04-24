@@ -42,6 +42,8 @@
 
   "Error.AdditionalInfo": "Додаткова інформація",
   "Error.FailedSaveClientConfigIntoFile": "Не вдалося зберегти конфігурацію клієнта у файл!",
+  "Error.FailedUnpackLinkType": "Не вдалося отримати лінк-тайп інтерфейсу. Перевірте мережевий інтерфейс серверу.",
+  "Error.Pcap": "Виникла помилка з бібліотеки PCAP",
 
   "Language.English": "Англійська",
   "Language.Ukrainian": "Українська",

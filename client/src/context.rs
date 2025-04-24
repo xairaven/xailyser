@@ -1,6 +1,7 @@
 use crate::communication::heartbeat::Heartbeat;
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
+use crate::net::NetStorage;
 use crate::profiles::ProfilesStorage;
 use crate::ui::modals::Modal;
 use crate::ui::styles::themes;
@@ -15,6 +16,7 @@ pub struct Context {
     pub client_settings: ClientSettings,
     pub settings_server: ServerSettings,
     pub heartbeat: Heartbeat,
+    pub net_storage: NetStorage,
 
     // Used for saving into config file
     pub config: Config,
@@ -51,6 +53,7 @@ impl Context {
             },
             settings_server: Default::default(),
             heartbeat: Default::default(),
+            net_storage: Default::default(),
 
             config,
             profiles_storage,
