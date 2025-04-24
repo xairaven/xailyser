@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::path::Path;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -49,7 +50,7 @@ impl From<&PacketHeader> for pcap::PacketHeader {
 }
 
 pub fn save_pcap<P: AsRef<Path>>(
-    path: P, packets: &[OwnedPacket], link_type: pcap::Linktype,
+    path: P, packets: &VecDeque<OwnedPacket>, link_type: pcap::Linktype,
 ) -> Result<(), pcap::Error> {
     let mut file = pcap::Capture::dead(link_type)?.savefile(path)?;
 
