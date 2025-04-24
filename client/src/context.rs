@@ -30,6 +30,8 @@ pub struct Context {
     // Channels
     pub modals_tx: Sender<Box<dyn Modal>>,
     pub modals_rx: Receiver<Box<dyn Modal>>,
+    pub data_response_tx: Sender<Response>,
+    pub data_response_rx: Receiver<Response>,
     pub server_response_tx: Sender<Response>,
     pub server_response_rx: Receiver<Response>,
     pub ui_client_requests_tx: Sender<UiClientRequest>,
@@ -40,6 +42,7 @@ impl Context {
     pub fn new(config: Config) -> Self {
         let (modals_tx, modals_rx) = unbounded::<Box<dyn Modal>>();
         let (server_response_tx, server_response_rx) = unbounded::<Response>();
+        let (data_response_tx, data_response_rx) = unbounded::<Response>();
         let (ui_client_requests_tx, ui_client_requests_rx) =
             unbounded::<UiClientRequest>();
 
@@ -66,6 +69,8 @@ impl Context {
 
             modals_tx,
             modals_rx,
+            data_response_tx,
+            data_response_rx,
             server_response_tx,
             server_response_rx,
             ui_client_requests_tx,

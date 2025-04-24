@@ -20,6 +20,7 @@ pub struct WsHandler {
     pub shutdown_flag: Arc<AtomicBool>,
 
     pub stream: WsStream,
+    pub data_response_tx: Sender<Response>,
     pub server_response_tx: Sender<Response>,
     pub ui_client_requests_rx: Receiver<UiClientRequest>,
 }
@@ -173,7 +174,11 @@ impl WsHandler {
         let deserialized: Result<Response, serde_json::Error> =
             serde_json::from_str(text);
         if let Ok(message) = deserialized {
-            if let Err(err) = self.server_response_tx.try_send(message) {
+            let result = match message {
+                Response::Data(_) => self.data_response_tx.try_send(message),
+                _ => self.server_response_tx.try_send(message),
+            };
+            if let Err(err) = result {
                 log::error!("WS Channel: Can't send message. Error: {}", err);
             }
         } else {

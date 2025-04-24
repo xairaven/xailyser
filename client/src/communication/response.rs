@@ -1,9 +1,36 @@
 use crate::context::Context;
 use common::messages::Response;
+use dpi::metadata::NetworkFrame;
+
+pub fn data(ctx: &mut Context, response: Response) {
+    let frame = match response {
+        Response::Data(frame) => frame,
+        _ => {
+            log::error!("Response: Wrong flow for this type of data chosen");
+            return;
+        },
+    };
+
+    match frame {
+        NetworkFrame::Parsed(parsed) => {
+            // TODO: Process parsed metadata
+        },
+        NetworkFrame::RawPacket(raw_packet) => {
+            if !ctx.client_settings.unparsed_frames_drop {
+                ctx.net_storage.raw.add_frame(raw_packet);
+                // TODO: Handle raw packets
+            }
+            // Else - pass
+        },
+        NetworkFrame::RawMetadata(raw_metadata) => {
+            ctx.net_storage.raw.add_metadata(raw_metadata);
+            // TODO: Handle raw metadata
+        },
+    }
+}
 
 pub fn process(ctx: &mut Context, response: Response) {
     match response {
-        Response::Data(data) => process::network_frame(ctx, data),
         Response::ServerSettings(dto) => process::server_settings(ctx, dto),
         Response::SuccessChangePassword => {
             modals::success::password_changed(&ctx.modals_tx)
@@ -20,6 +47,10 @@ pub fn process(ctx: &mut Context, response: Response) {
         },
         Response::SuccessSync => process::pong(ctx),
         Response::Error(error) => modals::error::try_send(&ctx.modals_tx, error),
+
+        Response::Data(_) => {
+            log::error!("Response: Wrong flow for this type of data chosen");
+        },
     }
 }
 
@@ -102,26 +133,6 @@ mod process {
     use crate::context::{Context, ServerSettings};
     use chrono::Local;
     use common::messages::ServerSettingsDto;
-    use dpi::metadata::NetworkFrame;
-
-    pub fn network_frame(ctx: &mut Context, frame: NetworkFrame) {
-        match frame {
-            NetworkFrame::Parsed(parsed) => {
-                // TODO: Process parsed metadata
-            },
-            NetworkFrame::RawPacket(raw_packet) => {
-                if !ctx.client_settings.unparsed_frames_drop {
-                    ctx.net_storage.raw.add_frame(raw_packet);
-                    // TODO: Handle raw packets
-                }
-                // Else - pass
-            },
-            NetworkFrame::RawMetadata(raw_metadata) => {
-                ctx.net_storage.raw.add_metadata(raw_metadata);
-                // TODO: Handle raw metadata
-            },
-        }
-    }
 
     pub fn pong(ctx: &mut Context) {
         ctx.heartbeat.update();

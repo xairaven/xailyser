@@ -147,6 +147,7 @@ impl AuthComponent {
                     compression: ctx.client_settings.compression,
                     shutdown_flag: Arc::clone(&ctx.shutdown_flag),
                     stream,
+                    data_response_tx: ctx.data_response_tx.clone(),
                     server_response_tx: ctx.server_response_tx.clone(),
                     ui_client_requests_rx: ctx.ui_client_requests_rx.clone(),
                 };
