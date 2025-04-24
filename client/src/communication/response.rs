@@ -12,19 +12,15 @@ pub fn data(ctx: &mut Context, response: Response) {
     };
 
     match frame {
-        NetworkFrame::Parsed(parsed) => {
+        NetworkFrame::Metadata(metadata) => {
             // TODO: Process parsed metadata
         },
         NetworkFrame::RawPacket(raw_packet) => {
             if !ctx.client_settings.unparsed_frames_drop {
-                ctx.net_storage.raw.add_frame(raw_packet);
+                ctx.net_storage.raw.add(raw_packet);
                 // TODO: Handle raw packets
             }
             // Else - pass
-        },
-        NetworkFrame::RawMetadata(raw_metadata) => {
-            ctx.net_storage.raw.add_metadata(raw_metadata);
-            // TODO: Handle raw metadata
         },
     }
 }
