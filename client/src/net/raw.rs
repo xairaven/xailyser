@@ -1,8 +1,9 @@
+use dpi::wrapper::OwnedFrame;
 use std::collections::VecDeque;
 use std::path::PathBuf;
 
 pub struct RawStorage {
-    vec: VecDeque<dpi::wrapper::OwnedPacket>,
+    vec: VecDeque<OwnedFrame>,
     threshold: Option<usize>,
 }
 
@@ -14,7 +15,7 @@ impl RawStorage {
         }
     }
 
-    pub fn add(&mut self, frame: dpi::wrapper::OwnedPacket) {
+    pub fn add(&mut self, frame: OwnedFrame) {
         self.vec.push_back(frame);
         if let Some(threshold) = self.threshold {
             if self.vec.len() > threshold {

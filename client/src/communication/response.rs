@@ -1,6 +1,6 @@
 use crate::context::Context;
 use common::messages::Response;
-use dpi::metadata::NetworkFrame;
+use dpi::frame::FrameType;
 
 pub fn data(ctx: &mut Context, response: Response) {
     let frame = match response {
@@ -12,13 +12,13 @@ pub fn data(ctx: &mut Context, response: Response) {
     };
 
     match frame {
-        NetworkFrame::Metadata(metadata) => {
+        FrameType::Metadata(metadata) => {
             // TODO: Process parsed metadata
         },
-        NetworkFrame::RawPacket(raw_packet) => {
+        FrameType::Raw(frame) => {
             if !ctx.client_settings.unparsed_frames_drop {
-                ctx.net_storage.raw.add(raw_packet);
-                // TODO: Handle raw packets
+                ctx.net_storage.raw.add(frame);
+                // TODO: Handle raw frames
             }
             // Else - pass
         },
