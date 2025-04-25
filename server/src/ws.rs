@@ -21,7 +21,7 @@ pub struct WsHandler {
     id: u16,
     compression: bool,
     context: Arc<Mutex<Context>>,
-    frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
+    frame_receiver: Receiver<dpi::frame::FrameType>,
     response_queue: VecDeque<Response>,
     shutdown_flag: Arc<AtomicBool>,
 
@@ -316,7 +316,7 @@ pub enum WsError {
 
 pub struct WsHandlerBuilder {
     pub id: u16,
-    pub frame_receiver: Receiver<dpi::metadata::NetworkFrame>,
+    pub frame_receiver: Receiver<dpi::frame::FrameType>,
     pub context: Arc<Mutex<Context>>,
     pub shutdown_flag: Arc<AtomicBool>,
     pub ws_active_counter: Arc<AtomicUsize>,

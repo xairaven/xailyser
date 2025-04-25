@@ -13,7 +13,7 @@ use thiserror::Error;
 const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 
 pub struct TcpHandler {
-    frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+    frame_channel: Arc<Mutex<BroadcastChannel<dpi::frame::FrameType>>>,
     context: Arc<Mutex<Context>>,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
@@ -140,7 +140,7 @@ pub enum TcpError {
 }
 
 pub struct TcpHandlerBuilder {
-    pub frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+    pub frame_channel: Arc<Mutex<BroadcastChannel<dpi::frame::FrameType>>>,
     pub context: Arc<Mutex<Context>>,
     pub shutdown_flag: Arc<AtomicBool>,
     pub ws_active_counter: Arc<AtomicUsize>,

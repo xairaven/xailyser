@@ -17,9 +17,8 @@ pub fn start(config: Config) {
         },
     }));
     let shutdown_flag = Arc::new(AtomicBool::new(false));
-    let frame_channel = Arc::new(Mutex::new(BroadcastChannel::<
-        dpi::metadata::NetworkFrame,
-    >::new()));
+    let frame_channel =
+        Arc::new(Mutex::new(BroadcastChannel::<dpi::frame::FrameType>::new()));
     let ws_active_counter = Arc::new(AtomicUsize::new(0));
 
     if let Err(err) = ctrlc::set_handler({

@@ -13,7 +13,7 @@ const TIMEOUT_MS: i32 = 100;
 
 pub struct PacketSniffer {
     capture: Capture<Active>,
-    frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+    frame_channel: Arc<Mutex<BroadcastChannel<dpi::frame::FrameType>>>,
     parser: dpi::ProtocolParser,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
@@ -30,7 +30,10 @@ impl PacketSniffer {
             if self.ws_active_counter.load(Ordering::Acquire) > 0 {
                 match self.capture.next_packet() {
                     Ok(packet) => {
-                        let frame = self.parser.process(packet);
+                        let frame = match self.parser.process(packet) {
+                            Some(frame) => frame,
+                            None => continue,
+                        };
 
                         match self.frame_channel.lock() {
                             Ok(mut guard) => {
@@ -80,7 +83,7 @@ pub enum NetworkError {
 }
 
 pub struct PacketSnifferBuilder {
-    pub frame_channel: Arc<Mutex<BroadcastChannel<dpi::metadata::NetworkFrame>>>,
+    pub frame_channel: Arc<Mutex<BroadcastChannel<dpi::frame::FrameType>>>,
     pub context: Arc<Mutex<Context>>,
     pub shutdown_flag: Arc<AtomicBool>,
     pub ws_active_counter: Arc<AtomicUsize>,
@@ -100,9 +103,7 @@ impl PacketSnifferBuilder {
 
         let send_unparsed_frames =
             context::lock(&self.context, |ctx| ctx.send_unparsed_frames);
-        let parser = dpi::ProtocolParser {
-            raw_needed: send_unparsed_frames,
-        };
+        let parser = dpi::ProtocolParser::new(send_unparsed_frames);
 
         let sniffer = PacketSniffer {
             capture,
