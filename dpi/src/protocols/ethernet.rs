@@ -1,6 +1,6 @@
+use crate::ParseResult;
 use crate::frame::FrameMetadata;
 use crate::protocols::ProtocolId;
-use crate::{ParseResult, ParseableProtocol};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -16,14 +16,6 @@ impl Default for Ethernet {
     }
 }
 
-impl ParseableProtocol<'_> for Ethernet {
-    fn id(&self) -> &ProtocolId {
-        &self.id
-    }
-
-    fn parse<'a>(
-        &self, bytes: &'a [u8], metadata: &mut FrameMetadata,
-    ) -> ParseResult<'a> {
-        todo!()
-    }
+pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'a> {
+    todo!()
 }

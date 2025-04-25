@@ -1,4 +1,4 @@
-use crate::ParseableProtocol;
+use crate::ParseFn;
 use crate::protocols::arp::Arp;
 use crate::protocols::ethernet::Ethernet;
 use serde::{Deserialize, Serialize};
@@ -33,10 +33,10 @@ impl ProtocolId {
         vec![Self::Ethernet]
     }
 
-    pub fn protocol(&self) -> Box<dyn ParseableProtocol> {
+    pub fn parse(&self) -> ParseFn {
         match self {
-            ProtocolId::Ethernet => Box::new(Ethernet::default()),
-            ProtocolId::ARP => Box::new(Arp::default()),
+            ProtocolId::Ethernet => ethernet::parse,
+            ProtocolId::ARP => arp::parse,
             _ => todo!(),
         }
     }

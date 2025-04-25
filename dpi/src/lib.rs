@@ -25,7 +25,7 @@ impl ProtocolParser {
         let mut metadata = FrameMetadata::from_header(packet.header);
 
         for id in &self.roots {
-            let result = id.protocol().process(&packet, &mut metadata);
+            let result = traversal(id, &packet, &mut metadata);
             match result {
                 ProcessResult::Complete => {
                     return Some(FrameType::Metadata(metadata));
@@ -50,39 +50,38 @@ impl ProtocolParser {
     }
 }
 
-pub trait ParseableProtocol<'a> {
-    fn id(&self) -> &ProtocolId;
-    fn parse(&self, bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'a>;
-    fn process(&self, bytes: &'a [u8], metadata: &mut FrameMetadata) -> ProcessResult {
-        let result = self.parse(bytes, metadata);
+fn traversal(
+    id: &ProtocolId, bytes: &[u8], metadata: &mut FrameMetadata,
+) -> ProcessResult {
+    let result = id.parse()(bytes, metadata);
 
-        match result {
-            ParseResult::Success => ProcessResult::Complete,
-            ParseResult::SuccessIncomplete(bytes) => {
-                let children = match self.id().children() {
-                    Some(value) => value,
-                    None => {
-                        return ProcessResult::Incomplete;
+    match result {
+        ParseResult::Success => ProcessResult::Complete,
+        ParseResult::SuccessIncomplete(bytes) => {
+            let children = match id.children() {
+                Some(value) => value,
+                None => {
+                    return ProcessResult::Incomplete;
+                },
+            };
+
+            for id in children {
+                let result = traversal(&id, bytes, metadata);
+
+                match result {
+                    ProcessResult::Complete | ProcessResult::Incomplete => {
+                        return result;
                     },
-                };
-
-                for id in children {
-                    let result = id.protocol().process(bytes, metadata);
-
-                    match result {
-                        ProcessResult::Complete | ProcessResult::Incomplete => {
-                            return result;
-                        },
-                        ProcessResult::Failed => continue,
-                    }
+                    ProcessResult::Failed => continue,
                 }
+            }
 
-                ProcessResult::Incomplete
-            },
-            ParseResult::Failed => ProcessResult::Failed,
-        }
+            ProcessResult::Incomplete
+        },
+        ParseResult::Failed => ProcessResult::Failed,
     }
 }
+pub type ParseFn = for<'a, 'b> fn(&'a [u8], &'b mut FrameMetadata) -> ParseResult<'a>;
 
 #[derive(Clone, Debug)]
 pub enum ProcessResult {
