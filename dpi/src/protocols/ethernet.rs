@@ -16,12 +16,14 @@ impl Default for Ethernet {
     }
 }
 
-impl ParseableProtocol for Ethernet {
+impl ParseableProtocol<'_> for Ethernet {
     fn id(&self) -> &ProtocolId {
         &self.id
     }
 
-    fn parse(bytes: &[u8], metadata: &mut FrameMetadata) -> ParseResult {
+    fn parse<'a>(
+        &self, bytes: &'a [u8], metadata: &mut FrameMetadata,
+    ) -> ParseResult<'a> {
         todo!()
     }
 }

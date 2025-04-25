@@ -16,12 +16,14 @@ impl Default for Arp {
     }
 }
 
-impl ParseableProtocol for Arp {
+impl ParseableProtocol<'_> for Arp {
     fn id(&self) -> &ProtocolId {
         &self.id
     }
 
-    fn parse(bytes: &[u8], metadata: &mut FrameMetadata) -> ParseResult {
+    fn parse<'a>(
+        &self, bytes: &'a [u8], metadata: &mut FrameMetadata,
+    ) -> ParseResult<'a> {
         todo!()
     }
 }

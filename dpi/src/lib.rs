@@ -25,22 +25,23 @@ impl ProtocolParser {
         let mut metadata = FrameMetadata::from_header(packet.header);
 
         for id in &self.roots {
-            let result = id.parse()(&packet, &mut metadata);
+            let result = id.protocol().process(&packet, &mut metadata);
             match result {
-                ParseResult::Complete => {
+                ProcessResult::Complete => {
                     return Some(FrameType::Metadata(metadata));
                 },
-                ParseResult::Incomplete => {
+                ProcessResult::Incomplete => {
                     return if !self.raw_needed {
                         Some(FrameType::Metadata(metadata))
                     } else {
                         Some(FrameType::Raw(OwnedFrame::from(packet)))
                     };
                 },
-                ParseResult::Failed => continue,
+                ProcessResult::Failed => continue,
             }
         }
 
+        // If there are not roots... impossible
         if !self.raw_needed {
             None
         } else {
@@ -49,16 +50,60 @@ impl ProtocolParser {
     }
 }
 
-pub type ParserFn = fn(&[u8], &mut FrameMetadata) -> ParseResult;
-pub trait ParseableProtocol {
+pub trait ParseableProtocol<'a> {
     fn id(&self) -> &ProtocolId;
-    fn parse(bytes: &[u8], metadata: &mut FrameMetadata) -> ParseResult;
+    fn parse(&self, bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'a>;
+    fn process(&self, bytes: &'a [u8], metadata: &mut FrameMetadata) -> ProcessResult {
+        let result = self.parse(bytes, metadata);
+
+        match result {
+            ParseResult::Success => ProcessResult::Complete,
+            ParseResult::SuccessIncomplete(bytes) => {
+                let children = match self.id().children() {
+                    Some(value) => value,
+                    None => {
+                        return ProcessResult::Incomplete;
+                    },
+                };
+
+                for id in children {
+                    let result = id.protocol().process(bytes, metadata);
+
+                    match result {
+                        ProcessResult::Complete | ProcessResult::Incomplete => {
+                            return result;
+                        },
+                        ProcessResult::Failed => continue,
+                    }
+                }
+
+                ProcessResult::Incomplete
+            },
+            ParseResult::Failed => ProcessResult::Failed,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
-pub enum ParseResult {
+pub enum ProcessResult {
+    // Fully parsed
     Complete,
+
+    // Some protocols parsed (we are going into the deep), but some in the deepness are not
     Incomplete,
+
+    // Not matched
+    Failed,
+}
+
+pub enum ParseResult<'a> {
+    // Fully parsed, to the last byte
+    Success,
+
+    // Exact protocol parsed successfully, but there are something inside
+    SuccessIncomplete(&'a [u8]),
+
+    // Not matched
     Failed,
 }
 
