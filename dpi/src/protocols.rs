@@ -1,37 +1,83 @@
-use crate::metadata::FrameMetadata;
+use crate::protocols::arp::Arp;
 use crate::protocols::ethernet::Ethernet;
+use crate::{ParseableProtocol, ParserFn};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum Protocols {
-    Ethernet(Ethernet),
+pub enum ProtocolId {
+    Ethernet,
 
     ARP,
-    ICMP,
+
     IPv4,
     IPv6,
 
-    UDP,
+    ICMP,
+    ICMPv6,
+
     TCP,
+    UDP,
 
     DNS,
+    FTP,
     HTTP,
     HTTPS,
-    FTP,
-    SMTP,
     IMAP,
     POP3,
+    SMTP,
     SSH,
 }
 
-impl Protocols {
-    pub fn parse(bytes: &[u8], metadata: &mut FrameMetadata) -> bool {
-        ethernet::Ethernet::parse(bytes, metadata)
+impl ProtocolId {
+    pub fn roots() -> Vec<Self> {
+        vec![Self::Ethernet]
+    }
+
+    pub fn parse(&self) -> ParserFn {
+        match self {
+            ProtocolId::Ethernet => Ethernet::parse,
+            ProtocolId::ARP => Arp::parse,
+            _ => todo!(),
+        }
+    }
+
+    pub fn children(&self) -> Option<Vec<Self>> {
+        match self {
+            ProtocolId::Ethernet => Some(vec![
+                Self::ARP,
+                Self::ICMP,
+                Self::ICMPv6,
+                Self::IPv4,
+                Self::IPv6,
+            ]),
+            ProtocolId::ARP => None,
+
+            ProtocolId::IPv4 => Some(vec![Self::ICMP, Self::TCP, Self::UDP]),
+            ProtocolId::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
+            ProtocolId::ICMP => None,
+            ProtocolId::ICMPv6 => None,
+
+            ProtocolId::TCP => Some(vec![Self::HTTP, Self::HTTPS, Self::DNS]),
+            ProtocolId::UDP => Some(vec![Self::DNS]),
+
+            ProtocolId::DNS => None,
+            ProtocolId::FTP => None,
+            ProtocolId::HTTP => None,
+            ProtocolId::HTTPS => None,
+            ProtocolId::IMAP => None,
+            ProtocolId::POP3 => None,
+            ProtocolId::SMTP => None,
+            ProtocolId::SSH => None,
+        }
     }
 }
 
-pub trait Protocol {
-    fn parse(bytes: &[u8], metadata: &mut FrameMetadata) -> bool;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ProtocolData {
+    Ethernet(Ethernet),
+
+    ARP(Arp),
 }
 
+mod arp;
 mod ethernet;

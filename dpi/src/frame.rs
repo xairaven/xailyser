@@ -1,23 +1,23 @@
-use crate::protocols::Protocols;
-use crate::wrapper::{OwnedPacket, PacketHeader};
+use crate::protocols::ProtocolData;
+use crate::wrapper::{FrameHeader, OwnedFrame};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum NetworkFrame {
+pub enum FrameType {
     Metadata(FrameMetadata),
-    RawPacket(OwnedPacket),
+    Raw(OwnedFrame),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FrameMetadata {
-    pub header: PacketHeader,
-    pub layers: Vec<Protocols>,
+    pub header: FrameHeader,
+    pub layers: Vec<ProtocolData>,
 }
 
 impl FrameMetadata {
     pub fn from_header(header: &pcap::PacketHeader) -> Self {
         Self {
-            header: PacketHeader::from(header),
+            header: FrameHeader::from(header),
             layers: vec![],
         }
     }

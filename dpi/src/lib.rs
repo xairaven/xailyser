@@ -4,25 +4,64 @@
 #![deny(clippy::panic)]
 #![deny(unsafe_code)]
 
-use crate::metadata::{FrameMetadata, NetworkFrame};
-use crate::protocols::Protocols;
-use crate::wrapper::OwnedPacket;
+use crate::frame::{FrameMetadata, FrameType};
+use crate::protocols::ProtocolId;
+use crate::wrapper::OwnedFrame;
 
-pub fn process(packet: pcap::Packet, unparsed_needed: bool) -> NetworkFrame {
-    let mut metadata = FrameMetadata::from_header(packet.header);
+pub struct ProtocolParser {
+    raw_needed: bool,
+    roots: Vec<ProtocolId>,
+}
 
-    let is_fully_parsed = Protocols::parse(packet.data, &mut metadata);
+impl ProtocolParser {
+    pub fn new(raw_needed: bool) -> Self {
+        Self {
+            raw_needed,
+            roots: ProtocolId::roots(),
+        }
+    }
 
-    // If fully parsed or not needed raw bytes for saving to pcap - first branch
-    // If not parsed fully and unparsed needed for saving to pcap - second branch
-    if is_fully_parsed || !unparsed_needed {
-        NetworkFrame::Metadata(metadata)
-    } else {
-        let raw_packet = OwnedPacket::from(packet);
-        NetworkFrame::RawPacket(raw_packet)
+    pub fn process(&self, packet: pcap::Packet) -> Option<FrameType> {
+        let mut metadata = FrameMetadata::from_header(packet.header);
+
+        for id in &self.roots {
+            let result = id.parse()(&packet, &mut metadata);
+            match result {
+                ParseResult::Complete => {
+                    return Some(FrameType::Metadata(metadata));
+                },
+                ParseResult::Incomplete => {
+                    return if !self.raw_needed {
+                        Some(FrameType::Metadata(metadata))
+                    } else {
+                        Some(FrameType::Raw(OwnedFrame::from(packet)))
+                    };
+                },
+                ParseResult::Failed => continue,
+            }
+        }
+
+        if !self.raw_needed {
+            None
+        } else {
+            Some(FrameType::Raw(OwnedFrame::from(packet)))
+        }
     }
 }
 
-pub mod metadata;
+pub type ParserFn = fn(&[u8], &mut FrameMetadata) -> ParseResult;
+pub trait ParseableProtocol {
+    fn id(&self) -> &ProtocolId;
+    fn parse(bytes: &[u8], metadata: &mut FrameMetadata) -> ParseResult;
+}
+
+#[derive(Clone, Debug)]
+pub enum ParseResult {
+    Complete,
+    Incomplete,
+    Failed,
+}
+
+pub mod frame;
 pub mod protocols;
 pub mod wrapper;

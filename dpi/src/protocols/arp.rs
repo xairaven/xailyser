@@ -4,19 +4,19 @@ use crate::{ParseResult, ParseableProtocol};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Ethernet {
+pub struct Arp {
     id: ProtocolId,
 }
 
-impl Default for Ethernet {
+impl Default for Arp {
     fn default() -> Self {
         Self {
-            id: ProtocolId::Ethernet,
+            id: ProtocolId::ARP,
         }
     }
 }
 
-impl ParseableProtocol for Ethernet {
+impl ParseableProtocol for Arp {
     fn id(&self) -> &ProtocolId {
         &self.id
     }
