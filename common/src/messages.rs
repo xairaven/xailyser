@@ -18,7 +18,7 @@ pub enum Request {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
     // Data itself
-    Data(dpi::metadata::NetworkFrame),
+    Data(dpi::frame::FrameType),
 
     // Pong (Heartbeat)
     SuccessSync,
