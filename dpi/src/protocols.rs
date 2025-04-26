@@ -3,12 +3,11 @@ use crate::protocols::arp::Arp;
 use crate::protocols::ethernet::Ethernet;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ProtocolId {
     Ethernet,
 
-    ARP,
-
+    Arp,
     // IPv4,
     // IPv6,
     //
@@ -36,21 +35,20 @@ impl ProtocolId {
     pub fn parse(&self) -> ParseFn {
         match self {
             ProtocolId::Ethernet => ethernet::parse,
-            ProtocolId::ARP => arp::parse,
+            ProtocolId::Arp => arp::parse,
         }
     }
 
     pub fn children(&self) -> Option<Vec<Self>> {
         match self {
             ProtocolId::Ethernet => Some(vec![
-                Self::ARP,
+                Self::Arp,
                 // Self::ICMP,
                 // Self::ICMPv6,
                 // Self::IPv4,
                 // Self::IPv6,
             ]),
-            ProtocolId::ARP => None,
-
+            ProtocolId::Arp => None,
             // ProtocolId::IPv4 => Some(vec![Self::ICMP, Self::TCP, Self::UDP]),
             // ProtocolId::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
             // ProtocolId::ICMP => None,
@@ -75,7 +73,7 @@ impl ProtocolId {
 pub enum ProtocolData {
     Ethernet(Ethernet),
 
-    ARP(Arp),
+    Arp(Arp),
 }
 
 mod arp;

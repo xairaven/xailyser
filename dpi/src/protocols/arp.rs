@@ -11,7 +11,7 @@ pub struct Arp {
 impl Default for Arp {
     fn default() -> Self {
         Self {
-            id: ProtocolId::ARP,
+            id: ProtocolId::Arp,
         }
     }
 }
