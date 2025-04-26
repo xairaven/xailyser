@@ -76,5 +76,5 @@ pub enum ProtocolData {
     Arp(Arp),
 }
 
-mod arp;
-mod ethernet;
+pub mod arp;
+pub mod ethernet;
