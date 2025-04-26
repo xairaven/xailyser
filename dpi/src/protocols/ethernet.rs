@@ -6,17 +6,19 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 // ETHERNET II.
-const FRAME_LENGTH: usize = 14;
+pub const FRAME_LENGTH: usize = 14;
+pub const FCS_LENGTH: usize = 4;
+pub const MAC_LENGTH: usize = 6;
 pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'a> {
     if bytes.len() < FRAME_LENGTH {
         return ParseResult::Failed;
     }
 
-    let dst_mac = match <[u8; 6]>::try_from(&bytes[0..6]) {
+    let dst_mac = match <[u8; MAC_LENGTH]>::try_from(&bytes[0..6]) {
         Ok(value) => MacAddress::from_bytes(value),
         Err(_) => return ParseResult::Failed,
     };
-    let src_mac = match <[u8; 6]>::try_from(&bytes[6..12]) {
+    let src_mac = match <[u8; MAC_LENGTH]>::try_from(&bytes[6..12]) {
         Ok(value) => MacAddress::from_bytes(value),
         Err(_) => return ParseResult::Failed,
     };
@@ -54,17 +56,32 @@ impl Ethernet {
             ether_type,
         }
     }
+
+    pub fn id(&self) -> &ProtocolId {
+        &self.id
+    }
+
+    pub fn destination(&self) -> &MacAddress {
+        &self.destination_mac
+    }
+
+    pub fn source(&self) -> &MacAddress {
+        &self.source_mac
+    }
+
+    pub fn ether_type(&self) -> &EtherType {
+        &self.ether_type
+    }
 }
 
-#[allow(dead_code)]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MacAddress {
-    bytes: [u8; 6],
+    bytes: [u8; MAC_LENGTH],
     string: String,
 }
 
 impl MacAddress {
-    pub fn from_bytes(bytes: [u8; 6]) -> Self {
+    pub fn from_bytes(bytes: [u8; MAC_LENGTH]) -> Self {
         let string = format!(
             "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]
@@ -77,7 +94,7 @@ impl MacAddress {
         let s = raw.replace(":", "").replace(".", "").replace("-", "");
         let bytes = hex::decode(&s)?;
         Ok(Self {
-            bytes: <[u8; 6]>::try_from(bytes)
+            bytes: <[u8; MAC_LENGTH]>::try_from(bytes)
                 .map_err(|_| hex::FromHexError::InvalidStringLength)?,
             string: raw,
         })
@@ -121,9 +138,17 @@ mod tests {
     #[test]
     fn test_ethernet() {
         let ethernet_header = hex::decode("04E8B918551084D81B6EC14A0800").unwrap();
-        let mut metadata = create_empty_metadata();
+        let mut metadata = FrameMetadata {
+            header: FrameHeader {
+                tv_sec: 0,
+                tv_usec: 0,
+                caplen: 0,
+                len: 0,
+            },
+            layers: vec![],
+        };
         let _ = parse(&ethernet_header, &mut metadata);
-        let value = match metadata.layers[0].clone() {
+        let actual = match metadata.layers[0].clone() {
             ProtocolData::Ethernet(value) => value,
             _ => panic!(),
         };
@@ -135,18 +160,6 @@ mod tests {
             ether_type: EtherType::Ipv4,
         };
 
-        assert_eq!(expected, value);
-    }
-
-    fn create_empty_metadata() -> FrameMetadata {
-        FrameMetadata {
-            header: FrameHeader {
-                tv_sec: 0,
-                tv_usec: 0,
-                caplen: 0,
-                len: 0,
-            },
-            layers: vec![],
-        }
+        assert_eq!(actual, expected);
     }
 }
