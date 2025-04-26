@@ -22,12 +22,17 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'
         Ok(value) => MacAddress::from_bytes(value),
         Err(_) => return ParseResult::Failed,
     };
-    let ethertype = match EtherType::from_bytes(&[bytes[12], bytes[13]]) {
+    let ether_type = match EtherType::from_bytes(&[bytes[12], bytes[13]]) {
         Some(value) => value,
         None => return ParseResult::Failed,
     };
 
-    let ethernet = Ethernet::new(dst_mac, src_mac, ethertype);
+    let ethernet = Ethernet {
+        id: ProtocolId::Ethernet,
+        destination_mac: dst_mac,
+        source_mac: src_mac,
+        ether_type,
+    };
     metadata.layers.push(ProtocolData::Ethernet(ethernet));
 
     if bytes.len() > FRAME_LENGTH {
@@ -39,39 +44,10 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Ethernet {
-    id: ProtocolId,
-    destination_mac: MacAddress,
-    source_mac: MacAddress,
-    ether_type: EtherType,
-}
-
-impl Ethernet {
-    pub fn new(
-        destination: MacAddress, source: MacAddress, ether_type: EtherType,
-    ) -> Self {
-        Self {
-            id: ProtocolId::Ethernet,
-            destination_mac: destination,
-            source_mac: source,
-            ether_type,
-        }
-    }
-
-    pub fn id(&self) -> &ProtocolId {
-        &self.id
-    }
-
-    pub fn destination(&self) -> &MacAddress {
-        &self.destination_mac
-    }
-
-    pub fn source(&self) -> &MacAddress {
-        &self.source_mac
-    }
-
-    pub fn ether_type(&self) -> &EtherType {
-        &self.ether_type
-    }
+    pub id: ProtocolId,
+    pub destination_mac: MacAddress,
+    pub source_mac: MacAddress,
+    pub ether_type: EtherType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
