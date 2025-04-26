@@ -78,3 +78,4 @@ pub enum ProtocolData {
 
 pub mod arp;
 pub mod ethernet;
+pub mod ipv4;
