@@ -70,6 +70,10 @@ fn traversal(
         Ok((rest, layer)) => {
             metadata.layers.push(layer);
 
+            if let Some(best) = id.best_children(metadata) {
+                return traversal(&best, rest, metadata);
+            }
+
             let children = match id.children() {
                 Some(value) => value,
                 None => {
