@@ -1,24 +1,99 @@
-use crate::ParseResult;
 use crate::frame::FrameMetadata;
+use crate::protocols::arp::hardware_type::HardwareType;
+use crate::protocols::arp::operation::Operation;
 use crate::protocols::ethernet::ether_type::EtherType;
-use crate::protocols::ethernet::mac;
 use crate::protocols::ethernet::mac::MacAddress;
-use crate::protocols::{ProtocolData, ProtocolId, ipv4};
+use crate::protocols::{ProtocolData, ProtocolId, ethernet, ipv4};
+use crate::{ParseResult, error};
+use nom::IResult;
+use nom::Parser;
+use nom::number::be_u8;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 use thiserror::Error;
 
 // ARP Protocol
 // RFC 826: https://datatracker.ietf.org/doc/html/rfc826
 pub const PACKET_LENGTH: usize = 28;
 
-pub const HARDWARE_TYPE_LENGTH: usize = 2;
 pub const PROTOCOL_TYPE_LENGTH: usize = 2;
 pub const HARDWARE_ADDRESS_LENGTH: usize = 1;
 pub const PROTOCOL_ADDRESS_LENGTH: usize = 1;
-pub const OPERATION_LENGTH: usize = 2;
+
+pub fn parse_arp<'a>(
+    bytes: &'a [u8], metadata: &FrameMetadata,
+) -> IResult<&'a [u8], ProtocolData> {
+    if bytes.len() < PACKET_LENGTH {
+        return Err(error::nom_failure_verify(bytes));
+    };
+
+    // Cutting Ethernet padding & FCS
+    let bytes = if bytes.len() > PACKET_LENGTH {
+        &bytes[..PACKET_LENGTH]
+    } else {
+        bytes
+    };
+
+    // Checking ethernet ether type
+    let ethernet = match metadata.layers.first() {
+        Some(ProtocolData::Ethernet(value)) => value,
+        _ => return Err(error::nom_failure_verify(bytes)),
+    };
+    if ethernet.ether_type.ne(&EtherType::Arp) {
+        return Err(error::nom_failure_verify(bytes));
+    }
+
+    // HTYPE
+    let (rest, hardware_type) = hardware_type::parse(bytes)?;
+
+    // PTYPE
+    let (rest, protocol_type) = ethernet::ether_type::parse(rest)?;
+    if protocol_type != EtherType::Ipv4 {
+        return Err(error::nom_failure_verify(bytes));
+    }
+
+    // HLEN
+    let (rest, hardware_address_length) = be_u8().parse(rest)?;
+    if hardware_address_length != ethernet::mac::LENGTH_BYTES as u8 {
+        return Err(error::nom_failure_verify(bytes));
+    }
+
+    // PLEN
+    let (rest, protocol_address_length) = be_u8().parse(rest)?;
+    if protocol_address_length != ipv4::address::LENGTH_BYTES as u8 {
+        return Err(error::nom_failure_verify(bytes));
+    }
+
+    // OP
+    let (rest, operation) = operation::parse(rest)?;
+
+    // SENDER_HARDWARE_ADDRESS
+    let (rest, sender_hardware_address) = ethernet::mac::parse(rest)?;
+
+    // SENDER_PROTOCOL_ADDRESS
+    let (rest, sender_protocol_address) = ipv4::address::parse(rest)?;
+
+    // TARGET_HARDWARE_ADDRESS
+    let (rest, target_hardware_address) = ethernet::mac::parse(rest)?;
+
+    // TARGET_PROTOCOL_ADDRESS
+    let (rest, target_protocol_address) = ipv4::address::parse(rest)?;
+
+    let arp = Arp {
+        id: ProtocolId::Arp,
+        hardware_type,
+        protocol_type,
+        hardware_address_length,
+        protocol_address_length,
+        operation,
+        sender_mac: sender_hardware_address,
+        sender_ip: sender_protocol_address,
+        target_mac: target_hardware_address,
+        target_ip: target_protocol_address,
+    };
+
+    Ok((rest, ProtocolData::Arp(arp)))
+}
 
 pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     if bytes.len() < PACKET_LENGTH {
@@ -48,7 +123,8 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     if ethernet.ether_type.ne(&EtherType::Arp) {
         return ParseResult::Failed;
     }
-    let hardware_type = match <[u8; HARDWARE_TYPE_LENGTH]>::try_from(&bytes[0..2]) {
+    let hardware_type = match <[u8; hardware_type::LENGTH_BYTES]>::try_from(&bytes[0..2])
+    {
         Ok(value) => match HardwareType::try_from(&value) {
             Ok(value) => value,
             Err(_) => return ParseResult::Failed,
@@ -66,21 +142,21 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     }
 
     // Parsing HLEN
-    let hardware_address_length = if bytes[4] == mac::LENGTH_BYTES as u8 {
-        mac::LENGTH_BYTES as u8
+    let hardware_address_length = if bytes[4] == ethernet::mac::LENGTH_BYTES as u8 {
+        ethernet::mac::LENGTH_BYTES as u8
     } else {
         return ParseResult::Failed;
     };
 
     // Parsing PLEN
-    let protocol_address_length = if bytes[5] == ipv4::LOGICAL_ADDRESS_LENGTH as u8 {
-        ipv4::LOGICAL_ADDRESS_LENGTH as u8
+    let protocol_address_length = if bytes[5] == ipv4::address::LENGTH_BYTES as u8 {
+        ipv4::address::LENGTH_BYTES as u8
     } else {
         return ParseResult::Failed;
     };
 
     // Parsing OPERATION
-    let operation = match <[u8; OPERATION_LENGTH]>::try_from(&bytes[6..8]) {
+    let operation = match <[u8; operation::LENGTH_BYTES]>::try_from(&bytes[6..8]) {
         Ok(value) => match Operation::try_from(&value) {
             Ok(value) => value,
             Err(_) => return ParseResult::Failed,
@@ -89,29 +165,29 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     };
 
     // Parsing SENDER_HARDWARE_ADDRESS
-    let sender_hardware_address = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[8..14])
-    {
-        Ok(value) => MacAddress::from(value),
-        Err(_) => return ParseResult::Failed,
-    };
+    let sender_hardware_address =
+        match <[u8; ethernet::mac::LENGTH_BYTES]>::try_from(&bytes[8..14]) {
+            Ok(value) => MacAddress::from(value),
+            Err(_) => return ParseResult::Failed,
+        };
 
     // Parsing SENDER_PROTOCOL_ADDRESS
     let sender_protocol_address =
-        match <[u8; ipv4::LOGICAL_ADDRESS_LENGTH]>::try_from(&bytes[14..18]) {
+        match <[u8; ipv4::address::LENGTH_BYTES]>::try_from(&bytes[14..18]) {
             Ok(value) => Ipv4Addr::from(value),
             Err(_) => return ParseResult::Failed,
         };
 
     // Parsing TARGET_HARDWARE_ADDRESS
     let target_hardware_address =
-        match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[18..24]) {
+        match <[u8; ethernet::mac::LENGTH_BYTES]>::try_from(&bytes[18..24]) {
             Ok(value) => MacAddress::from(value),
             Err(_) => return ParseResult::Failed,
         };
 
     // Parsing TARGET_PROTOCOL_ADDRESS
     let target_protocol_address =
-        match <[u8; ipv4::LOGICAL_ADDRESS_LENGTH]>::try_from(&bytes[24..28]) {
+        match <[u8; ipv4::address::LENGTH_BYTES]>::try_from(&bytes[24..28]) {
             Ok(value) => Ipv4Addr::from(value),
             Err(_) => return ParseResult::Failed,
         };
@@ -151,54 +227,6 @@ pub struct Arp {
     pub target_ip: Ipv4Addr,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, EnumIter, PartialEq)]
-pub enum HardwareType {
-    Ethernet,
-}
-
-impl HardwareType {
-    pub fn bytes(&self) -> &[u8] {
-        match self {
-            Self::Ethernet => &[0x00, 0x01],
-        }
-    }
-}
-
-impl TryFrom<&[u8; 2]> for HardwareType {
-    type Error = ArpError;
-
-    fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
-        Self::iter()
-            .find(|hardware_type| hardware_type.bytes() == value)
-            .ok_or(ArpError::HardwareTypeUnknown)
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, EnumIter, PartialEq)]
-pub enum Operation {
-    Request,
-    Reply,
-}
-
-impl Operation {
-    pub fn bytes(&self) -> &[u8] {
-        match self {
-            Self::Request => &[0x00, 0x01],
-            Self::Reply => &[0x00, 0x02],
-        }
-    }
-}
-
-impl TryFrom<&[u8; 2]> for Operation {
-    type Error = ArpError;
-
-    fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
-        Self::iter()
-            .find(|operation| operation.bytes() == value)
-            .ok_or(ArpError::OperationUnknown)
-    }
-}
-
 #[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
 pub enum ArpError {
     #[error("Unknown hardware type")]
@@ -208,11 +236,15 @@ pub enum ArpError {
     OperationUnknown,
 }
 
+pub mod hardware_type;
+pub mod operation;
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ProtocolParser;
     use crate::frame::FrameType;
+    use crate::protocols::arp::operation::Operation;
     use crate::protocols::ethernet::Ethernet;
     use crate::wrapper::FrameHeader;
 
@@ -264,8 +296,8 @@ mod tests {
             id: ProtocolId::Arp,
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
-            hardware_address_length: mac::LENGTH_BYTES as u8,
-            protocol_address_length: ipv4::LOGICAL_ADDRESS_LENGTH as u8,
+            hardware_address_length: ethernet::mac::LENGTH_BYTES as u8,
+            protocol_address_length: ipv4::address::LENGTH_BYTES as u8,
             operation: Operation::Reply,
             sender_mac: MacAddress::try_from("00:1E:68:51:4F:A9").unwrap(),
             sender_ip: Ipv4Addr::new(172, 16, 255, 1),
@@ -324,8 +356,8 @@ mod tests {
             id: ProtocolId::Arp,
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
-            hardware_address_length: mac::LENGTH_BYTES as u8,
-            protocol_address_length: ipv4::LOGICAL_ADDRESS_LENGTH as u8,
+            hardware_address_length: ethernet::mac::LENGTH_BYTES as u8,
+            protocol_address_length: ipv4::address::LENGTH_BYTES as u8,
             operation: Operation::Request,
             sender_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
             sender_ip: Ipv4Addr::new(172, 16, 0, 1),
