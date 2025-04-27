@@ -6,7 +6,7 @@ use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ProtocolId, ethernet, ipv4};
 use nom::Parser;
-use nom::number::be_u8;
+use nom::bytes::take;
 use nom::{Finish, IResult};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
@@ -16,7 +16,6 @@ use thiserror::Error;
 // RFC 826: https://datatracker.ietf.org/doc/html/rfc826
 pub const PACKET_LENGTH: usize = 28;
 
-pub const PROTOCOL_TYPE_LENGTH: usize = 2;
 pub const HARDWARE_ADDRESS_LENGTH: usize = 1;
 pub const PROTOCOL_ADDRESS_LENGTH: usize = 1;
 
@@ -53,13 +52,15 @@ pub fn parse<'a>(
     }
 
     // HLEN
-    let (rest, hardware_address_length) = be_u8().parse(rest)?;
+    let (rest, hardware_address_length) = take(HARDWARE_ADDRESS_LENGTH).parse(rest)?;
+    let hardware_address_length = hardware_address_length[0];
     if hardware_address_length != ethernet::mac::LENGTH_BYTES as u8 {
         return Err(error::nom_failure_verify(bytes));
     }
 
     // PLEN
-    let (rest, protocol_address_length) = be_u8().parse(rest)?;
+    let (rest, protocol_address_length) = take(PROTOCOL_ADDRESS_LENGTH).parse(rest)?;
+    let protocol_address_length = protocol_address_length[0];
     if protocol_address_length != ipv4::address::LENGTH_BYTES as u8 {
         return Err(error::nom_failure_verify(bytes));
     }
