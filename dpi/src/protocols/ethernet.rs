@@ -4,22 +4,23 @@ use crate::protocols::{ProtocolData, ProtocolId};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use crate::protocols::ethernet::mac::MacAddress;
 
 // ETHERNET II.
 pub const FRAME_LENGTH: usize = 14;
 pub const FCS_LENGTH: usize = 4;
-pub const MAC_LENGTH: usize = 6;
+
 pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> ParseResult<'a> {
     if bytes.len() < FRAME_LENGTH {
         return ParseResult::Failed;
     }
 
-    let dst_mac = match <[u8; MAC_LENGTH]>::try_from(&bytes[0..6]) {
-        Ok(value) => MacAddress::from_bytes(value),
+    let dst_mac = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[0..6]) {
+        Ok(value) => MacAddress::from(value),
         Err(_) => return ParseResult::Failed,
     };
-    let src_mac = match <[u8; MAC_LENGTH]>::try_from(&bytes[6..12]) {
-        Ok(value) => MacAddress::from_bytes(value),
+    let src_mac = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[6..12]) {
+        Ok(value) => MacAddress::from(value),
         Err(_) => return ParseResult::Failed,
     };
     let ether_type = match EtherType::from_bytes(&[bytes[12], bytes[13]]) {
@@ -47,33 +48,6 @@ pub struct Ethernet {
     pub destination_mac: MacAddress,
     pub source_mac: MacAddress,
     pub ether_type: EtherType,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct MacAddress {
-    bytes: [u8; MAC_LENGTH],
-    string: String,
-}
-
-impl MacAddress {
-    pub fn from_bytes(bytes: [u8; MAC_LENGTH]) -> Self {
-        let string = format!(
-            "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]
-        );
-        Self { bytes, string }
-    }
-
-    pub fn from_string(raw: &str) -> Result<Self, hex::FromHexError> {
-        let raw = raw.to_string();
-        let s = raw.replace(":", "").replace(".", "").replace("-", "");
-        let bytes = hex::decode(&s)?;
-        Ok(Self {
-            bytes: <[u8; MAC_LENGTH]>::try_from(bytes)
-                .map_err(|_| hex::FromHexError::InvalidStringLength)?,
-            string: raw,
-        })
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, EnumIter, PartialEq)]
@@ -144,11 +118,14 @@ mod tests {
 
         let expected_ethernet = Ethernet {
             id: ProtocolId::Ethernet,
-            destination_mac: MacAddress::from_string("40:61:86:9A:F1:F5").unwrap(),
-            source_mac: MacAddress::from_string("00:1A:8C:15:F9:80").unwrap(),
+            destination_mac: MacAddress::try_from("40:61:86:9A:F1:F5").unwrap(),
+            source_mac: MacAddress::try_from("00:1A:8C:15:F9:80").unwrap(),
             ether_type: EtherType::Ipv4,
         };
 
         assert_eq!(actual_ethernet, expected_ethernet);
     }
 }
+
+pub mod ether_type;
+pub mod mac;

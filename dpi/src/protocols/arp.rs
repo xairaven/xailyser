@@ -1,11 +1,12 @@
 use crate::ParseResult;
 use crate::frame::FrameMetadata;
-use crate::protocols::ethernet::{EtherType, MAC_LENGTH, MacAddress};
+use crate::protocols::ethernet::{mac, EtherType};
 use crate::protocols::{ProtocolData, ProtocolId, ipv4};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use crate::protocols::ethernet::mac::MacAddress;
 
 // ARP Protocol
 // RFC 826: https://datatracker.ietf.org/doc/html/rfc826
@@ -63,8 +64,8 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     }
 
     // Parsing HLEN
-    let hardware_address_length = if bytes[4] == MAC_LENGTH as u8 {
-        MAC_LENGTH as u8
+    let hardware_address_length = if bytes[4] == mac::LENGTH_BYTES as u8 {
+        mac::LENGTH_BYTES as u8
     } else {
         return ParseResult::Failed;
     };
@@ -86,8 +87,8 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     };
 
     // Parsing SENDER_HARDWARE_ADDRESS
-    let sender_hardware_address = match <[u8; MAC_LENGTH]>::try_from(&bytes[8..14]) {
-        Ok(value) => MacAddress::from_bytes(value),
+    let sender_hardware_address = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[8..14]) {
+        Ok(value) => MacAddress::from(value),
         Err(_) => return ParseResult::Failed,
     };
 
@@ -99,8 +100,8 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
         };
 
     // Parsing TARGET_HARDWARE_ADDRESS
-    let target_hardware_address = match <[u8; MAC_LENGTH]>::try_from(&bytes[18..24]) {
-        Ok(value) => MacAddress::from_bytes(value),
+    let target_hardware_address = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[18..24]) {
+        Ok(value) => MacAddress::from(value),
         Err(_) => return ParseResult::Failed,
     };
 
@@ -222,8 +223,8 @@ mod tests {
 
         let expected_ethernet = Ethernet {
             id: ProtocolId::Ethernet,
-            destination_mac: MacAddress::from_string("00:1A:8C:10:AD:30").unwrap(),
-            source_mac: MacAddress::from_string("00:1E:68:51:4F:A9").unwrap(),
+            destination_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
+            source_mac: MacAddress::try_from("00:1E:68:51:4F:A9").unwrap(),
             ether_type: EtherType::Arp,
         };
 
@@ -238,12 +239,12 @@ mod tests {
             id: ProtocolId::Arp,
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
-            hardware_address_length: MAC_LENGTH as u8,
+            hardware_address_length: mac::LENGTH_BYTES as u8,
             protocol_address_length: ipv4::LOGICAL_ADDRESS_LENGTH as u8,
             operation: Operation::Reply,
-            sender_mac: MacAddress::from_string("00:1E:68:51:4F:A9").unwrap(),
+            sender_mac: MacAddress::try_from("00:1E:68:51:4F:A9").unwrap(),
             sender_ip: Ipv4Addr::new(172, 16, 255, 1),
-            target_mac: MacAddress::from_string("00:1A:8C:10:AD:30").unwrap(),
+            target_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
             target_ip: Ipv4Addr::new(172, 16, 0, 1),
         };
 
@@ -282,8 +283,8 @@ mod tests {
 
         let expected_ethernet = Ethernet {
             id: ProtocolId::Ethernet,
-            destination_mac: MacAddress::from_string("00:1E:68:51:4F:A9").unwrap(),
-            source_mac: MacAddress::from_string("00:1A:8C:10:AD:30").unwrap(),
+            destination_mac: MacAddress::try_from("00:1E:68:51:4F:A9").unwrap(),
+            source_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
             ether_type: EtherType::Arp,
         };
 
@@ -298,12 +299,12 @@ mod tests {
             id: ProtocolId::Arp,
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
-            hardware_address_length: MAC_LENGTH as u8,
+            hardware_address_length: mac::LENGTH_BYTES as u8,
             protocol_address_length: ipv4::LOGICAL_ADDRESS_LENGTH as u8,
             operation: Operation::Request,
-            sender_mac: MacAddress::from_string("00:1A:8C:10:AD:30").unwrap(),
+            sender_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
             sender_ip: Ipv4Addr::new(172, 16, 0, 1),
-            target_mac: MacAddress::from_string("00:00:00:00:00:00").unwrap(),
+            target_mac: MacAddress::try_from("00:00:00:00:00:00").unwrap(),
             target_ip: Ipv4Addr::new(172, 16, 255, 1),
         };
 
