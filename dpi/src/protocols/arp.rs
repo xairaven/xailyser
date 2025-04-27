@@ -1,12 +1,13 @@
 use crate::ParseResult;
 use crate::frame::FrameMetadata;
-use crate::protocols::ethernet::{mac, EtherType};
+use crate::protocols::ethernet::ether_type::EtherType;
+use crate::protocols::ethernet::mac;
+use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ProtocolId, ipv4};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use crate::protocols::ethernet::mac::MacAddress;
 
 // ARP Protocol
 // RFC 826: https://datatracker.ietf.org/doc/html/rfc826
@@ -55,9 +56,9 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     };
 
     // Parsing PTYPE
-    let protocol_type = match EtherType::from_bytes(&[bytes[2], bytes[3]]) {
-        Some(value) => value,
-        None => return ParseResult::Failed,
+    let protocol_type = match EtherType::try_from(&[bytes[2], bytes[3]]) {
+        Ok(value) => value,
+        Err(_) => return ParseResult::Failed,
     };
     if protocol_type != EtherType::Ipv4 {
         return ParseResult::Failed;
@@ -87,7 +88,8 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     };
 
     // Parsing SENDER_HARDWARE_ADDRESS
-    let sender_hardware_address = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[8..14]) {
+    let sender_hardware_address = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[8..14])
+    {
         Ok(value) => MacAddress::from(value),
         Err(_) => return ParseResult::Failed,
     };
@@ -100,10 +102,11 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
         };
 
     // Parsing TARGET_HARDWARE_ADDRESS
-    let target_hardware_address = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[18..24]) {
-        Ok(value) => MacAddress::from(value),
-        Err(_) => return ParseResult::Failed,
-    };
+    let target_hardware_address =
+        match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[18..24]) {
+            Ok(value) => MacAddress::from(value),
+            Err(_) => return ParseResult::Failed,
+        };
 
     // Parsing TARGET_PROTOCOL_ADDRESS
     let target_protocol_address =

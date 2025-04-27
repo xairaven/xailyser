@@ -1,5 +1,5 @@
-use std::fmt::Formatter;
 use serde::{Deserialize, Serialize};
+use std::fmt::Formatter;
 use thiserror::Error;
 
 pub const LENGTH_BYTES: usize = 6;
@@ -18,8 +18,7 @@ impl TryFrom<&str> for MacAddress {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let s = value.replace(":", "").replace(".", "").replace("-", "");
-        let bytes = hex::decode(&s)
-            .map_err(|_| MacError::FailedHexDecode)?;
+        let bytes = hex::decode(&s).map_err(|_| MacError::FailedHexDecode)?;
         let bytes = <[u8; LENGTH_BYTES]>::try_from(bytes)
             .map_err(|_| MacError::InvalidStringLength)?;
 
