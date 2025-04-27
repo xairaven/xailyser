@@ -30,8 +30,11 @@ pub enum ProtocolId {
 }
 
 impl ProtocolId {
-    pub fn roots() -> Vec<Self> {
-        vec![Self::Ethernet]
+    pub fn root(link_type: &pcap::Linktype) -> Option<Self> {
+        match link_type {
+            pcap::Linktype(1) => Some(Self::Ethernet),
+            _ => None,
+        }
     }
 
     pub fn parse(&self) -> ParseFn {

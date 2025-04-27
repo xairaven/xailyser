@@ -18,7 +18,7 @@ impl ProtocolParser {
     pub fn new(link_type: &pcap::Linktype, raw_needed: bool) -> Self {
         Self {
             raw_needed,
-            root: Self::get_root_protocol(link_type),
+            root: ProtocolId::root(link_type),
         }
     }
 
@@ -47,13 +47,6 @@ impl ProtocolParser {
         }
 
         None
-    }
-
-    fn get_root_protocol(link_type: &pcap::Linktype) -> Option<ProtocolId> {
-        match link_type {
-            pcap::Linktype(1) => Some(ProtocolId::Ethernet),
-            _ => None,
-        }
     }
 }
 
