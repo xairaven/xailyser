@@ -1,4 +1,7 @@
+use crate::error;
 use crate::protocols::ethernet::EthernetError;
+use nom::IResult;
+use nom::bytes::complete::take;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 
@@ -10,6 +13,17 @@ pub struct MacAddress(pub [u8; LENGTH_BYTES]);
 impl From<[u8; LENGTH_BYTES]> for MacAddress {
     fn from(value: [u8; LENGTH_BYTES]) -> Self {
         Self(value)
+    }
+}
+
+impl TryFrom<&[u8]> for MacAddress {
+    type Error = EthernetError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        let bytes = <[u8; LENGTH_BYTES]>::try_from(value)
+            .map_err(|_| EthernetError::MacInvalidBytesLength)?;
+
+        Ok(MacAddress(bytes))
     }
 }
 
@@ -35,4 +49,14 @@ impl std::fmt::Display for MacAddress {
 
         write!(f, "{}", string)
     }
+}
+
+pub fn parse(input: &[u8]) -> IResult<&[u8], MacAddress> {
+    let (input, mac_bytes) = take(LENGTH_BYTES)(input)?;
+    let mac = match MacAddress::try_from(mac_bytes) {
+        Ok(mac) => mac,
+        Err(_) => return Err(error::nom_error_verify(input)),
+    };
+
+    Ok((input, mac))
 }

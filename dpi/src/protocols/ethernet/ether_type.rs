@@ -1,4 +1,8 @@
+use crate::error;
 use crate::protocols::ethernet::EthernetError;
+use nom::IResult;
+use nom::Parser;
+use nom::number::be_u16;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -55,4 +59,12 @@ impl TryFrom<u16> for EtherType {
             _ => Err(EthernetError::EtherTypeUnknown),
         }
     }
+}
+
+pub fn parse(input: &[u8]) -> IResult<&[u8], EtherType> {
+    let (input, ether_type) = be_u16().parse(input)?;
+    let ether_type =
+        EtherType::try_from(ether_type).map_err(|_| error::nom_failure_verify(input))?;
+
+    Ok((input, ether_type))
 }

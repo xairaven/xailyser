@@ -1,14 +1,36 @@
-use crate::ParseResult;
 use crate::frame::FrameMetadata;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ProtocolId};
+use crate::{ParseResult, error};
+use nom::IResult;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 // ETHERNET II.
 pub const FRAME_LENGTH: usize = 14;
 pub const FCS_LENGTH: usize = 4;
+
+pub fn parse_ethernet<'a>(
+    bytes: &'a [u8], _: &FrameMetadata,
+) -> IResult<&'a [u8], ProtocolData> {
+    if bytes.len() <= FRAME_LENGTH {
+        return Err(error::nom_failure_verify(bytes));
+    }
+
+    let (rest, destination_mac) = mac::parse(bytes)?;
+    let (rest, source_mac) = mac::parse(rest)?;
+    let (rest, ether_type) = ether_type::parse(rest)?;
+
+    let layer = Ethernet {
+        id: ProtocolId::Ethernet,
+        destination_mac,
+        source_mac,
+        ether_type,
+    };
+
+    Ok((rest, ProtocolData::Ethernet(layer)))
+}
 
 pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> ParseResult<'a> {
     if bytes.len() < FRAME_LENGTH {
@@ -57,6 +79,9 @@ pub enum EthernetError {
 
     #[error("Invalid hex characters found while parsing Mac address")]
     MacFailedHexDecode,
+
+    #[error("Invalid bytes length for Mac address")]
+    MacInvalidBytesLength,
 
     #[error("Invalid string length for Mac address")]
     MacInvalidStringLength,
