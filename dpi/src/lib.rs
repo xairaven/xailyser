@@ -117,6 +117,7 @@ pub enum ParseResult<'a> {
     Failed,
 }
 
+pub mod error;
 pub mod frame;
 pub mod protocols;
 pub mod wrapper;
