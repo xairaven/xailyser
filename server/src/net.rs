@@ -103,7 +103,7 @@ impl PacketSnifferBuilder {
 
         let send_unparsed_frames =
             context::lock(&self.context, |ctx| ctx.send_unparsed_frames);
-        let parser = dpi::ProtocolParser::new(send_unparsed_frames);
+        let parser = dpi::ProtocolParser::new(&link_type, send_unparsed_frames);
 
         let sniffer = PacketSniffer {
             capture,
