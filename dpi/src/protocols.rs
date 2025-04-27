@@ -1,4 +1,5 @@
 use crate::ParseFn;
+use crate::frame::FrameMetadata;
 use crate::protocols::arp::Arp;
 use crate::protocols::ethernet::Ethernet;
 use serde::{Deserialize, Serialize};
@@ -8,7 +9,8 @@ pub enum ProtocolId {
     Ethernet,
 
     Arp,
-    // IPv4,
+
+    IPv4,
     // IPv6,
     //
     // ICMP,
@@ -36,6 +38,15 @@ impl ProtocolId {
         match self {
             ProtocolId::Ethernet => ethernet::parse,
             ProtocolId::Arp => arp::parse,
+            ProtocolId::IPv4 => ipv4::parse,
+        }
+    }
+
+    pub fn best_children(&self, metadata: &FrameMetadata) -> Option<Self> {
+        match self {
+            ProtocolId::Ethernet => ethernet::best_children(metadata),
+            ProtocolId::Arp => None,
+            ProtocolId::IPv4 => ipv4::best_children(metadata),
         }
     }
 
@@ -43,12 +54,13 @@ impl ProtocolId {
         match self {
             ProtocolId::Ethernet => Some(vec![
                 Self::Arp,
+                Self::IPv4,
                 // Self::ICMP,
                 // Self::ICMPv6,
-                // Self::IPv4,
                 // Self::IPv6,
             ]),
             ProtocolId::Arp => None,
+            ProtocolId::IPv4 => Some(vec![todo!()]),
             // ProtocolId::IPv4 => Some(vec![Self::ICMP, Self::TCP, Self::UDP]),
             // ProtocolId::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
             // ProtocolId::ICMP => None,
