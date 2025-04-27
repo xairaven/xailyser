@@ -4,6 +4,14 @@ use crate::protocols::arp::Arp;
 use crate::protocols::ethernet::Ethernet;
 use serde::{Deserialize, Serialize};
 
+/// Guide: How to Add a Protocol
+/// 1. Add it to the `ProtocolId` enum.
+/// 2. If the protocol is a root protocol, add a link to it in the `ProtocolId::root` method according to the linktype.
+/// 3. Add a parsing method with the signature `ParseFn` to the `ProtocolId::parse` method. The parsing method itself should be placed in your module, e.g., `protocols::custom_protocol`.
+/// 4. If there is a way to determine the most suitable nested protocol, create a `best_children` method in your module, following the pattern of existing methods. Link your new method in `ProtocolId::best_children`.
+/// 5. In `ProtocolId::children`, specify whether there are any nested protocols.
+///
+/// That's it! After that, write tests and verify that parsing works correctly.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ProtocolId {
     Ethernet,
