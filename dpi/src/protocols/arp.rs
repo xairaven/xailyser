@@ -1,4 +1,4 @@
-use crate::error;
+use crate::utils;
 use crate::frame::FrameMetadata;
 use crate::protocols::arp::hardware_type::HardwareType;
 use crate::protocols::arp::operation::Operation;
@@ -23,16 +23,16 @@ pub fn parse<'a>(
     bytes: &'a [u8], metadata: &FrameMetadata,
 ) -> IResult<&'a [u8], ProtocolData> {
     if bytes.len() < PACKET_LENGTH {
-        return Err(error::nom_failure_verify(bytes));
+        return Err(utils::nom_failure_verify(bytes));
     };
 
     // Checking ethernet ether type
     let ethernet = match metadata.layers.first() {
         Some(ProtocolData::Ethernet(value)) => value,
-        _ => return Err(error::nom_failure_verify(bytes)),
+        _ => return Err(utils::nom_failure_verify(bytes)),
     };
     if ethernet.ether_type.ne(&EtherType::Arp) {
-        return Err(error::nom_failure_verify(bytes));
+        return Err(utils::nom_failure_verify(bytes));
     }
 
     // Cutting Ethernet padding & FCS
@@ -48,21 +48,21 @@ pub fn parse<'a>(
     // PTYPE
     let (rest, protocol_type) = ethernet::ether_type::parse(rest)?;
     if protocol_type != EtherType::Ipv4 {
-        return Err(error::nom_failure_verify(bytes));
+        return Err(utils::nom_failure_verify(bytes));
     }
 
     // HLEN
     let (rest, hardware_address_length) = take(HARDWARE_ADDRESS_LENGTH).parse(rest)?;
     let hardware_address_length = hardware_address_length[0];
     if hardware_address_length != ethernet::mac::LENGTH_BYTES as u8 {
-        return Err(error::nom_failure_verify(bytes));
+        return Err(utils::nom_failure_verify(bytes));
     }
 
     // PLEN
     let (rest, protocol_address_length) = take(PROTOCOL_ADDRESS_LENGTH).parse(rest)?;
     let protocol_address_length = protocol_address_length[0];
     if protocol_address_length != ipv4::address::LENGTH_BYTES as u8 {
-        return Err(error::nom_failure_verify(bytes));
+        return Err(utils::nom_failure_verify(bytes));
     }
 
     // OP
