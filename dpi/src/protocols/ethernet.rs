@@ -123,7 +123,7 @@ mod tests {
             len: 0,
         };
 
-        let parser = ProtocolParser::new(false);
+        let parser = ProtocolParser::new(&pcap::Linktype(1), false);
         let packet = pcap::Packet {
             header: &pcap::PacketHeader::from(&header),
             data: &frame,

@@ -10,42 +10,48 @@ use crate::wrapper::OwnedFrame;
 
 pub struct ProtocolParser {
     raw_needed: bool,
-    roots: Vec<ProtocolId>,
+    root: Option<ProtocolId>,
 }
 
 impl ProtocolParser {
-    pub fn new(raw_needed: bool) -> Self {
+    pub fn new(link_type: &pcap::Linktype, raw_needed: bool) -> Self {
         Self {
             raw_needed,
-            roots: ProtocolId::roots(),
+            root: Self::get_root_protocol(link_type),
         }
     }
 
     pub fn process(&self, packet: pcap::Packet) -> Option<FrameType> {
         let mut metadata = FrameMetadata::from_header(packet.header);
 
-        for id in &self.roots {
-            let result = traversal(id, &packet, &mut metadata);
-            match result {
-                ProcessResult::Complete => {
-                    return Some(FrameType::Metadata(metadata));
-                },
+        if let Some(root_protocol) = &self.root {
+            let result = traversal(root_protocol, &packet, &mut metadata);
+            return match result {
+                ProcessResult::Complete => Some(FrameType::Metadata(metadata)),
                 ProcessResult::Incomplete => {
-                    return if !self.raw_needed {
+                    if !self.raw_needed {
                         Some(FrameType::Metadata(metadata))
                     } else {
                         Some(FrameType::Raw(OwnedFrame::from(packet)))
-                    };
+                    }
                 },
-                ProcessResult::Failed => continue,
-            }
+                ProcessResult::Failed => {
+                    if !self.raw_needed {
+                        None
+                    } else {
+                        Some(FrameType::Raw(OwnedFrame::from(packet)))
+                    }
+                },
+            };
         }
 
-        // If there are not roots... impossible
-        if !self.raw_needed {
-            None
-        } else {
-            Some(FrameType::Raw(OwnedFrame::from(packet)))
+        None
+    }
+
+    fn get_root_protocol(link_type: &pcap::Linktype) -> Option<ProtocolId> {
+        match link_type {
+            pcap::Linktype(1) => Some(ProtocolId::Ethernet),
+            _ => None,
         }
     }
 }
