@@ -4,6 +4,7 @@ use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ProtocolId};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 // ETHERNET II.
 pub const FRAME_LENGTH: usize = 14;
@@ -47,6 +48,18 @@ pub struct Ethernet {
     pub destination_mac: MacAddress,
     pub source_mac: MacAddress,
     pub ether_type: EtherType,
+}
+
+#[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
+pub enum EthernetError {
+    #[error("Unknown EtherType")]
+    EtherTypeUnknown,
+
+    #[error("Invalid hex characters found while parsing Mac address")]
+    MacFailedHexDecode,
+
+    #[error("Invalid string length for Mac address")]
+    MacInvalidStringLength,
 }
 
 #[cfg(test)]

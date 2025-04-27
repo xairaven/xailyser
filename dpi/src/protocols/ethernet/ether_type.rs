@@ -1,7 +1,7 @@
+use crate::protocols::ethernet::EthernetError;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use thiserror::Error;
 
 #[derive(Clone, Debug, Serialize, Deserialize, EnumIter, PartialEq)]
 pub enum EtherType {
@@ -29,19 +29,19 @@ impl EtherType {
 }
 
 impl TryFrom<&[u8; 2]> for EtherType {
-    type Error = EtherTypeError;
+    type Error = EthernetError;
 
     fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
         let ether_type = Self::iter()
             .find(|ether_type| ether_type.bytes() == value)
-            .ok_or(EtherTypeError::Unknown)?;
+            .ok_or(EthernetError::EtherTypeUnknown)?;
 
         Ok(ether_type)
     }
 }
 
 impl TryFrom<u16> for EtherType {
-    type Error = EtherTypeError;
+    type Error = EthernetError;
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
@@ -52,13 +52,7 @@ impl TryFrom<u16> for EtherType {
             0x86DD => Ok(Self::Ipv6),
             0x88CC => Ok(Self::Lldp),
             0x8100 => Ok(Self::Vlan),
-            _ => Err(EtherTypeError::Unknown),
+            _ => Err(EthernetError::EtherTypeUnknown),
         }
     }
-}
-
-#[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
-pub enum EtherTypeError {
-    #[error("Unknown EtherType")]
-    Unknown,
 }
