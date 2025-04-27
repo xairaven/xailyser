@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use thiserror::Error;
 
 // ARP Protocol
 // RFC 826: https://datatracker.ietf.org/doc/html/rfc826
@@ -48,9 +49,9 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
         return ParseResult::Failed;
     }
     let hardware_type = match <[u8; HARDWARE_TYPE_LENGTH]>::try_from(&bytes[0..2]) {
-        Ok(value) => match HardwareType::from_bytes(&value) {
-            Some(value) => value,
-            None => return ParseResult::Failed,
+        Ok(value) => match HardwareType::try_from(&value) {
+            Ok(value) => value,
+            Err(_) => return ParseResult::Failed,
         },
         Err(_) => return ParseResult::Failed,
     };
@@ -80,9 +81,9 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
 
     // Parsing OPERATION
     let operation = match <[u8; OPERATION_LENGTH]>::try_from(&bytes[6..8]) {
-        Ok(value) => match Operation::from_bytes(&value) {
-            Some(value) => value,
-            None => return ParseResult::Failed,
+        Ok(value) => match Operation::try_from(&value) {
+            Ok(value) => value,
+            Err(_) => return ParseResult::Failed,
         },
         Err(_) => return ParseResult::Failed,
     };
@@ -161,9 +162,15 @@ impl HardwareType {
             Self::Ethernet => &[0x00, 0x01],
         }
     }
+}
 
-    pub fn from_bytes(bytes: &[u8; 2]) -> Option<Self> {
-        Self::iter().find(|hardware_type| hardware_type.bytes() == bytes)
+impl TryFrom<&[u8; 2]> for HardwareType {
+    type Error = ArpError;
+
+    fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
+        Self::iter()
+            .find(|hardware_type| hardware_type.bytes() == value)
+            .ok_or(ArpError::HardwareTypeUnknown)
     }
 }
 
@@ -180,10 +187,25 @@ impl Operation {
             Self::Reply => &[0x00, 0x02],
         }
     }
+}
 
-    pub fn from_bytes(bytes: &[u8; 2]) -> Option<Self> {
-        Self::iter().find(|operation| operation.bytes() == bytes)
+impl TryFrom<&[u8; 2]> for Operation {
+    type Error = ArpError;
+
+    fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
+        Self::iter()
+            .find(|operation| operation.bytes() == value)
+            .ok_or(ArpError::OperationUnknown)
     }
+}
+
+#[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
+pub enum ArpError {
+    #[error("Unknown hardware type")]
+    HardwareTypeUnknown,
+
+    #[error("Unknown operation type")]
+    OperationUnknown,
 }
 
 #[cfg(test)]
