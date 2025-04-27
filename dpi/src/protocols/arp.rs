@@ -27,13 +27,6 @@ pub fn parse<'a>(
         return Err(error::nom_failure_verify(bytes));
     };
 
-    // Cutting Ethernet padding & FCS
-    let bytes = if bytes.len() > PACKET_LENGTH {
-        &bytes[..PACKET_LENGTH]
-    } else {
-        bytes
-    };
-
     // Checking ethernet ether type
     let ethernet = match metadata.layers.first() {
         Some(ProtocolData::Ethernet(value)) => value,
@@ -42,6 +35,13 @@ pub fn parse<'a>(
     if ethernet.ether_type.ne(&EtherType::Arp) {
         return Err(error::nom_failure_verify(bytes));
     }
+
+    // Cutting Ethernet padding & FCS
+    let bytes = if bytes.len() > PACKET_LENGTH {
+        &bytes[..PACKET_LENGTH]
+    } else {
+        bytes
+    };
 
     // HTYPE
     let (rest, hardware_type) = hardware_type::parse(bytes)?;
@@ -92,7 +92,6 @@ pub fn parse<'a>(
         target_ip: target_protocol_address,
     };
 
-    let rest: &[u8] = &[];
     Finish::finish(Ok((rest, ProtocolData::Arp(arp))))
 }
 
