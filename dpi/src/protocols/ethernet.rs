@@ -1,8 +1,8 @@
+use crate::error;
 use crate::frame::FrameMetadata;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ProtocolId};
-use crate::{ParseResult, error};
 use nom::IResult;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -11,9 +11,7 @@ use thiserror::Error;
 pub const FRAME_LENGTH: usize = 14;
 pub const FCS_LENGTH: usize = 4;
 
-pub fn parse_ethernet<'a>(
-    bytes: &'a [u8], _: &FrameMetadata,
-) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
     if bytes.len() <= FRAME_LENGTH {
         return Err(error::nom_failure_verify(bytes));
     }
@@ -30,38 +28,6 @@ pub fn parse_ethernet<'a>(
     };
 
     Ok((rest, ProtocolData::Ethernet(layer)))
-}
-
-pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> ParseResult<'a> {
-    if bytes.len() < FRAME_LENGTH {
-        return ParseResult::Failed;
-    }
-
-    let dst_mac = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[0..6]) {
-        Ok(value) => MacAddress::from(value),
-        Err(_) => return ParseResult::Failed,
-    };
-    let src_mac = match <[u8; mac::LENGTH_BYTES]>::try_from(&bytes[6..12]) {
-        Ok(value) => MacAddress::from(value),
-        Err(_) => return ParseResult::Failed,
-    };
-    let ether_type = match EtherType::try_from(&[bytes[12], bytes[13]]) {
-        Ok(value) => value,
-        Err(_) => return ParseResult::Failed,
-    };
-
-    let ethernet = Ethernet {
-        id: ProtocolId::Ethernet,
-        destination_mac: dst_mac,
-        source_mac: src_mac,
-        ether_type,
-    };
-
-    if bytes.len() > FRAME_LENGTH {
-        ParseResult::SuccessIncomplete(ProtocolData::Ethernet(ethernet), &bytes[14..])
-    } else {
-        ParseResult::Failed
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

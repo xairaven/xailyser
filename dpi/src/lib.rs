@@ -7,6 +7,7 @@
 use crate::frame::{FrameMetadata, FrameType};
 use crate::protocols::{ProtocolData, ProtocolId};
 use crate::wrapper::OwnedFrame;
+use nom::IResult;
 
 pub struct ProtocolParser {
     raw_needed: bool,
@@ -62,11 +63,11 @@ fn traversal(
     let result = id.parse()(bytes, metadata);
 
     match result {
-        ParseResult::Success(layer) => {
+        Ok(([], layer)) => {
             metadata.layers.push(layer);
             ProcessResult::Complete
         },
-        ParseResult::SuccessIncomplete(layer, bytes) => {
+        Ok((rest, layer)) => {
             metadata.layers.push(layer);
 
             let children = match id.children() {
@@ -77,7 +78,7 @@ fn traversal(
             };
 
             for id in children {
-                let result = traversal(&id, bytes, metadata);
+                let result = traversal(&id, rest, metadata);
 
                 match result {
                     ProcessResult::Complete | ProcessResult::Incomplete => {
@@ -89,10 +90,11 @@ fn traversal(
 
             ProcessResult::Incomplete
         },
-        ParseResult::Failed => ProcessResult::Failed,
+        Err(_) => ProcessResult::Failed,
     }
 }
-pub type ParseFn = for<'a, 'b> fn(&'a [u8], &'b FrameMetadata) -> ParseResult<'a>;
+pub type ParseFn =
+    for<'a, 'b> fn(&'a [u8], &'b FrameMetadata) -> IResult<&'a [u8], ProtocolData>;
 
 #[derive(Clone, Debug)]
 pub enum ProcessResult {
