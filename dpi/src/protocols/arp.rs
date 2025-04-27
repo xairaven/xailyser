@@ -17,7 +17,7 @@ pub const HARDWARE_ADDRESS_LENGTH: usize = 1;
 pub const PROTOCOL_ADDRESS_LENGTH: usize = 1;
 pub const OPERATION_LENGTH: usize = 2;
 
-pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'a> {
+pub fn parse<'a>(bytes: &'a [u8], metadata: &FrameMetadata) -> ParseResult<'a> {
     if bytes.len() < PACKET_LENGTH {
         return ParseResult::Failed;
     };
@@ -123,9 +123,8 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'
         target_mac: target_hardware_address,
         target_ip: target_protocol_address,
     };
-    metadata.layers.push(ProtocolData::Arp(arp));
 
-    ParseResult::Success
+    ParseResult::Success(ProtocolData::Arp(arp))
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

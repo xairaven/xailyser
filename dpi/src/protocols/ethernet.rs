@@ -9,7 +9,7 @@ use strum_macros::EnumIter;
 pub const FRAME_LENGTH: usize = 14;
 pub const FCS_LENGTH: usize = 4;
 pub const MAC_LENGTH: usize = 6;
-pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'a> {
+pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> ParseResult<'a> {
     if bytes.len() < FRAME_LENGTH {
         return ParseResult::Failed;
     }
@@ -33,10 +33,9 @@ pub fn parse<'a>(bytes: &'a [u8], metadata: &mut FrameMetadata) -> ParseResult<'
         source_mac: src_mac,
         ether_type,
     };
-    metadata.layers.push(ProtocolData::Ethernet(ethernet));
 
     if bytes.len() > FRAME_LENGTH {
-        ParseResult::SuccessIncomplete(&bytes[14..])
+        ParseResult::SuccessIncomplete(ProtocolData::Ethernet(ethernet), &bytes[14..])
     } else {
         ParseResult::Failed
     }
@@ -109,33 +108,47 @@ impl EtherType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ProtocolParser;
+    use crate::frame::FrameType;
     use crate::wrapper::FrameHeader;
 
     #[test]
     fn test_ethernet() {
-        let ethernet_header = hex::decode("04E8B918551084D81B6EC14A0800").unwrap();
-        let mut metadata = FrameMetadata {
-            header: FrameHeader {
-                tv_sec: 0,
-                tv_usec: 0,
-                caplen: 0,
-                len: 0,
-            },
-            layers: vec![],
+        let hex_actual = "40 61 86 9A F1 F5 00 1A 8C 15 F9 80 08 00 45 00 00 28 59 B0 40 00 38 06 86 FC CE 6C CF 8B C0 A8 03 83 00 50 DA 98 A4 28 53 A0 9A 18 FA A4 50 10 00 D8 E5 69 00 00 00 00 00 00 00 00".replace(" ", "");
+        let frame = hex::decode(hex_actual).unwrap();
+        let header = FrameHeader {
+            tv_sec: 0,
+            tv_usec: 0,
+            caplen: 60,
+            len: 0,
         };
-        let _ = parse(&ethernet_header, &mut metadata);
-        let actual = match metadata.layers[0].clone() {
+
+        let parser = ProtocolParser::new(false);
+        let packet = pcap::Packet {
+            header: &pcap::PacketHeader::from(&header),
+            data: &frame,
+        };
+        let result = parser.process(packet);
+        let metadata = match result {
+            Some(value) => match value {
+                FrameType::Metadata(value) => value,
+                FrameType::Raw(_) => panic!(),
+            },
+            None => panic!(),
+        };
+
+        let actual_ethernet = match metadata.layers[0].clone() {
             ProtocolData::Ethernet(value) => value,
             _ => panic!(),
         };
 
-        let expected = Ethernet {
+        let expected_ethernet = Ethernet {
             id: ProtocolId::Ethernet,
-            destination_mac: MacAddress::from_string("04:E8:B9:18:55:10").unwrap(),
-            source_mac: MacAddress::from_string("84:D8:1B:6E:C1:4A").unwrap(),
+            destination_mac: MacAddress::from_string("40:61:86:9A:F1:F5").unwrap(),
+            source_mac: MacAddress::from_string("00:1A:8C:15:F9:80").unwrap(),
             ether_type: EtherType::Ipv4,
         };
 
-        assert_eq!(actual, expected);
+        assert_eq!(actual_ethernet, expected_ethernet);
     }
 }

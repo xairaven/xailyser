@@ -5,7 +5,7 @@
 #![deny(unsafe_code)]
 
 use crate::frame::{FrameMetadata, FrameType};
-use crate::protocols::ProtocolId;
+use crate::protocols::{ProtocolData, ProtocolId};
 use crate::wrapper::OwnedFrame;
 
 pub struct ProtocolParser {
@@ -56,8 +56,13 @@ fn traversal(
     let result = id.parse()(bytes, metadata);
 
     match result {
-        ParseResult::Success => ProcessResult::Complete,
-        ParseResult::SuccessIncomplete(bytes) => {
+        ParseResult::Success(layer) => {
+            metadata.layers.push(layer);
+            ProcessResult::Complete
+        },
+        ParseResult::SuccessIncomplete(layer, bytes) => {
+            metadata.layers.push(layer);
+
             let children = match id.children() {
                 Some(value) => value,
                 None => {
@@ -81,7 +86,7 @@ fn traversal(
         ParseResult::Failed => ProcessResult::Failed,
     }
 }
-pub type ParseFn = for<'a, 'b> fn(&'a [u8], &'b mut FrameMetadata) -> ParseResult<'a>;
+pub type ParseFn = for<'a, 'b> fn(&'a [u8], &'b FrameMetadata) -> ParseResult<'a>;
 
 #[derive(Clone, Debug)]
 pub enum ProcessResult {
@@ -97,10 +102,10 @@ pub enum ProcessResult {
 
 pub enum ParseResult<'a> {
     // Fully parsed, to the last byte
-    Success,
+    Success(ProtocolData),
 
     // Exact protocol parsed successfully, but there are something inside
-    SuccessIncomplete(&'a [u8]),
+    SuccessIncomplete(ProtocolData, &'a [u8]),
 
     // Not matched
     Failed,
