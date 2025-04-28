@@ -2,6 +2,7 @@ use crate::ParseFn;
 use crate::frame::FrameMetadata;
 use crate::protocols::arp::Arp;
 use crate::protocols::ethernet::Ethernet;
+use crate::protocols::ipv4::IPv4;
 use serde::{Deserialize, Serialize};
 
 /// Guide: How to Add a Protocol
@@ -71,7 +72,9 @@ impl ProtocolId {
                 // Self::IPv6,
             ]),
             ProtocolId::Arp => None,
-            ProtocolId::IPv4 => Some(vec![todo!()]),
+
+            // TODO: ...
+            ProtocolId::IPv4 => None,
             // ProtocolId::IPv4 => Some(vec![Self::ICMP, Self::TCP, Self::UDP]),
             // ProtocolId::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
             // ProtocolId::ICMP => None,
@@ -97,6 +100,8 @@ pub enum ProtocolData {
     Ethernet(Ethernet),
 
     Arp(Arp),
+
+    IPv4(IPv4),
 }
 
 pub mod arp;
