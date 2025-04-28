@@ -118,5 +118,5 @@ pub enum ParseResult<'a> {
 
 pub mod frame;
 pub mod protocols;
-pub mod wrapper;
 pub mod utils;
+pub mod wrapper;

@@ -1,5 +1,5 @@
-use crate::utils;
 use crate::protocols::arp::ArpError;
+use crate::utils;
 use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
@@ -49,7 +49,7 @@ pub fn parse(input: &[u8]) -> IResult<&[u8], Operation> {
     let (input, number) = be_u16().parse(input)?;
 
     let operation =
-        Operation::try_from(number).map_err(|_| utils::nom_failure_verify(input))?;
+        Operation::try_from(number).map_err(|_| utils::nom_error_verify(input))?;
 
     Ok((input, operation))
 }

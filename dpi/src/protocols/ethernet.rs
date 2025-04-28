@@ -1,8 +1,8 @@
-use crate::utils;
 use crate::frame::FrameMetadata;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ProtocolId};
+use crate::utils;
 use nom::IResult;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -13,7 +13,7 @@ pub const FCS_LENGTH: usize = 4;
 
 pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
     if bytes.len() <= FRAME_LENGTH {
-        return Err(utils::nom_failure_verify(bytes));
+        return Err(utils::nom_error_verify(bytes));
     }
 
     let (rest, destination_mac) = mac::parse(bytes)?;

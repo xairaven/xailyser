@@ -10,7 +10,7 @@ pub fn parse(input: &[u8]) -> IResult<&[u8], Ipv4Addr> {
     let (input, address) = take(LENGTH_BYTES).parse(input)?;
 
     let address = Ipv4Addr::from(
-        <[u8; 4]>::try_from(address).map_err(|_| utils::nom_failure_verify(input))?,
+        <[u8; 4]>::try_from(address).map_err(|_| utils::nom_error_verify(input))?,
     );
 
     Ok((input, address))

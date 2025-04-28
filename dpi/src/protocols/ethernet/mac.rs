@@ -1,5 +1,5 @@
-use crate::utils;
 use crate::protocols::ethernet::EthernetError;
+use crate::utils;
 use nom::IResult;
 use nom::bytes::complete::take;
 use serde::{Deserialize, Serialize};
