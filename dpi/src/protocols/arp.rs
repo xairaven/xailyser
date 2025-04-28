@@ -78,8 +78,12 @@ pub fn parse<'a>(
     let (rest, target_hardware_address) = ethernet::mac::parse(rest)?;
 
     // TARGET_PROTOCOL_ADDRESS
-    let (_, target_protocol_address) = ipv4::address::parse(rest)?;
+    let (rest, target_protocol_address) = ipv4::address::parse(rest)?;
 
+    if rest.len() != 0 {
+        return Err(utils::nom_error_verify(bytes));
+    }
+    
     let arp = Arp {
         id: ProtocolId::Arp,
         hardware_type,
