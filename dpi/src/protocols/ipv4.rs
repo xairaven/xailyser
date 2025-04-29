@@ -94,6 +94,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     };
     match ipv4.protocol_inner {
         IpProtocolField::TCP => Some(ProtocolId::TCP),
+        IpProtocolField::UDP => Some(ProtocolId::UDP),
         _ => None,
     }
 }

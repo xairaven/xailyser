@@ -1,9 +1,5 @@
 use crate::ParseFn;
 use crate::frame::FrameMetadata;
-use crate::protocols::arp::Arp;
-use crate::protocols::ethernet::Ethernet;
-use crate::protocols::ipv4::IPv4;
-use crate::protocols::tcp::TCP;
 use serde::{Deserialize, Serialize};
 
 /// Guide: How to Add a Protocol
@@ -26,8 +22,7 @@ pub enum ProtocolId {
     // ICMP,
     // ICMPv6,
     TCP,
-    // UDP,
-
+    UDP,
     // DNS,
     // FTP,
     // HTTP,
@@ -52,6 +47,7 @@ impl ProtocolId {
             ProtocolId::Arp => arp::parse,
             ProtocolId::IPv4 => ipv4::parse,
             ProtocolId::TCP => tcp::parse,
+            ProtocolId::UDP => udp::parse,
         }
     }
 
@@ -61,6 +57,7 @@ impl ProtocolId {
             ProtocolId::Arp => None,
             ProtocolId::IPv4 => ipv4::best_children(metadata),
             ProtocolId::TCP => tcp::best_children(metadata),
+            ProtocolId::UDP => udp::best_children(metadata),
         }
     }
 
@@ -75,16 +72,16 @@ impl ProtocolId {
             ]),
             ProtocolId::Arp => None,
 
-            // TODO: IPv4. Add ICMP, UDP
-            ProtocolId::IPv4 => Some(vec![Self::TCP]),
+            // TODO: IPv4. Add ICMP
+            ProtocolId::IPv4 => Some(vec![Self::TCP, Self::UDP]),
             // ProtocolId::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
             // ProtocolId::ICMP => None,
             // ProtocolId::ICMPv6 => None,
 
             // TODO: TCP. Add HTTP, HTTPS, DNS
+            // TODO: UDP. DNS
             ProtocolId::TCP => None,
-            // ProtocolId::UDP => Some(vec![Self::DNS]),
-            //
+            ProtocolId::UDP => None,
             // ProtocolId::DNS => None,
             // ProtocolId::FTP => None,
             // ProtocolId::HTTP => None,
@@ -99,16 +96,18 @@ impl ProtocolId {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ProtocolData {
-    Ethernet(Ethernet),
+    Ethernet(ethernet::Ethernet),
 
-    Arp(Arp),
+    Arp(arp::Arp),
 
-    IPv4(IPv4),
+    IPv4(ipv4::IPv4),
 
-    TCP(TCP),
+    TCP(tcp::TCP),
+    UDP(udp::UDP),
 }
 
 pub mod arp;
 pub mod ethernet;
 pub mod ipv4;
 pub mod tcp;
+pub mod udp;
