@@ -87,8 +87,16 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
 }
 
 pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
-    // TODO: ...
-    None
+    // TODO: Other Protocols
+    // Checking IP inner protocol type
+    let ipv4 = match metadata.layers.get(1) {
+        Some(ProtocolData::IPv4(value)) => value,
+        _ => return None,
+    };
+    match ipv4.protocol_inner {
+        IpProtocolField::TCP => Some(ProtocolId::TCP),
+        _ => None,
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

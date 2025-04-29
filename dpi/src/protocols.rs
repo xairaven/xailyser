@@ -3,6 +3,7 @@ use crate::frame::FrameMetadata;
 use crate::protocols::arp::Arp;
 use crate::protocols::ethernet::Ethernet;
 use crate::protocols::ipv4::IPv4;
+use crate::protocols::tcp::TCP;
 use serde::{Deserialize, Serialize};
 
 /// Guide: How to Add a Protocol
@@ -21,13 +22,12 @@ pub enum ProtocolId {
 
     IPv4,
     // IPv6,
-    //
+
     // ICMP,
     // ICMPv6,
-    //
-    // TCP,
+    TCP,
     // UDP,
-    //
+
     // DNS,
     // FTP,
     // HTTP,
@@ -51,6 +51,7 @@ impl ProtocolId {
             ProtocolId::Ethernet => ethernet::parse,
             ProtocolId::Arp => arp::parse,
             ProtocolId::IPv4 => ipv4::parse,
+            ProtocolId::TCP => tcp::parse,
         }
     }
 
@@ -59,6 +60,7 @@ impl ProtocolId {
             ProtocolId::Ethernet => ethernet::best_children(metadata),
             ProtocolId::Arp => None,
             ProtocolId::IPv4 => ipv4::best_children(metadata),
+            ProtocolId::TCP => tcp::best_children(metadata),
         }
     }
 
@@ -73,14 +75,14 @@ impl ProtocolId {
             ]),
             ProtocolId::Arp => None,
 
-            // TODO: ...
-            ProtocolId::IPv4 => None,
-            // ProtocolId::IPv4 => Some(vec![Self::ICMP, Self::TCP, Self::UDP]),
+            // TODO: IPv4. Add ICMP, UDP
+            ProtocolId::IPv4 => Some(vec![Self::TCP]),
             // ProtocolId::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
             // ProtocolId::ICMP => None,
             // ProtocolId::ICMPv6 => None,
-            //
-            // ProtocolId::TCP => Some(vec![Self::HTTP, Self::HTTPS, Self::DNS]),
+
+            // TODO: TCP. Add HTTP, HTTPS, DNS
+            ProtocolId::TCP => None,
             // ProtocolId::UDP => Some(vec![Self::DNS]),
             //
             // ProtocolId::DNS => None,
@@ -102,8 +104,11 @@ pub enum ProtocolData {
     Arp(Arp),
 
     IPv4(IPv4),
+
+    TCP(TCP),
 }
 
 pub mod arp;
 pub mod ethernet;
 pub mod ipv4;
+pub mod tcp;
