@@ -59,13 +59,13 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
 }
 
 pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
-    // TODO: ICMPv6
     // Checking IP inner protocol type
     let ipv6 = match metadata.layers.get(1) {
         Some(ProtocolData::IPv6(value)) => value,
         _ => return None,
     };
     match ipv6.next_header {
+        IpNextLevelProtocol::Ipv6Icmp => Some(ProtocolId::ICMPv6),
         IpNextLevelProtocol::IPv6 => Some(ProtocolId::IPv6),
         IpNextLevelProtocol::TCP => Some(ProtocolId::TCP),
         IpNextLevelProtocol::UDP => Some(ProtocolId::UDP),
