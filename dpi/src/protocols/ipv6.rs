@@ -94,10 +94,11 @@ mod tests {
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
+    use crate::protocols::ipv4::IPv4;
     use crate::protocols::ipv6::IPv6;
     use crate::protocols::tcp::TCP;
     use crate::wrapper::FrameHeader;
-    use std::net::Ipv6Addr;
+    use std::net::{Ipv4Addr, Ipv6Addr};
     use std::str::FromStr;
 
     #[test]
@@ -255,6 +256,108 @@ mod tests {
             options: vec![
                 0x01, 0x01, 0x08, 0x0A, 0x80, 0x1D, 0xA5, 0x25, 0x80, 0x1D, 0xA5, 0x25,
             ],
+        };
+
+        assert_eq!(actual_tcp, expected_tcp);
+    }
+
+    #[test]
+    fn test_ipv4_ipv6_tcp() {
+        let hex_actual = "01 00 01 00 00 00 1A 43 20 00 01 00 08 00 45 00 00 81 2A 50 00 00 10 29 46 CB 8B 12 19 21 51 83 43 83 60 04 40 E8 00 45 06 3F 20 01 06 38 09 02 00 01 02 01 02 FF FE E2 75 96 20 02 51 83 43 83 00 00 00 00 00 00 51 83 43 83 00 15 04 02 E5 37 A5 73 62 6B F3 08 50 18 81 60 98 72 00 00 33 33 31 20 47 75 65 73 74 20 6C 6F 67 69 6E 20 6F 6B 2C 20 74 79 70 65 20 79 6F 75 72 20 6E 61 6D 65 20 61 73 20 70 61 73 73 77 6F 72 64 2E 0D 0A".replace(" ", "");
+        let frame = hex::decode(hex_actual).unwrap();
+        let header = FrameHeader {
+            tv_sec: 0,
+            tv_usec: 0,
+            caplen: 143,
+            len: 0,
+        };
+
+        let parser = ProtocolParser::new(&pcap::Linktype(1), false);
+        let packet = pcap::Packet {
+            header: &pcap::PacketHeader::from(&header),
+            data: &frame,
+        };
+        let result = parser.process(packet);
+        let metadata = match result {
+            Some(value) => match value {
+                FrameType::Metadata(value) => value,
+                FrameType::Raw(_) => panic!(),
+            },
+            None => panic!(),
+        };
+
+        let actual_ethernet = match metadata.layers[0].clone() {
+            ProtocolData::Ethernet(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_ethernet = Ethernet {
+            destination_mac: MacAddress::try_from("01:00:01:00:00:00").unwrap(),
+            source_mac: MacAddress::try_from("1A:43:20:00:01:00").unwrap(),
+            ether_type: EtherType::Ipv4,
+        };
+
+        assert_eq!(actual_ethernet, expected_ethernet);
+
+        let actual_ipv4 = match metadata.layers[1].clone() {
+            ProtocolData::IPv4(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_ipv4 = IPv4 {
+            version: 4,
+            internet_header_length: 20,
+            differentiated_services_code_point: 0,
+            explicit_congestion_notification: 0,
+            total_length: 129,
+            identification: 0x2a50,
+            flags: 0,
+            fragment_offset: 0,
+            time_to_live: 16,
+            protocol_inner: IpNextLevelProtocol::IPv6,
+            checksum: 0x46cb,
+            address_source: Ipv4Addr::from_str("139.18.25.33").unwrap(),
+            address_destination: Ipv4Addr::from_str("81.131.67.131").unwrap(),
+        };
+
+        assert_eq!(actual_ipv4, expected_ipv4);
+
+        let actual_ipv6 = match metadata.layers[2].clone() {
+            ProtocolData::IPv6(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_ipv6 = IPv6 {
+            version: 6,
+            traffic_class: 0x00,
+            flow_label: 0x440e8,
+            payload_length: 69,
+            next_header: IpNextLevelProtocol::TCP,
+            hop_limit: 63,
+            address_source: Ipv6Addr::from_str("2001:638:902:1:201:2ff:fee2:7596")
+                .unwrap(),
+            address_destination: Ipv6Addr::from_str("2002:5183:4383::5183:4383").unwrap(),
+        };
+
+        assert_eq!(actual_ipv6, expected_ipv6);
+
+        let actual_tcp = match metadata.layers[3].clone() {
+            ProtocolData::TCP(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_tcp = TCP {
+            port_source: 21,
+            port_destination: 1026,
+            sequence_number: 0xe537a573,
+            acknowledgement_number: 0x626bf308,
+            data_offset: 20,
+            reserved: 0,
+            flags: [0, 0, 0, 1, 1, 0, 0, 0],
+            window: 33120,
+            checksum: 0x9872,
+            urgent_pointer: 0,
+            options: vec![],
         };
 
         assert_eq!(actual_tcp, expected_tcp);
