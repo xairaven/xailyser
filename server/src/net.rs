@@ -2,6 +2,7 @@ use crate::context;
 use crate::context::Context;
 use crate::net::interface::InterfaceError;
 use common::channel::BroadcastChannel;
+use dpi::parser::ProtocolParser;
 use pcap::{Active, Capture};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -14,7 +15,7 @@ const TIMEOUT_MS: i32 = 100;
 pub struct PacketSniffer {
     capture: Capture<Active>,
     frame_channel: Arc<Mutex<BroadcastChannel<dpi::frame::FrameType>>>,
-    parser: dpi::ProtocolParser,
+    parser: ProtocolParser,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
 }
@@ -103,7 +104,7 @@ impl PacketSnifferBuilder {
 
         let send_unparsed_frames =
             context::lock(&self.context, |ctx| ctx.send_unparsed_frames);
-        let parser = dpi::ProtocolParser::new(&link_type, send_unparsed_frames);
+        let parser = ProtocolParser::new(&link_type, send_unparsed_frames);
 
         let sniffer = PacketSniffer {
             capture,
