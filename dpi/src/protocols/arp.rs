@@ -131,8 +131,8 @@ pub mod operation;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ProtocolParser;
     use crate::frame::FrameType;
+    use crate::parser::ProtocolParser;
     use crate::protocols::arp::operation::Operation;
     use crate::protocols::ethernet::Ethernet;
     use crate::wrapper::FrameHeader;

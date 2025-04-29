@@ -46,8 +46,8 @@ pub struct UDP {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ProtocolParser;
     use crate::frame::FrameType;
+    use crate::parser::ProtocolParser;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;

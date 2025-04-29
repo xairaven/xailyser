@@ -1,5 +1,5 @@
-use crate::ParseFn;
 use crate::frame::FrameMetadata;
+use crate::parser::ParseFn;
 use serde::{Deserialize, Serialize};
 
 /// Guide: How to Add a Protocol
