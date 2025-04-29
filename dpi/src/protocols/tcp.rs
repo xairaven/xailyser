@@ -1,6 +1,6 @@
 use crate::frame::FrameMetadata;
 use crate::protocols::{ProtocolData, ProtocolId};
-use nom::number::{be_u8, be_u16, be_u32};
+use nom::number::{be_u16, be_u32};
 use nom::{IResult, Parser, bits};
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 pub const DATA_OFFSET_LENGTH_BITS: usize = 4;
 pub const RESERVED_LENGTH_BITS: usize = 4;
+pub const FLAG_LENGTH_BITS: usize = 1;
 pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
     // Source port. 2 bytes
     let (rest, port_source) = be_u16().parse(bytes)?;
@@ -34,17 +35,19 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     let rest = &rest[..data_offset as usize - 13];
 
     // Flags: 8 flags by 1 bit.
-    let (rest, flags) = be_u8().parse(rest)?;
-    let flags: [u8; 8] = [
-        (flags >> 7) & 1,
-        (flags >> 6) & 1,
-        (flags >> 5) & 1,
-        (flags >> 4) & 1,
-        (flags >> 3) & 1,
-        (flags >> 2) & 1,
-        (flags >> 1) & 1,
-        flags & 1,
-    ];
+    type TcpFlags = (u8, u8, u8, u8, u8, u8, u8, u8);
+    let (rest, (cwr, ece, urg, ack, psh, rst, syn, fin)): (&[u8], TcpFlags) =
+        bits::bits::<_, _, nom::error::Error<_>, _, _>((
+            bits::complete::take(FLAG_LENGTH_BITS),
+            bits::complete::take(FLAG_LENGTH_BITS),
+            bits::complete::take(FLAG_LENGTH_BITS),
+            bits::complete::take(FLAG_LENGTH_BITS),
+            bits::complete::take(FLAG_LENGTH_BITS),
+            bits::complete::take(FLAG_LENGTH_BITS),
+            bits::complete::take(FLAG_LENGTH_BITS),
+            bits::complete::take(FLAG_LENGTH_BITS),
+        ))(rest)?;
+    let flags: [u8; 8] = [cwr, ece, urg, ack, psh, rst, syn, fin];
 
     // Window: 2 bytes.
     let (rest, window) = be_u16().parse(rest)?;
