@@ -138,7 +138,6 @@ mod tests {
         };
 
         let expected_ethernet = Ethernet {
-            id: ProtocolId::Ethernet,
             destination_mac: MacAddress::try_from("40:61:86:9A:F1:F5").unwrap(),
             source_mac: MacAddress::try_from("00:1A:8C:15:F9:80").unwrap(),
             ether_type: EtherType::Ipv4,
@@ -152,7 +151,6 @@ mod tests {
         };
 
         let expected_ipv4 = IPv4 {
-            id: ProtocolId::IPv4,
             version: 4,
             internet_header_length: 20,
             differentiated_services_code_point: 0,
@@ -236,7 +234,6 @@ mod tests {
         };
 
         let expected_ethernet = Ethernet {
-            id: ProtocolId::Ethernet,
             destination_mac: MacAddress::try_from("40:61:86:9A:F1:F5").unwrap(),
             source_mac: MacAddress::try_from("00:1A:8C:15:F9:80").unwrap(),
             ether_type: EtherType::Ipv4,
@@ -250,7 +247,6 @@ mod tests {
         };
 
         let expected_ipv4 = IPv4 {
-            id: ProtocolId::IPv4,
             version: 4,
             internet_header_length: 20,
             differentiated_services_code_point: 0,

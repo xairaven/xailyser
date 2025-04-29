@@ -3,7 +3,7 @@ use crate::protocols::arp::hardware_type::HardwareType;
 use crate::protocols::arp::operation::Operation;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
-use crate::protocols::{ProtocolData, ProtocolId, ethernet, ipv4};
+use crate::protocols::{ProtocolData, ethernet, ipv4};
 use crate::utils;
 use nom::Parser;
 use nom::bytes::take;
@@ -85,7 +85,6 @@ pub fn parse<'a>(
     }
 
     let arp = Arp {
-        id: ProtocolId::Arp,
         hardware_type,
         protocol_type,
         hardware_address_length,
@@ -102,8 +101,6 @@ pub fn parse<'a>(
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Arp {
-    pub id: ProtocolId,
-
     pub hardware_type: HardwareType,
     pub protocol_type: EtherType,
 
@@ -171,7 +168,6 @@ mod tests {
         };
 
         let expected_ethernet = Ethernet {
-            id: ProtocolId::Ethernet,
             destination_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
             source_mac: MacAddress::try_from("00:1E:68:51:4F:A9").unwrap(),
             ether_type: EtherType::Arp,
@@ -185,7 +181,6 @@ mod tests {
         };
 
         let expected_arp = Arp {
-            id: ProtocolId::Arp,
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
             hardware_address_length: ethernet::mac::LENGTH_BYTES as u8,
@@ -231,7 +226,6 @@ mod tests {
         };
 
         let expected_ethernet = Ethernet {
-            id: ProtocolId::Ethernet,
             destination_mac: MacAddress::try_from("00:1E:68:51:4F:A9").unwrap(),
             source_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
             ether_type: EtherType::Arp,
@@ -245,7 +239,6 @@ mod tests {
         };
 
         let expected_arp = Arp {
-            id: ProtocolId::Arp,
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
             hardware_address_length: ethernet::mac::LENGTH_BYTES as u8,

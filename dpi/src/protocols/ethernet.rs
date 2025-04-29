@@ -21,7 +21,6 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     let (rest, ether_type) = ether_type::parse(rest)?;
 
     let layer = Ethernet {
-        id: ProtocolId::Ethernet,
         destination_mac,
         source_mac,
         ether_type,
@@ -45,7 +44,6 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Ethernet {
-    pub id: ProtocolId,
     pub destination_mac: MacAddress,
     pub source_mac: MacAddress,
     pub ether_type: EtherType,
@@ -92,7 +90,6 @@ mod tests {
         };
 
         let expected_ethernet = Ethernet {
-            id: ProtocolId::Ethernet,
             destination_mac: MacAddress::try_from("40:61:86:9A:F1:F5").unwrap(),
             source_mac: MacAddress::try_from("00:1A:8C:15:F9:80").unwrap(),
             ether_type: EtherType::Ipv4,
