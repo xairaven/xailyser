@@ -80,10 +80,10 @@ pub fn parse<'a>(
     // TARGET_PROTOCOL_ADDRESS
     let (rest, target_protocol_address) = ipv4::address::parse(rest)?;
 
-    if rest.len() != 0 {
+    if !rest.is_empty() {
         return Err(utils::nom_error_verify(bytes));
     }
-    
+
     let arp = Arp {
         id: ProtocolId::Arp,
         hardware_type,
