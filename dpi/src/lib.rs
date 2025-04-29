@@ -7,5 +7,4 @@
 pub mod frame;
 pub mod parser;
 pub mod protocols;
-pub mod utils;
 pub mod wrapper;

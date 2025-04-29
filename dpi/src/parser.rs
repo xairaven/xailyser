@@ -87,6 +87,26 @@ impl ProtocolParser {
 pub type ParseFn =
     for<'a, 'b> fn(&'a [u8], &'b FrameMetadata) -> IResult<&'a [u8], ProtocolData>;
 
+pub enum ParserError {
+    ErrorVerify,
+    FailureVerify,
+}
+
+impl ParserError {
+    pub fn to_nom<T>(&self, input: T) -> nom::Err<nom::error::Error<T>> {
+        match self {
+            Self::ErrorVerify => nom::Err::Error(nom::error::Error::new(
+                input,
+                nom::error::ErrorKind::Verify,
+            )),
+            Self::FailureVerify => nom::Err::Failure(nom::error::Error::new(
+                input,
+                nom::error::ErrorKind::Verify,
+            )),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum ProcessResult {
     // Fully parsed

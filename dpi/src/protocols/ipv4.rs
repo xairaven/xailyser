@@ -1,7 +1,7 @@
 use crate::frame::FrameMetadata;
+use crate::parser::ParserError;
 use crate::protocols::ipv4::protocol::IpProtocolField;
 use crate::protocols::{ProtocolData, ProtocolId};
-use crate::utils;
 use nom::Parser;
 use nom::number::{be_u8, be_u16};
 use nom::{IResult, bits, sequence};
@@ -25,7 +25,7 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
             bits::complete::take(IHL_LENGTH_BITS),
         ))(bytes)?;
     if version != 4 {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
     // IHL is stored in 32bit words. So, we are doing IHL * 32 / 8 (bits in bytes)
     let ihl = ihl * 4;
@@ -71,7 +71,7 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     let (rest, address_destination) = address::parse(rest)?;
 
     if rest.len() as isize != ihl as isize - PACKET_NECESSARY_LENGTH_BYTES as isize {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     let protocol = IPv4 {

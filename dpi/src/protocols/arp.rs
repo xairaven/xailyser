@@ -1,10 +1,10 @@
 use crate::frame::FrameMetadata;
+use crate::parser::ParserError;
 use crate::protocols::arp::hardware_type::HardwareType;
 use crate::protocols::arp::operation::Operation;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ethernet, ipv4};
-use crate::utils;
 use nom::Parser;
 use nom::bytes::take;
 use nom::{Finish, IResult};
@@ -23,16 +23,16 @@ pub fn parse<'a>(
     bytes: &'a [u8], metadata: &FrameMetadata,
 ) -> IResult<&'a [u8], ProtocolData> {
     if bytes.len() < PACKET_LENGTH {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     };
 
     // Checking ethernet ether type
     let ethernet = match metadata.layers.first() {
         Some(ProtocolData::Ethernet(value)) => value,
-        _ => return Err(utils::nom_error_verify(bytes)),
+        _ => return Err(ParserError::ErrorVerify.to_nom(bytes)),
     };
     if ethernet.ether_type.ne(&EtherType::Arp) {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     // Cutting Ethernet padding & FCS
@@ -48,21 +48,21 @@ pub fn parse<'a>(
     // PTYPE
     let (rest, protocol_type) = ethernet::ether_type::parse(rest)?;
     if protocol_type != EtherType::Ipv4 {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     // HLEN
     let (rest, hardware_address_length) = take(HARDWARE_ADDRESS_LENGTH).parse(rest)?;
     let hardware_address_length = hardware_address_length[0];
     if hardware_address_length != ethernet::mac::LENGTH_BYTES as u8 {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     // PLEN
     let (rest, protocol_address_length) = take(PROTOCOL_ADDRESS_LENGTH).parse(rest)?;
     let protocol_address_length = protocol_address_length[0];
     if protocol_address_length != ipv4::address::LENGTH_BYTES as u8 {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     // OP
@@ -81,7 +81,7 @@ pub fn parse<'a>(
     let (rest, target_protocol_address) = ipv4::address::parse(rest)?;
 
     if !rest.is_empty() {
-        return Err(utils::nom_error_verify(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     let arp = Arp {

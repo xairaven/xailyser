@@ -1,5 +1,5 @@
+use crate::parser::ParserError;
 use crate::protocols::arp::ArpError;
-use crate::utils;
 use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
@@ -46,8 +46,8 @@ impl TryFrom<u16> for HardwareType {
 pub fn parse(input: &[u8]) -> IResult<&[u8], HardwareType> {
     let (input, number) = be_u16().parse(input)?;
 
-    let hardware_type =
-        HardwareType::try_from(number).map_err(|_| utils::nom_error_verify(input))?;
+    let hardware_type = HardwareType::try_from(number)
+        .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
 
     Ok((input, hardware_type))
 }

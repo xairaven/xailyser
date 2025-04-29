@@ -1,5 +1,5 @@
+use crate::parser::ParserError;
 use crate::protocols::ethernet::EthernetError;
-use crate::utils;
 use nom::IResult;
 use nom::bytes::complete::take;
 use serde::{Deserialize, Serialize};
@@ -55,7 +55,7 @@ pub fn parse(input: &[u8]) -> IResult<&[u8], MacAddress> {
     let (input, mac_bytes) = take(LENGTH_BYTES)(input)?;
     let mac = match MacAddress::try_from(mac_bytes) {
         Ok(mac) => mac,
-        Err(_) => return Err(utils::nom_error_verify(input)),
+        Err(_) => return Err(ParserError::ErrorVerify.to_nom(input)),
     };
 
     Ok((input, mac))
