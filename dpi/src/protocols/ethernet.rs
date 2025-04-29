@@ -38,6 +38,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     match ethernet.ether_type {
         EtherType::Arp => Some(ProtocolId::Arp),
         EtherType::Ipv4 => Some(ProtocolId::IPv4),
+        EtherType::Ipv6 => Some(ProtocolId::IPv6),
         _ => None,
     }
 }

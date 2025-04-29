@@ -51,8 +51,8 @@ mod tests {
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
+    use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv4::IPv4;
-    use crate::protocols::ipv4::protocol::IpProtocolField;
     use crate::wrapper::FrameHeader;
     use std::net::Ipv4Addr;
 
@@ -109,7 +109,7 @@ mod tests {
             flags: 0,
             fragment_offset: 0,
             time_to_live: 1,
-            protocol_inner: IpProtocolField::UDP,
+            protocol_inner: IpNextLevelProtocol::UDP,
             checksum: 0xaa56,
             address_source: Ipv4Addr::new(192, 168, 3, 131),
             address_destination: Ipv4Addr::new(224, 0, 0, 252),
@@ -185,7 +185,7 @@ mod tests {
             flags: 0,
             fragment_offset: 0,
             time_to_live: 113,
-            protocol_inner: IpProtocolField::UDP,
+            protocol_inner: IpNextLevelProtocol::UDP,
             checksum: 0xf755,
             address_source: Ipv4Addr::new(88, 198, 13, 111),
             address_destination: Ipv4Addr::new(172, 16, 255, 1),

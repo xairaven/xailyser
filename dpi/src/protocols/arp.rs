@@ -4,7 +4,7 @@ use crate::protocols::arp::hardware_type::HardwareType;
 use crate::protocols::arp::operation::Operation;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
-use crate::protocols::{ProtocolData, ethernet, ipv4};
+use crate::protocols::{ProtocolData, ethernet, ip};
 use nom::Parser;
 use nom::bytes::take;
 use nom::{Finish, IResult};
@@ -61,7 +61,7 @@ pub fn parse<'a>(
     // PLEN
     let (rest, protocol_address_length) = take(PROTOCOL_ADDRESS_LENGTH).parse(rest)?;
     let protocol_address_length = protocol_address_length[0];
-    if protocol_address_length != ipv4::address::LENGTH_BYTES as u8 {
+    if protocol_address_length != ip::address::V4_LENGTH_BYTES as u8 {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
@@ -72,13 +72,13 @@ pub fn parse<'a>(
     let (rest, sender_hardware_address) = ethernet::mac::parse(rest)?;
 
     // SENDER_PROTOCOL_ADDRESS
-    let (rest, sender_protocol_address) = ipv4::address::parse(rest)?;
+    let (rest, sender_protocol_address) = ip::address::v4_parse(rest)?;
 
     // TARGET_HARDWARE_ADDRESS
     let (rest, target_hardware_address) = ethernet::mac::parse(rest)?;
 
     // TARGET_PROTOCOL_ADDRESS
-    let (rest, target_protocol_address) = ipv4::address::parse(rest)?;
+    let (rest, target_protocol_address) = ip::address::v4_parse(rest)?;
 
     if !rest.is_empty() {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
@@ -184,7 +184,7 @@ mod tests {
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
             hardware_address_length: ethernet::mac::LENGTH_BYTES as u8,
-            protocol_address_length: ipv4::address::LENGTH_BYTES as u8,
+            protocol_address_length: ip::address::V4_LENGTH_BYTES as u8,
             operation: Operation::Reply,
             sender_mac: MacAddress::try_from("00:1E:68:51:4F:A9").unwrap(),
             sender_ip: Ipv4Addr::new(172, 16, 255, 1),
@@ -242,7 +242,7 @@ mod tests {
             hardware_type: HardwareType::Ethernet,
             protocol_type: EtherType::Ipv4,
             hardware_address_length: ethernet::mac::LENGTH_BYTES as u8,
-            protocol_address_length: ipv4::address::LENGTH_BYTES as u8,
+            protocol_address_length: ip::address::V4_LENGTH_BYTES as u8,
             operation: Operation::Request,
             sender_mac: MacAddress::try_from("00:1A:8C:10:AD:30").unwrap(),
             sender_ip: Ipv4Addr::new(172, 16, 0, 1),

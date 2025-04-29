@@ -1,7 +1,7 @@
 use crate::frame::FrameMetadata;
 use crate::parser::ParserError;
-use crate::protocols::ipv4::protocol::IpProtocolField;
-use crate::protocols::{ProtocolData, ProtocolId};
+use crate::protocols::ip::protocol::IpNextLevelProtocol;
+use crate::protocols::{ProtocolData, ProtocolId, ip};
 use nom::Parser;
 use nom::number::{be_u8, be_u16};
 use nom::{IResult, bits, sequence};
@@ -60,15 +60,15 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
 
     // Protocol field
     let (rest, inner_protocol) = be_u8().parse(rest)?;
-    let protocol_inner = IpProtocolField::from(inner_protocol);
+    let protocol_inner = IpNextLevelProtocol::from(inner_protocol);
 
     // Checksum
     let (rest, checksum) = be_u16().parse(rest)?;
 
     // Source Address
-    let (rest, address_source) = address::parse(rest)?;
+    let (rest, address_source) = ip::address::v4_parse(rest)?;
     // Destination Address
-    let (rest, address_destination) = address::parse(rest)?;
+    let (rest, address_destination) = ip::address::v4_parse(rest)?;
 
     if rest.len() as isize != ihl as isize - PACKET_NECESSARY_LENGTH_BYTES as isize {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
@@ -101,9 +101,9 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
         _ => return None,
     };
     match ipv4.protocol_inner {
-        IpProtocolField::ICMP => Some(ProtocolId::ICMPv4),
-        IpProtocolField::TCP => Some(ProtocolId::TCP),
-        IpProtocolField::UDP => Some(ProtocolId::UDP),
+        IpNextLevelProtocol::ICMP => Some(ProtocolId::ICMPv4),
+        IpNextLevelProtocol::TCP => Some(ProtocolId::TCP),
+        IpNextLevelProtocol::UDP => Some(ProtocolId::UDP),
         _ => None,
     }
 }
@@ -119,14 +119,11 @@ pub struct IPv4 {
     pub flags: u8,
     pub fragment_offset: u16,
     pub time_to_live: u8,
-    pub protocol_inner: IpProtocolField,
+    pub protocol_inner: IpNextLevelProtocol,
     pub checksum: u16,
     pub address_source: Ipv4Addr,
     pub address_destination: Ipv4Addr,
 }
-
-pub mod address;
-pub mod protocol;
 
 #[cfg(test)]
 mod tests {
@@ -191,7 +188,7 @@ mod tests {
             flags: 0,
             fragment_offset: 0,
             time_to_live: 52,
-            protocol_inner: IpProtocolField::TCP,
+            protocol_inner: IpNextLevelProtocol::TCP,
             checksum: 0x7955,
             address_source: Ipv4Addr::new(72, 14, 213, 147),
             address_destination: Ipv4Addr::new(192, 168, 3, 131),
@@ -253,7 +250,7 @@ mod tests {
             flags: 0,
             fragment_offset: 0,
             time_to_live: 52,
-            protocol_inner: IpProtocolField::TCP,
+            protocol_inner: IpNextLevelProtocol::TCP,
             checksum: 0x7917,
             address_source: Ipv4Addr::new(72, 14, 213, 147),
             address_destination: Ipv4Addr::new(192, 168, 3, 131),

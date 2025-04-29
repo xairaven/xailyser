@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 /// IANA: https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub enum IpProtocolField {
+pub enum IpNextLevelProtocol {
     HOPOPT,
     ICMP,
     IGMP,
@@ -168,7 +168,7 @@ pub enum IpProtocolField {
     Reserved,
 }
 
-impl From<u8> for IpProtocolField {
+impl From<u8> for IpNextLevelProtocol {
     fn from(value: u8) -> Self {
         match value {
             0 => Self::HOPOPT,
