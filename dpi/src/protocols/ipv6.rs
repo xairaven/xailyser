@@ -60,7 +60,7 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
 
 pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     // Checking IP inner protocol type
-    let ipv6 = match metadata.layers.get(1) {
+    let ipv6 = match metadata.layers.last() {
         Some(ProtocolData::IPv6(value)) => value,
         _ => return None,
     };
