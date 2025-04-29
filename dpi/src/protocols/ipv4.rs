@@ -93,6 +93,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
         _ => return None,
     };
     match ipv4.protocol_inner {
+        IpProtocolField::ICMP => Some(ProtocolId::ICMPv4),
         IpProtocolField::TCP => Some(ProtocolId::TCP),
         IpProtocolField::UDP => Some(ProtocolId::UDP),
         _ => None,

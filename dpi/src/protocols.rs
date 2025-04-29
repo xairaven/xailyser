@@ -18,8 +18,7 @@ pub enum ProtocolId {
 
     IPv4,
     // IPv6,
-
-    // ICMP,
+    ICMPv4,
     // ICMPv6,
     TCP,
     UDP,
@@ -43,53 +42,55 @@ impl ProtocolId {
 
     pub fn parse(&self) -> ParseFn {
         match self {
-            ProtocolId::Ethernet => ethernet::parse,
-            ProtocolId::Arp => arp::parse,
-            ProtocolId::IPv4 => ipv4::parse,
-            ProtocolId::TCP => tcp::parse,
-            ProtocolId::UDP => udp::parse,
+            Self::Ethernet => ethernet::parse,
+            Self::Arp => arp::parse,
+            Self::ICMPv4 => icmpv4::parse,
+            Self::IPv4 => ipv4::parse,
+            Self::TCP => tcp::parse,
+            Self::UDP => udp::parse,
         }
     }
 
     pub fn best_children(&self, metadata: &FrameMetadata) -> Option<Self> {
         match self {
-            ProtocolId::Ethernet => ethernet::best_children(metadata),
-            ProtocolId::Arp => None,
-            ProtocolId::IPv4 => ipv4::best_children(metadata),
-            ProtocolId::TCP => tcp::best_children(metadata),
-            ProtocolId::UDP => udp::best_children(metadata),
+            Self::Ethernet => ethernet::best_children(metadata),
+            Self::Arp => None,
+            Self::ICMPv4 => None,
+            Self::IPv4 => ipv4::best_children(metadata),
+            Self::TCP => tcp::best_children(metadata),
+            Self::UDP => udp::best_children(metadata),
         }
     }
 
     pub fn children(&self) -> Option<Vec<Self>> {
         match self {
-            ProtocolId::Ethernet => Some(vec![
+            Self::Ethernet => Some(vec![
                 Self::Arp,
                 Self::IPv4,
                 // Self::ICMP,
                 // Self::ICMPv6,
                 // Self::IPv6,
             ]),
-            ProtocolId::Arp => None,
+            Self::Arp => None,
 
             // TODO: IPv4. Add ICMP
-            ProtocolId::IPv4 => Some(vec![Self::TCP, Self::UDP]),
-            // ProtocolId::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
-            // ProtocolId::ICMP => None,
-            // ProtocolId::ICMPv6 => None,
+            Self::IPv4 => Some(vec![Self::TCP, Self::UDP]),
+            // Self::IPv6 => Some(vec![Self::ICMPv6, Self::TCP, Self::UDP]),
+            Self::ICMPv4 => None,
+            // Self::ICMPv6 => None,
 
             // TODO: TCP. Add HTTP, HTTPS, DNS
             // TODO: UDP. DNS
-            ProtocolId::TCP => None,
-            ProtocolId::UDP => None,
-            // ProtocolId::DNS => None,
-            // ProtocolId::FTP => None,
-            // ProtocolId::HTTP => None,
-            // ProtocolId::HTTPS => None,
-            // ProtocolId::IMAP => None,
-            // ProtocolId::POP3 => None,
-            // ProtocolId::SMTP => None,
-            // ProtocolId::SSH => None,
+            Self::TCP => None,
+            Self::UDP => None,
+            // Self::DNS => None,
+            // Self::FTP => None,
+            // Self::HTTP => None,
+            // Self::HTTPS => None,
+            // Self::IMAP => None,
+            // Self::POP3 => None,
+            // Self::SMTP => None,
+            // Self::SSH => None,
         }
     }
 }
@@ -100,6 +101,7 @@ pub enum ProtocolData {
 
     Arp(arp::Arp),
 
+    ICMPv4(icmpv4::ICMPv4),
     IPv4(ipv4::IPv4),
 
     TCP(tcp::TCP),
@@ -108,6 +110,7 @@ pub enum ProtocolData {
 
 pub mod arp;
 pub mod ethernet;
+pub mod icmpv4;
 pub mod ipv4;
 pub mod tcp;
 pub mod udp;
