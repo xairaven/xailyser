@@ -2,15 +2,16 @@ use crate::frame::FrameMetadata;
 use crate::protocols::ipv4::protocol::IpProtocolField;
 use crate::protocols::{ProtocolData, ProtocolId};
 use crate::utils;
-use nom::IResult;
 use nom::Parser;
 use nom::number::{be_u8, be_u16};
+use nom::{IResult, bits, sequence};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 
 // IPv4 Protocol
 // RFC 791: https://datatracker.ietf.org/doc/html/rfc791
 pub const PROTOCOL_VERSION_LENGTH_BITS: usize = 4;
+pub const IHL_LENGTH_BITS: usize = 4;
 pub const DSCP_LENGTH_BITS: usize = 6;
 pub const ECN_LENGTH_BITS: usize = 2;
 pub const FLAGS_LENGTH_BITS: usize = 3;
@@ -18,8 +19,11 @@ pub const FRAGMENT_OFFSET_LENGTH_BITS: usize = 13;
 pub const PACKET_NECESSARY_LENGTH_BYTES: usize = 20;
 pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
     // Version (4 bits), Internet Header Length (4 bits)
-    let (rest, (version, ihl)) =
-        utils::pair_from_byte(bytes, PROTOCOL_VERSION_LENGTH_BITS)?;
+    let (rest, (version, ihl)): (&[u8], (u8, u8)) =
+        bits::bits::<_, _, nom::error::Error<_>, _, _>(sequence::pair(
+            bits::complete::take(PROTOCOL_VERSION_LENGTH_BITS),
+            bits::complete::take(IHL_LENGTH_BITS),
+        ))(bytes)?;
     if version != 4 {
         return Err(utils::nom_error_verify(bytes));
     }
@@ -27,7 +31,11 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     let ihl = ihl * 4;
 
     // Differentiated Services Code Point (6 bits), Explicit Congestion Notification (2 bits)
-    let (rest, (dscp, ecn)) = utils::pair_from_byte(rest, DSCP_LENGTH_BITS)?;
+    let (rest, (dscp, ecn)): (&[u8], (u8, u8)) =
+        bits::bits::<_, _, nom::error::Error<_>, _, _>(sequence::pair(
+            bits::complete::take(DSCP_LENGTH_BITS),
+            bits::complete::take(ECN_LENGTH_BITS),
+        ))(rest)?;
 
     // Total Length
     let (rest, total_len) = be_u16().parse(rest)?;
@@ -42,9 +50,9 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
 
     // Flags, Fragment offset - 16 bits.
     let (rest, (flags, fragment_offset)): (&[u8], (u8, u16)) =
-        nom::bits::bits::<_, _, nom::error::Error<_>, _, _>(nom::sequence::pair(
-            nom::bits::complete::take(FLAGS_LENGTH_BITS),
-            nom::bits::complete::take(FRAGMENT_OFFSET_LENGTH_BITS),
+        bits::bits::<_, _, nom::error::Error<_>, _, _>(sequence::pair(
+            bits::complete::take(FLAGS_LENGTH_BITS),
+            bits::complete::take(FRAGMENT_OFFSET_LENGTH_BITS),
         ))(rest)?;
 
     // Time To Live
