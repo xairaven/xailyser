@@ -21,10 +21,12 @@ pub const RECURSION_DESIRED_LENGTH_BITS: usize = 1;
 pub const RECURSION_AVAILABLE_LENGTH_BITS: usize = 1;
 pub const RESERVED_LENGTH_BITS: usize = 3;
 pub const RESPONSE_CODE_LENGTH_BITS: usize = 4;
-pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse<'a>(
+    dns_packet: &'a [u8], _: &FrameMetadata,
+) -> IResult<&'a [u8], ProtocolData> {
     // HEADER
     // Identifier - 16 bits.
-    let (rest, id) = be_u16().parse(bytes)?;
+    let (rest, id) = be_u16().parse(dns_packet)?;
 
     // Message Type (QR), Operation Code (OPCODE)
     // Authoritative Answer (AA), Truncation (TC), Recursion Desired (RD)
@@ -41,22 +43,23 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
             bits::complete::take(RESERVED_LENGTH_BITS),
             bits::complete::take(RESPONSE_CODE_LENGTH_BITS),
         ))(rest)?;
-    let message_type =
-        MessageType::try_from(qr).map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
+    let message_type = MessageType::try_from(qr)
+        .map_err(|_| ParserError::ErrorVerify.to_nom(dns_packet))?;
     let operation_code = OperationCode::try_from(opcode)
-        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
+        .map_err(|_| ParserError::ErrorVerify.to_nom(dns_packet))?;
     let authoritative_answer =
-        ProtocolParser::cast_to_bool(aa).map_err(|err| err.to_nom(bytes))?;
-    let truncation = ProtocolParser::cast_to_bool(tc).map_err(|err| err.to_nom(bytes))?;
+        ProtocolParser::cast_to_bool(aa).map_err(|err| err.to_nom(dns_packet))?;
+    let truncation =
+        ProtocolParser::cast_to_bool(tc).map_err(|err| err.to_nom(dns_packet))?;
     let recursion_desired =
-        ProtocolParser::cast_to_bool(rd).map_err(|err| err.to_nom(bytes))?;
+        ProtocolParser::cast_to_bool(rd).map_err(|err| err.to_nom(dns_packet))?;
     let recursion_available =
-        ProtocolParser::cast_to_bool(ra).map_err(|err| err.to_nom(bytes))?;
+        ProtocolParser::cast_to_bool(ra).map_err(|err| err.to_nom(dns_packet))?;
     if z != 0 {
-        return Err(ParserError::ErrorVerify.to_nom(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(dns_packet));
     }
     let response_code = ResponseCode::try_from(rcode)
-        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
+        .map_err(|_| ParserError::ErrorVerify.to_nom(dns_packet))?;
 
     // QDCOUNT - 16 bits
     let (rest, question_entries) = be_u16().parse(rest)?;
@@ -91,7 +94,7 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
         true => {
             let mut vec: Vec<QuestionEntry> = vec![];
             for _ in 0..question_entries {
-                let (section_rest, question) = parse_question_section(rest)?;
+                let (section_rest, question) = parse_question_section(rest, dns_packet)?;
                 vec.push(question);
                 rest = section_rest;
             }
@@ -101,13 +104,15 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     };
 
     // ANSWER SECTION
-    let (rest, answer_section) = parse_record_section(rest, answer_records)?;
+    let (rest, answer_section) = parse_record_section(rest, answer_records, dns_packet)?;
 
     // AUTHORITY SECTION
-    let (rest, authority_section) = parse_record_section(rest, authority_records)?;
+    let (rest, authority_section) =
+        parse_record_section(rest, authority_records, dns_packet)?;
 
     // ADDITIONAL SECTION
-    let (rest, additional_section) = parse_record_section(rest, additional_records)?;
+    let (rest, additional_section) =
+        parse_record_section(rest, additional_records, dns_packet)?;
 
     let protocol = DNS {
         header,
@@ -118,15 +123,17 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     };
 
     if !rest.is_empty() {
-        return Err(ParserError::ErrorVerify.to_nom(bytes));
+        return Err(ParserError::ErrorVerify.to_nom(dns_packet));
     }
 
     Finish::finish(Ok((rest, ProtocolData::DNS(protocol))))
 }
 
-fn parse_question_section(bytes: &[u8]) -> IResult<&[u8], QuestionEntry> {
+fn parse_question_section<'a>(
+    bytes: &'a [u8], whole: &'a [u8],
+) -> IResult<&'a [u8], QuestionEntry> {
     // QNAME
-    let (rest, qname) = parse_name(bytes)?;
+    let (rest, qname) = parse_name(bytes, whole)?;
 
     // QTYPE
     let (rest, qtype) = be_u16().parse(rest)?;
@@ -147,33 +154,56 @@ fn parse_question_section(bytes: &[u8]) -> IResult<&[u8], QuestionEntry> {
     Ok((rest, section))
 }
 
-// TODO: Make parsing by pointers
-fn parse_name(bytes: &[u8]) -> IResult<&[u8], String> {
+fn parse_name<'a>(bytes: &'a [u8], whole: &'a [u8]) -> IResult<&'a [u8], String> {
     let mut labels: Vec<String> = Vec::new();
-    let (mut rest, mut length_octet) = be_u8().parse(bytes)?;
-    while length_octet != 0 {
-        let (inner_rest, word) = take(length_octet).parse(rest)?;
-        let word = String::from_utf8_lossy(word);
-        labels.push(word.to_string());
-        let (inner_rest, inner_octet) = be_u8().parse(inner_rest)?;
 
-        length_octet = inner_octet;
-        rest = inner_rest;
+    let mut main_rest = bytes;
+    loop {
+        let (rest, length_octet) = be_u8().parse(main_rest)?;
+        if length_octet == 0 {
+            main_rest = rest;
+            break;
+        }
+
+        let is_simple_parsing = (length_octet & 0b1100_0000) != 0b1100_0000;
+
+        match is_simple_parsing {
+            true => {
+                let (rest, word) = take(length_octet).parse(rest)?;
+                let word = String::from_utf8(word.to_vec())
+                    .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
+                labels.push(word);
+                main_rest = rest;
+            },
+
+            false => {
+                let (rest, next_byte) = be_u8().parse(rest)?;
+
+                let binary_original_octet = length_octet;
+                let low6 = (binary_original_octet & 0b0011_1111) as u16; // оставшиеся 6 бит первого байта :contentReference[oaicite:2]{index=2}
+                let combined = (low6 << 8) | (next_byte as u16);
+                let combined = usize::from(combined);
+                let (_, str) = parse_name(&whole[combined..], whole)?;
+                labels.push(str.to_string());
+                main_rest = rest;
+                break;
+            },
+        }
     }
     let name = labels.join(".");
 
-    Ok((rest, name))
+    Ok((main_rest, name))
 }
 
-fn parse_record_section(
-    bytes: &[u8], records: u16,
-) -> IResult<&[u8], Option<Vec<ResourceRecord>>> {
+fn parse_record_section<'a>(
+    bytes: &'a [u8], records: u16, whole: &'a [u8],
+) -> IResult<&'a [u8], Option<Vec<ResourceRecord>>> {
     let mut rest = bytes;
     let result = match records > 0 {
         true => {
             let mut vec: Vec<ResourceRecord> = vec![];
             for _ in 0..records {
-                let (section_rest, question) = parse_resource_record(rest)?;
+                let (section_rest, question) = parse_resource_record(rest, whole)?;
                 vec.push(question);
                 rest = section_rest;
             }
@@ -185,9 +215,11 @@ fn parse_record_section(
     Ok((rest, result))
 }
 
-fn parse_resource_record(bytes: &[u8]) -> IResult<&[u8], ResourceRecord> {
+fn parse_resource_record<'a>(
+    bytes: &'a [u8], whole: &'a [u8],
+) -> IResult<&'a [u8], ResourceRecord> {
     // NAME
-    let (rest, name) = parse_name(bytes)?;
+    let (rest, name) = parse_name(bytes, whole)?;
 
     // TYPE
     let (rest, record_type) = be_u16().parse(rest)?;
@@ -670,6 +702,127 @@ mod tests {
             }]),
             answer_section: None,
             authority_section: None,
+            additional_section: None,
+        };
+
+        assert_eq!(actual_dns, expected_dns);
+    }
+
+    #[test]
+    fn test_dns_query_authoritative() {
+        let hex_actual = "04 E8 B9 18 55 10 84 D8 1B 6E C1 4A 08 00 45 00 00 79 56 FF 00 00 3D 11 A4 BC C0 A8 00 01 C0 A8 00 67 00 35 C3 8C 00 65 89 02 BF 9D 81 80 00 01 00 00 00 01 00 00 03 77 77 77 0A 67 6F 6F 67 6C 65 61 70 69 73 03 63 6F 6D 00 00 41 00 01 C0 10 00 06 00 01 00 00 00 37 00 2D 03 6E 73 31 06 67 6F 6F 67 6C 65 C0 1B 09 64 6E 73 2D 61 64 6D 69 6E C0 34 2C C2 48 8D 00 00 03 84 00 00 03 84 00 00 07 08 00 00 00 3C".replace(" ", "");
+        let frame = hex::decode(hex_actual).unwrap();
+        let header = FrameHeader {
+            tv_sec: 0,
+            tv_usec: 0,
+            caplen: 135,
+            len: 0,
+        };
+
+        let parser = ProtocolParser::new(&pcap::Linktype(1), false);
+        let packet = pcap::Packet {
+            header: &pcap::PacketHeader::from(&header),
+            data: &frame,
+        };
+        let result = parser.process(packet);
+        let metadata = match result {
+            Some(value) => match value {
+                FrameType::Metadata(value) => value,
+                FrameType::Raw(_) => panic!(),
+            },
+            None => panic!(),
+        };
+
+        let actual_ethernet = match metadata.layers[0].clone() {
+            ProtocolData::Ethernet(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_ethernet = Ethernet {
+            destination_mac: MacAddress::try_from("04:E8:B9:18:55:10").unwrap(),
+            source_mac: MacAddress::try_from("84:D8:1B:6E:C1:4A").unwrap(),
+            ether_type: EtherType::Ipv4,
+        };
+
+        assert_eq!(actual_ethernet, expected_ethernet);
+
+        let actual_ipv4 = match metadata.layers[1].clone() {
+            ProtocolData::IPv4(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_ipv4 = IPv4 {
+            version: 4,
+            internet_header_length: 20,
+            differentiated_services_code_point: 0,
+            explicit_congestion_notification: 0,
+            total_length: 121,
+            identification: 0x56ff,
+            flags: 0,
+            fragment_offset: 0,
+            time_to_live: 61,
+            protocol_inner: IpNextLevelProtocol::UDP,
+            checksum: 0xa4bc,
+            address_source: Ipv4Addr::from_str("192.168.0.1").unwrap(),
+            address_destination: Ipv4Addr::from_str("192.168.0.103").unwrap(),
+        };
+
+        assert_eq!(actual_ipv4, expected_ipv4);
+
+        let actual_udp = match metadata.layers[2].clone() {
+            ProtocolData::UDP(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_udp = UDP {
+            port_source: 53,
+            port_destination: 50060,
+            length: 101,
+            checksum: 0x8902,
+        };
+
+        assert_eq!(actual_udp, expected_udp);
+
+        let actual_dns = match metadata.layers[3].clone() {
+            ProtocolData::DNS(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_dns = DNS {
+            header: Header {
+                id: 0xbf9d,
+                message_type: MessageType::Response,
+                operation_code: OperationCode::StandardQuery,
+                authoritative_answer: false,
+                truncation: false,
+                recursion_desired: true,
+                recursion_available: true,
+                response_code: ResponseCode::NoErrorCondition,
+                question_entries: 1,
+                answer_records: 0,
+                authority_records: 1,
+                additional_records: 0,
+            },
+            question_section: Some(vec![QuestionEntry {
+                name: "www.googleapis.com".to_string(),
+                entry_type: DnsType::HTTPS,
+                class: Class::IN,
+            }]),
+            answer_section: None,
+            authority_section: Some(vec![ResourceRecord {
+                name: "googleapis.com".to_string(),
+                record_type: DnsType::SOA,
+                class: Class::IN,
+                time_to_live: 55,
+                data_length: 45,
+                data: DnsTypeData::Unknown(vec![
+                    0x03, 0x6E, 0x73, 0x31, 0x06, 0x67, 0x6F, 0x6F, 0x67, 0x6C, 0x65,
+                    0xC0, 0x1B, 0x09, 0x64, 0x6E, 0x73, 0x2D, 0x61, 0x64, 0x6D, 0x69,
+                    0x6E, 0xC0, 0x34, 0x2C, 0xC2, 0x48, 0x8D, 0x00, 0x00, 0x03, 0x84,
+                    0x00, 0x00, 0x03, 0x84, 0x00, 0x00, 0x07, 0x08, 0x00, 0x00, 0x00,
+                    0x3C,
+                ]),
+            }]),
             additional_section: None,
         };
 
