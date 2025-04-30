@@ -130,8 +130,8 @@ fn parse_question_section(bytes: &[u8]) -> IResult<&[u8], QuestionEntry> {
 
     // QTYPE
     let (rest, qtype) = be_u16().parse(rest)?;
-    let qtype = QuestionType::try_from(qtype)
-        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
+    let qtype =
+        DnsType::try_from(qtype).map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // QCLASS
     let (rest, qclass) = be_u16().parse(rest)?;
@@ -251,7 +251,7 @@ pub struct Header {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct QuestionEntry {
     name: String,
-    entry_type: QuestionType,
+    entry_type: DnsType,
     class: Class,
 }
 
@@ -335,22 +335,68 @@ impl TryFrom<u8> for ResponseCode {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum DnsType {
-    A = 1,      // A host address
-    NS = 2,     // An authoritative name server
-    MD = 3,     // A mail destination (Obsolete - use MX)
-    MF = 4,     // A mail forwarder (Obsolete - use MX)
-    CNAME = 5,  // The canonical name for an alias
-    SOA = 6,    // Marks the start of a zone of authority
-    MB = 7,     // A mailbox domain name (EXPERIMENTAL)
-    MG = 8,     // A mail group member (EXPERIMENTAL)
-    MR = 9,     // A mail rename domain name (EXPERIMENTAL)
-    NULL = 10,  // A null RR (EXPERIMENTAL)
-    WKS = 11,   // A well known service description
-    PTR = 12,   // A domain name pointer
-    HINFO = 13, // Host information
-    MINFO = 14, // Mailbox or mail list information
-    MX = 15,    // Mail exchange
-    TXT = 16,   // Text strings
+    A = 1,           // A host address
+    NS = 2,          // An authoritative name server
+    MD = 3,          // A mail destination (Obsolete - use MX)
+    MF = 4,          // A mail forwarder (Obsolete - use MX)
+    CNAME = 5,       // The canonical name for an alias
+    SOA = 6,         // Marks the start of a zone of authority
+    MB = 7,          // A mailbox domain name (EXPERIMENTAL)
+    MG = 8,          // A mail group member (EXPERIMENTAL)
+    MR = 9,          // A mail rename domain name (EXPERIMENTAL)
+    NULL = 10,       // A null RR (EXPERIMENTAL)
+    WKS = 11,        // A well known service description
+    PTR = 12,        // A domain name pointer
+    HINFO = 13,      // Host information
+    MINFO = 14,      // Mailbox or mail list information
+    MX = 15,         // Mail exchange
+    TXT = 16,        // Text strings
+    RP = 17,         // Responsible Person
+    AFSDB = 18,      // AFS database record
+    SIG = 24,        // Signature
+    KEY = 25,        // Key record
+    AAAA = 28,       // IPv6 address record
+    LOC = 29,        // Location record
+    SRV = 33,        // Service locator
+    NAPTR = 35,      // Naming Authority Pointer
+    KX = 36,         // 	Key Exchanger record
+    CERT = 37,       // Certificate record
+    DNAME = 39,      // 	Delegation name record
+    APL = 42,        // Address Prefix List
+    DS = 43,         // Delegation signer
+    SSHFP = 44,      // SSH Public Key Fingerprint
+    IPSECKEY = 45,   // IPsec Key
+    RPSIG = 46,      // DNSSEC signature
+    NSEC = 47,       // Next Secure record
+    DNSKEY = 48,     // DNS Key record
+    DHCID = 49,      // DHCP identifier
+    NSEC3 = 50,      // Next Secure record version 3
+    NSEC3PARAM = 51, // NSEC3 parameters
+    TLSA = 52,       // TLSA certificate association
+    SMIMEA = 53,     // S/MIME cert association
+    HIP = 55,        // Host Identity Protocol
+    CDS = 59,        // Child DS
+    CDNSKEY = 60,    // ...
+    OPENPGPKEY = 61, // OpenPGP public key record
+    CSYNC = 62,      // Child-to-Parent Synchronization
+    ZONEMD = 63,     // Message Digests for DNS Zones
+    SVCB = 64,       // Service Binding
+    HTTPS = 65,      // HTTPS Binding
+
+    EUI48 = 108, // MAC address (EUI-48)
+    EUI64 = 109, // MAC address (EUI-64)
+
+    TKEY = 249,  // Transaction Key record
+    TSIG = 250,  // Transaction Signature
+    AXFR = 252,  // A request for a transfer of an entire zone
+    MAILB = 253, // A request for mailbox-related records (MB, MG or MR)
+    MAILA = 254, // A request for mail agent RRs (Obsolete - see MX)
+    ALL = 255,   // A request for all records
+    URI = 256,   // Uniform Resource Identifier
+    CAA = 257,   // Certification Authority Authorization
+
+    TA = 32768,  // 	DNSSEC Trust Authorities
+    DLV = 32769, // DNSSEC Lookaside Validation record
 }
 
 impl TryFrom<u16> for DnsType {
@@ -374,6 +420,51 @@ impl TryFrom<u16> for DnsType {
             14 => Ok(Self::MINFO),
             15 => Ok(Self::MX),
             16 => Ok(Self::TXT),
+
+            17 => Ok(Self::RP),
+            18 => Ok(Self::AFSDB),
+            24 => Ok(Self::SIG),
+            25 => Ok(Self::KEY),
+            28 => Ok(Self::AAAA),
+            29 => Ok(Self::LOC),
+            33 => Ok(Self::SRV),
+            35 => Ok(Self::NAPTR),
+            36 => Ok(Self::KX),
+            37 => Ok(Self::CERT),
+            39 => Ok(Self::DNAME),
+            42 => Ok(Self::APL),
+            43 => Ok(Self::DS),
+            44 => Ok(Self::SSHFP),
+            45 => Ok(Self::IPSECKEY),
+            46 => Ok(Self::RPSIG),
+            47 => Ok(Self::NSEC),
+            48 => Ok(Self::DNSKEY),
+            49 => Ok(Self::DHCID),
+            50 => Ok(Self::NSEC3),
+            51 => Ok(Self::NSEC3PARAM),
+            52 => Ok(Self::TLSA),
+            53 => Ok(Self::SMIMEA),
+            55 => Ok(Self::HIP),
+            59 => Ok(Self::CDS),
+            60 => Ok(Self::CDNSKEY),
+            61 => Ok(Self::OPENPGPKEY),
+            62 => Ok(Self::CSYNC),
+            63 => Ok(Self::ZONEMD),
+            64 => Ok(Self::SVCB),
+            65 => Ok(Self::HTTPS),
+            108 => Ok(Self::EUI48),
+            109 => Ok(Self::EUI64),
+            249 => Ok(Self::TKEY),
+            250 => Ok(Self::TSIG),
+            252 => Ok(Self::AXFR),
+            253 => Ok(Self::MAILB),
+            254 => Ok(Self::MAILA),
+            255 => Ok(Self::ALL),
+            256 => Ok(Self::URI),
+            257 => Ok(Self::CAA),
+            32768 => Ok(Self::TA),
+            32769 => Ok(Self::DLV),
+
             _ => Err(Self::Error::DnsTypeUnknown),
         }
     }
@@ -384,6 +475,7 @@ pub enum DnsTypeData {
     AIPv4(Ipv4Addr),
     AIPv6(Ipv6Addr),
     CNAME(String),
+    Unknown(Vec<u8>),
 }
 
 impl DnsTypeData {
@@ -410,63 +502,7 @@ impl DnsTypeData {
 
                 Ok(Self::CNAME(str))
             },
-            _ => Err(DnsError::DnsTypeUnknown),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub enum QuestionType {
-    A = 1,      // A host address
-    NS = 2,     // An authoritative name server
-    MD = 3,     // A mail destination (Obsolete - use MX)
-    MF = 4,     // A mail forwarder (Obsolete - use MX)
-    CNAME = 5,  // The canonical name for an alias
-    SOA = 6,    // Marks the start of a zone of authority
-    MB = 7,     // A mailbox domain name (EXPERIMENTAL)
-    MG = 8,     // A mail group member (EXPERIMENTAL)
-    MR = 9,     // A mail rename domain name (EXPERIMENTAL)
-    NULL = 10,  // A null RR (EXPERIMENTAL)
-    WKS = 11,   // A well known service description
-    PTR = 12,   // A domain name pointer
-    HINFO = 13, // Host information
-    MINFO = 14, // Mailbox or mail list information
-    MX = 15,    // Mail exchange
-    TXT = 16,   // Text strings
-
-    AXFR = 252,  // A request for a transfer of an entire zone
-    MAILB = 253, // A request for mailbox-related records (MB, MG or MR)
-    MAILA = 254, // A request for mail agent RRs (Obsolete - see MX)
-    ALL = 255,   // A request for all records
-}
-
-impl TryFrom<u16> for QuestionType {
-    type Error = DnsError;
-
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(Self::A),
-            2 => Ok(Self::NS),
-            3 => Ok(Self::MD),
-            4 => Ok(Self::MF),
-            5 => Ok(Self::CNAME),
-            6 => Ok(Self::SOA),
-            7 => Ok(Self::MB),
-            8 => Ok(Self::MG),
-            9 => Ok(Self::MR),
-            10 => Ok(Self::NULL),
-            11 => Ok(Self::WKS),
-            12 => Ok(Self::PTR),
-            13 => Ok(Self::HINFO),
-            14 => Ok(Self::MINFO),
-            15 => Ok(Self::MX),
-            16 => Ok(Self::TXT),
-
-            252 => Ok(Self::AXFR),
-            253 => Ok(Self::MAILB),
-            254 => Ok(Self::MAILA),
-            255 => Ok(Self::ALL),
-            _ => Err(Self::Error::QTypeUnknown),
+            _ => Ok(Self::Unknown(bytes.to_vec())),
         }
     }
 }
@@ -629,7 +665,7 @@ mod tests {
             },
             question_section: Some(vec![QuestionEntry {
                 name: "download.jetbrains.com".to_string(),
-                entry_type: QuestionType::A,
+                entry_type: DnsType::A,
                 class: Class::IN,
             }]),
             answer_section: None,
