@@ -83,6 +83,14 @@ impl ProtocolParser {
             Err(_) => ProcessResult::Failed,
         }
     }
+
+    pub fn cast_to_bool(bit: u8) -> Result<bool, ParserError> {
+        match bit {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(ParserError::ErrorVerify),
+        }
+    }
 }
 pub type ParseFn =
     for<'a, 'b> fn(&'a [u8], &'b FrameMetadata) -> IResult<&'a [u8], ProtocolData>;
