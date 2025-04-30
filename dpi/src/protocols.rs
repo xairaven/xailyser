@@ -23,7 +23,8 @@ pub enum ProtocolId {
     ICMPv6,
     TCP,
     UDP,
-    // DNS,
+
+    DNS,
     // FTP,
     // HTTP,
     // HTTPS,
@@ -45,6 +46,7 @@ impl ProtocolId {
         match self {
             Self::Ethernet => ethernet::parse,
             Self::Arp => arp::parse,
+            Self::DNS => dns::parse,
             Self::ICMPv4 => icmpv4::parse,
             Self::ICMPv6 => icmpv6::parse,
             Self::IPv4 => ipv4::parse,
@@ -58,6 +60,7 @@ impl ProtocolId {
         match self {
             Self::Ethernet => ethernet::best_children(metadata),
             Self::Arp => None,
+            Self::DNS => None,
             Self::ICMPv4 => None,
             Self::ICMPv6 => None,
             Self::IPv4 => ipv4::best_children(metadata),
@@ -77,11 +80,12 @@ impl ProtocolId {
             Self::ICMPv4 => None,
             Self::ICMPv6 => None,
 
-            // TODO: TCP. Add HTTP, HTTPS, DNS
-            // TODO: UDP. DNS
-            Self::TCP => None,
-            Self::UDP => None,
-            // Self::DNS => None,
+            // TODO: TCP. Add HTTP, HTTPS
+            // TODO: UDP. ...
+            Self::TCP => Some(vec![Self::DNS]),
+            Self::UDP => Some(vec![Self::DNS]),
+
+            Self::DNS => None,
             // Self::FTP => None,
             // Self::HTTP => None,
             // Self::HTTPS => None,
@@ -99,6 +103,8 @@ pub enum ProtocolData {
 
     Arp(arp::Arp),
 
+    DNS(dns::DNS),
+
     IPv4(ipv4::IPv4),
     IPv6(ipv6::IPv6),
 
@@ -110,6 +116,7 @@ pub enum ProtocolData {
 }
 
 pub mod arp;
+pub mod dns;
 pub mod ethernet;
 pub mod icmpv4;
 pub mod icmpv6;
