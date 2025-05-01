@@ -93,6 +93,7 @@ impl ProtocolParser {
     }
 }
 pub type ParseFn = fn(&[u8]) -> IResult<&[u8], ProtocolData>;
+pub type PortFn = fn(u16, u16) -> bool;
 
 pub enum ParserError {
     ErrorVerify,

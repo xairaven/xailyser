@@ -11,7 +11,6 @@ use thiserror::Error;
 // DNS Protocol
 // RFC 1035: https://datatracker.ietf.org/doc/html/rfc1035
 
-pub const PORT_DNS: u16 = 53;
 pub const MESSAGE_TYPE_LENGTH_BITS: usize = 1;
 pub const OPERATION_CODE_LENGTH_BITS: usize = 4;
 pub const AUTHORITATIVE_ANSWER_LENGTH_BITS: usize = 1;
@@ -122,6 +121,12 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     }
 
     Finish::finish(Ok((rest, ProtocolData::DNS(protocol))))
+}
+
+pub fn is_protocol_default(port_source: u16, port_destination: u16) -> bool {
+    const PORT_DNS: u16 = 53;
+
+    port_source == PORT_DNS || port_destination == PORT_DNS
 }
 
 fn parse_question_section<'a>(

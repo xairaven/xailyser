@@ -1,5 +1,5 @@
 use crate::frame::FrameMetadata;
-use crate::protocols::{ProtocolData, ProtocolId, dns};
+use crate::protocols::{ProtocolData, ProtocolId};
 use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
@@ -35,14 +35,17 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
         Some(ProtocolData::UDP(value)) => value,
         _ => return None,
     };
-    let port_source = layer.port_source;
-    let port_destination = layer.port_destination;
 
-    if port_source == dns::PORT_DNS || port_destination == dns::PORT_DNS {
-        Some(ProtocolId::DNS)
-    } else {
-        None
+    for children in ProtocolId::UDP.children()? {
+        if let Some(port_validate) = children.check_ports() {
+            let applicable = port_validate(layer.port_source, layer.port_destination);
+            if applicable {
+                return Some(children);
+            }
+        }
     }
+
+    None
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

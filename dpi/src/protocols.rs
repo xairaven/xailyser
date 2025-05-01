@@ -1,5 +1,5 @@
 use crate::frame::FrameMetadata;
-use crate::parser::ParseFn;
+use crate::parser::{ParseFn, PortFn};
 use serde::{Deserialize, Serialize};
 
 /// Guide: How to Add a Protocol
@@ -53,6 +53,20 @@ impl ProtocolId {
             Self::IPv6 => ipv6::parse,
             Self::TCP => tcp::parse,
             Self::UDP => udp::parse,
+        }
+    }
+
+    pub fn check_ports(&self) -> Option<PortFn> {
+        match self {
+            ProtocolId::Ethernet => None,
+            ProtocolId::Arp => None,
+            ProtocolId::IPv4 => None,
+            ProtocolId::IPv6 => None,
+            ProtocolId::ICMPv4 => None,
+            ProtocolId::ICMPv6 => None,
+            ProtocolId::TCP => None,
+            ProtocolId::UDP => None,
+            ProtocolId::DNS => Some(dns::is_protocol_default),
         }
     }
 
