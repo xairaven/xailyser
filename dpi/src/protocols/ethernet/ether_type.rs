@@ -4,10 +4,8 @@ use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
-#[derive(Clone, Debug, Serialize, Deserialize, EnumIter, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum EtherType {
     Arp,
     ArpFrameRelay,
@@ -36,11 +34,16 @@ impl TryFrom<&[u8; 2]> for EtherType {
     type Error = EthernetError;
 
     fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
-        let ether_type = Self::iter()
-            .find(|ether_type| ether_type.bytes() == value)
-            .ok_or(EthernetError::EtherTypeUnknown)?;
-
-        Ok(ether_type)
+        match value {
+            [0x08, 0x06] => Ok(Self::Arp),
+            [0x08, 0x08] => Ok(Self::ArpFrameRelay),
+            [0x80, 0x35] => Ok(Self::ArpReverse),
+            [0x08, 0x00] => Ok(Self::Ipv4),
+            [0x86, 0xDD] => Ok(Self::Ipv6),
+            [0x88, 0xCC] => Ok(Self::Lldp),
+            [0x81, 0x00] => Ok(Self::Vlan),
+            _ => Err(EthernetError::EtherTypeUnknown),
+        }
     }
 }
 

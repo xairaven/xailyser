@@ -4,11 +4,9 @@ use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
 pub const LENGTH_BYTES: usize = 2;
-#[derive(Clone, Debug, Serialize, Deserialize, EnumIter, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Operation {
     Request,
     Reply,
@@ -27,9 +25,11 @@ impl TryFrom<&[u8; 2]> for Operation {
     type Error = ArpError;
 
     fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
-        Self::iter()
-            .find(|operation| operation.bytes() == value)
-            .ok_or(ArpError::OperationUnknown)
+        match value {
+            [0x00, 0x01] => Ok(Self::Request),
+            [0x00, 0x02] => Ok(Self::Reply),
+            _ => Err(ArpError::OperationUnknown),
+        }
     }
 }
 

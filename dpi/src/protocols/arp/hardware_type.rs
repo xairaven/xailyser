@@ -4,12 +4,10 @@ use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
 pub const LENGTH_BYTES: usize = 2;
 
-#[derive(Clone, Debug, Serialize, Deserialize, EnumIter, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum HardwareType {
     Ethernet,
 }
@@ -26,9 +24,10 @@ impl TryFrom<&[u8; 2]> for HardwareType {
     type Error = ArpError;
 
     fn try_from(value: &[u8; 2]) -> Result<Self, Self::Error> {
-        Self::iter()
-            .find(|hardware_type| hardware_type.bytes() == value)
-            .ok_or(ArpError::HardwareTypeUnknown)
+        match value {
+            [0x00, 0x01] => Ok(Self::Ethernet),
+            _ => Err(ArpError::HardwareTypeUnknown),
+        }
     }
 }
 
