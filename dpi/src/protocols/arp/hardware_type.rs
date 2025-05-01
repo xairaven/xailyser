@@ -1,5 +1,6 @@
 use crate::parser::ParserError;
 use crate::protocols::arp::ArpError;
+use crate::protocols::ethernet;
 use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
@@ -16,6 +17,19 @@ impl HardwareType {
     pub fn bytes(&self) -> &[u8] {
         match self {
             Self::Ethernet => &[0x00, 0x01],
+        }
+    }
+
+    pub fn validate_length(&self, length: usize) -> Result<(), ArpError> {
+        match self {
+            Self::Ethernet => {
+                let is_validated = length == ethernet::mac::LENGTH_BYTES;
+                if is_validated {
+                    Ok(())
+                } else {
+                    Err(ArpError::BadHardwareLength)
+                }
+            },
         }
     }
 }

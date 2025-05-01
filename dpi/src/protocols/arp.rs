@@ -5,7 +5,7 @@ use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ethernet, ip};
 use nom::Parser;
-use nom::bytes::take;
+use nom::number::be_u8;
 use nom::{Finish, IResult};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
@@ -15,9 +15,6 @@ use thiserror::Error;
 // RFC 826: https://datatracker.ietf.org/doc/html/rfc826
 
 pub const PACKET_LENGTH: usize = 28;
-
-pub const HARDWARE_ADDRESS_LENGTH: usize = 1;
-pub const PROTOCOL_ADDRESS_LENGTH: usize = 1;
 
 pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     if bytes.len() < PACKET_LENGTH {
@@ -44,19 +41,13 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     }
 
     // HLEN
-    let (rest, hardware_address_length) = take(HARDWARE_ADDRESS_LENGTH).parse(rest)?;
-    let hardware_address_length = *hardware_address_length
-        .first()
-        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
-    if hardware_address_length != ethernet::mac::LENGTH_BYTES as u8 {
-        return Err(ParserError::ErrorVerify.to_nom(bytes));
-    }
+    let (rest, hardware_address_length) = be_u8().parse(rest)?;
+    hardware_type
+        .validate_length(hardware_address_length as usize)
+        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // PLEN
-    let (rest, protocol_address_length) = take(PROTOCOL_ADDRESS_LENGTH).parse(rest)?;
-    let protocol_address_length = *protocol_address_length
-        .first()
-        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
+    let (rest, protocol_address_length) = be_u8().parse(rest)?;
     if protocol_address_length != ip::address::V4_LENGTH_BYTES as u8 {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
@@ -114,6 +105,9 @@ pub struct Arp {
 
 #[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
 pub enum ArpError {
+    #[error("Bad hardware length")]
+    BadHardwareLength,
+
     #[error("Unknown hardware type")]
     HardwareTypeUnknown,
 
