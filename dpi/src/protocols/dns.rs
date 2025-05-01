@@ -284,19 +284,19 @@ pub struct Header {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct QuestionEntry {
-    name: String,
-    entry_type: DnsType,
-    class: Class,
+    pub name: String,
+    pub entry_type: DnsType,
+    pub class: Class,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ResourceRecord {
-    name: String,
-    record_type: DnsType,
-    class: Class,
-    time_to_live: u32,
-    data_length: u16,
-    data: DnsTypeData,
+    pub name: String,
+    pub record_type: DnsType,
+    pub class: Class,
+    pub time_to_live: u32,
+    pub data_length: u16,
+    pub data: DnsTypeData,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
