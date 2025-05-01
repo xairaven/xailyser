@@ -1,9 +1,9 @@
 use crate::frame::FrameMetadata;
+use crate::parser::ParserError;
 use crate::protocols::{ProtocolData, ProtocolId, dns};
 use nom::number::{be_u16, be_u32};
 use nom::{IResult, Parser, bits};
 use serde::{Deserialize, Serialize};
-
 // TCP Protocol
 // RFC 9293: https://datatracker.ietf.org/doc/html/rfc9293
 
@@ -31,8 +31,12 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     let data_offset = data_offset * 4;
 
     // Already parsed 13 bytes, so doing sub 13.
-    let payload = &rest[data_offset as usize - 13..];
-    let rest = &rest[..data_offset as usize - 13];
+    let payload = rest
+        .get(data_offset as usize - 13..)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
+    let rest = rest
+        .get(..data_offset as usize - 13)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Flags: 8 flags by 1 bit.
     type TcpFlags = (u8, u8, u8, u8, u8, u8, u8, u8);

@@ -182,8 +182,10 @@ fn parse_name<'a>(bytes: &'a [u8], whole: &'a [u8]) -> IResult<&'a [u8], String>
                 let binary_original_octet = length_octet;
                 let low6 = (binary_original_octet & 0b0011_1111) as u16; // оставшиеся 6 бит первого байта :contentReference[oaicite:2]{index=2}
                 let combined = (low6 << 8) | (next_byte as u16);
-                let combined = usize::from(combined);
-                let (_, str) = parse_name(&whole[combined..], whole)?;
+                let pointed_slice = whole
+                    .get(usize::from(combined)..)
+                    .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
+                let (_, str) = parse_name(pointed_slice, whole)?;
                 labels.push(str.to_string());
                 main_rest = rest;
                 break;

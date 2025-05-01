@@ -41,9 +41,15 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     let (rest, total_len) = be_u16().parse(rest)?;
 
     // Totally parsed = 4 bytes. So, we can cut ethernet padding there.
-    let packet = &rest[..total_len as usize - 4];
-    let rest = &packet[..ihl as usize - 4];
-    let payload = &packet[ihl as usize - 4..];
+    let packet = rest
+        .get(..total_len as usize - 4)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
+    let rest = packet
+        .get(..ihl as usize - 4)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
+    let payload = packet
+        .get(ihl as usize - 4..)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Identification - 2 bytes
     let (rest, identification) = be_u16().parse(rest)?;

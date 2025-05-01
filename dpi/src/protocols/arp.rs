@@ -37,7 +37,10 @@ pub fn parse<'a>(
 
     // Cutting Ethernet padding & FCS
     let bytes = if bytes.len() > PACKET_LENGTH {
-        &bytes[..PACKET_LENGTH]
+        match bytes.get(..PACKET_LENGTH) {
+            Some(value) => value,
+            None => return Err(ParserError::ErrorVerify.to_nom(bytes)),
+        }
     } else {
         bytes
     };
@@ -53,14 +56,18 @@ pub fn parse<'a>(
 
     // HLEN
     let (rest, hardware_address_length) = take(HARDWARE_ADDRESS_LENGTH).parse(rest)?;
-    let hardware_address_length = hardware_address_length[0];
+    let hardware_address_length = *hardware_address_length
+        .first()
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
     if hardware_address_length != ethernet::mac::LENGTH_BYTES as u8 {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     // PLEN
     let (rest, protocol_address_length) = take(PROTOCOL_ADDRESS_LENGTH).parse(rest)?;
-    let protocol_address_length = protocol_address_length[0];
+    let protocol_address_length = *protocol_address_length
+        .first()
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
     if protocol_address_length != ip::address::V4_LENGTH_BYTES as u8 {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }

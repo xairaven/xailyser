@@ -42,7 +42,9 @@ pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], Protoc
     let (rest, address_destination) = ip::address::v6_parse(rest)?;
 
     // Cutting ethernet padding
-    let payload = &rest[..payload_length as usize];
+    let payload = rest
+        .get(..payload_length as usize)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     let protocol = IPv6 {
         version,
