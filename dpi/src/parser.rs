@@ -46,7 +46,7 @@ impl ProtocolParser {
     fn traversal(
         id: &ProtocolId, bytes: &[u8], metadata: &mut FrameMetadata,
     ) -> ProcessResult {
-        let result = id.parse()(bytes, metadata);
+        let result = id.parse()(bytes);
 
         match result {
             Ok(([], layer)) => {
@@ -92,8 +92,7 @@ impl ProtocolParser {
         }
     }
 }
-pub type ParseFn =
-    for<'a, 'b> fn(&'a [u8], &'b FrameMetadata) -> IResult<&'a [u8], ProtocolData>;
+pub type ParseFn = fn(&[u8]) -> IResult<&[u8], ProtocolData>;
 
 pub enum ParserError {
     ErrorVerify,

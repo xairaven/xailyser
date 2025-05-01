@@ -4,13 +4,14 @@ use crate::protocols::{ProtocolData, ProtocolId, dns};
 use nom::number::{be_u16, be_u32};
 use nom::{IResult, Parser, bits};
 use serde::{Deserialize, Serialize};
+
 // TCP Protocol
 // RFC 9293: https://datatracker.ietf.org/doc/html/rfc9293
 
 pub const DATA_OFFSET_LENGTH_BITS: usize = 4;
 pub const RESERVED_LENGTH_BITS: usize = 4;
 pub const FLAG_LENGTH_BITS: usize = 1;
-pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Source port. 2 bytes
     let (rest, port_source) = be_u16().parse(bytes)?;
     // Destination port. 2 bytes

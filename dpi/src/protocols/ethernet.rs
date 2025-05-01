@@ -11,7 +11,7 @@ use thiserror::Error;
 pub const FRAME_LENGTH: usize = 14;
 pub const FCS_LENGTH: usize = 4;
 
-pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     if bytes.len() <= FRAME_LENGTH {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
@@ -68,23 +68,13 @@ pub enum EthernetError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wrapper::FrameHeader;
 
     #[test]
     fn test_ethernet() {
         let hex_actual = "40 61 86 9A F1 F5 00 1A 8C 15 F9 80 08 00 45 00 00 28 59 B0 40 00 38 06 86 FC CE 6C CF 8B C0 A8 03 83 00 50 DA 98 A4 28 53 A0 9A 18 FA A4 50 10 00 D8 E5 69 00 00 00 00 00 00 00 00".replace(" ", "");
         let frame = hex::decode(hex_actual).unwrap();
-        let metadata = FrameMetadata {
-            header: FrameHeader {
-                tv_sec: 0,
-                tv_usec: 0,
-                caplen: 60,
-                len: 0,
-            },
-            layers: vec![],
-        };
 
-        let layer = parse(&frame, &metadata);
+        let layer = parse(&frame);
         let actual_ethernet = match layer {
             Ok((_, ProtocolData::Ethernet(layer))) => layer,
             _ => panic!(),

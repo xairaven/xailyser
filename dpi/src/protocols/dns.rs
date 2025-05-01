@@ -1,4 +1,3 @@
-use crate::frame::FrameMetadata;
 use crate::parser::{ParserError, ProtocolParser};
 use crate::protocols::ProtocolData;
 use nom::IResult;
@@ -21,12 +20,10 @@ pub const RECURSION_DESIRED_LENGTH_BITS: usize = 1;
 pub const RECURSION_AVAILABLE_LENGTH_BITS: usize = 1;
 pub const RESERVED_LENGTH_BITS: usize = 3;
 pub const RESPONSE_CODE_LENGTH_BITS: usize = 4;
-pub fn parse<'a>(
-    dns_packet: &'a [u8], _: &FrameMetadata,
-) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // HEADER
     // Identifier - 16 bits.
-    let (rest, id) = be_u16().parse(dns_packet)?;
+    let (rest, id) = be_u16().parse(bytes)?;
 
     // Message Type (QR), Operation Code (OPCODE)
     // Authoritative Answer (AA), Truncation (TC), Recursion Desired (RD)
@@ -43,23 +40,22 @@ pub fn parse<'a>(
             bits::complete::take(RESERVED_LENGTH_BITS),
             bits::complete::take(RESPONSE_CODE_LENGTH_BITS),
         ))(rest)?;
-    let message_type = MessageType::try_from(qr)
-        .map_err(|_| ParserError::ErrorVerify.to_nom(dns_packet))?;
+    let message_type =
+        MessageType::try_from(qr).map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
     let operation_code = OperationCode::try_from(opcode)
-        .map_err(|_| ParserError::ErrorVerify.to_nom(dns_packet))?;
+        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
     let authoritative_answer =
-        ProtocolParser::cast_to_bool(aa).map_err(|err| err.to_nom(dns_packet))?;
-    let truncation =
-        ProtocolParser::cast_to_bool(tc).map_err(|err| err.to_nom(dns_packet))?;
+        ProtocolParser::cast_to_bool(aa).map_err(|err| err.to_nom(bytes))?;
+    let truncation = ProtocolParser::cast_to_bool(tc).map_err(|err| err.to_nom(bytes))?;
     let recursion_desired =
-        ProtocolParser::cast_to_bool(rd).map_err(|err| err.to_nom(dns_packet))?;
+        ProtocolParser::cast_to_bool(rd).map_err(|err| err.to_nom(bytes))?;
     let recursion_available =
-        ProtocolParser::cast_to_bool(ra).map_err(|err| err.to_nom(dns_packet))?;
+        ProtocolParser::cast_to_bool(ra).map_err(|err| err.to_nom(bytes))?;
     if z != 0 {
-        return Err(ParserError::ErrorVerify.to_nom(dns_packet));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
     let response_code = ResponseCode::try_from(rcode)
-        .map_err(|_| ParserError::ErrorVerify.to_nom(dns_packet))?;
+        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // QDCOUNT - 16 bits
     let (rest, question_entries) = be_u16().parse(rest)?;
@@ -94,7 +90,7 @@ pub fn parse<'a>(
         true => {
             let mut vec: Vec<QuestionEntry> = vec![];
             for _ in 0..question_entries {
-                let (section_rest, question) = parse_question_section(rest, dns_packet)?;
+                let (section_rest, question) = parse_question_section(rest, bytes)?;
                 vec.push(question);
                 rest = section_rest;
             }
@@ -104,15 +100,14 @@ pub fn parse<'a>(
     };
 
     // ANSWER SECTION
-    let (rest, answer_section) = parse_record_section(rest, answer_records, dns_packet)?;
+    let (rest, answer_section) = parse_record_section(rest, answer_records, bytes)?;
 
     // AUTHORITY SECTION
-    let (rest, authority_section) =
-        parse_record_section(rest, authority_records, dns_packet)?;
+    let (rest, authority_section) = parse_record_section(rest, authority_records, bytes)?;
 
     // ADDITIONAL SECTION
     let (rest, additional_section) =
-        parse_record_section(rest, additional_records, dns_packet)?;
+        parse_record_section(rest, additional_records, bytes)?;
 
     let protocol = DNS {
         header,
@@ -123,7 +118,7 @@ pub fn parse<'a>(
     };
 
     if !rest.is_empty() {
-        return Err(ParserError::ErrorVerify.to_nom(dns_packet));
+        return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
     Finish::finish(Ok((rest, ProtocolData::DNS(protocol))))

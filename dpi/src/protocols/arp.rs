@@ -1,4 +1,3 @@
-use crate::frame::FrameMetadata;
 use crate::parser::ParserError;
 use crate::protocols::arp::hardware_type::HardwareType;
 use crate::protocols::arp::operation::Operation;
@@ -14,26 +13,16 @@ use thiserror::Error;
 
 // ARP Protocol
 // RFC 826: https://datatracker.ietf.org/doc/html/rfc826
+
 pub const PACKET_LENGTH: usize = 28;
 
 pub const HARDWARE_ADDRESS_LENGTH: usize = 1;
 pub const PROTOCOL_ADDRESS_LENGTH: usize = 1;
 
-pub fn parse<'a>(
-    bytes: &'a [u8], metadata: &FrameMetadata,
-) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     if bytes.len() < PACKET_LENGTH {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     };
-
-    // Checking ethernet ether type
-    let ethernet = match metadata.layers.first() {
-        Some(ProtocolData::Ethernet(value)) => value,
-        _ => return Err(ParserError::ErrorVerify.to_nom(bytes)),
-    };
-    if ethernet.ether_type.ne(&EtherType::Arp) {
-        return Err(ParserError::ErrorVerify.to_nom(bytes));
-    }
 
     // Cutting Ethernet padding & FCS
     let bytes = if bytes.len() > PACKET_LENGTH {

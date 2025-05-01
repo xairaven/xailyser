@@ -1,4 +1,3 @@
-use crate::frame::FrameMetadata;
 use crate::protocols::ProtocolData;
 use nom::IResult;
 use nom::number::{be_u8, be_u16};
@@ -8,7 +7,7 @@ use serde::{Deserialize, Serialize};
 // ICMPv4 Protocol
 // RFC 792: https://datatracker.ietf.org/doc/html/rfc792
 
-pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Message type. 1 byte
     let (rest, message_type) = be_u8().parse(bytes)?;
 

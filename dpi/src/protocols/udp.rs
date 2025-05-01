@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 // UDP Protocol
 // RFC 768: https://datatracker.ietf.org/doc/html/rfc768
 
-pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Source port. 2 bytes
     let (rest, port_source) = be_u16().parse(bytes)?;
     // Destination port. 2 bytes

@@ -14,7 +14,7 @@ use std::net::Ipv6Addr;
 pub const VERSION_LENGTH_BITS: usize = 4;
 pub const TRAFFIC_CLASS_LENGTH_BITS: usize = 8;
 pub const FLOW_LABEL_LENGTH_BITS: usize = 20;
-pub fn parse<'a>(bytes: &'a [u8], _: &FrameMetadata) -> IResult<&'a [u8], ProtocolData> {
+pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Version (4 bits), Traffic Class (8 bits), Flow Label (20 bits)
     let (rest, (version, traffic_class, flow_label)): (&[u8], (u8, u8, u32)) =
         bits::bits::<_, _, nom::error::Error<_>, _, _>((
