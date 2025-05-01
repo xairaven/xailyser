@@ -9,3 +9,6 @@ pub mod frame;
 pub mod parser;
 pub mod protocols;
 pub mod wrapper;
+
+// TODO tag: Needed features/fixes for release
+// FUTURE tag: Features, that may be implemented in future
