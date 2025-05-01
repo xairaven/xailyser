@@ -3,17 +3,19 @@ use crate::protocols::ethernet::EthernetError;
 use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u16)]
 pub enum EtherType {
-    Arp,
-    ArpFrameRelay,
-    ArpReverse,
-    Ipv4,
-    Ipv6,
-    Lldp,
-    Vlan,
+    Arp = 0x0806,
+    ArpFrameRelay = 0x0808,
+    ArpReverse = 0x8035,
+    Ipv4 = 0x0800,
+    Ipv6 = 0x86DD,
+    Lldp = 0x88CC,
+    Vlan = 0x8100,
 }
 
 impl EtherType {
@@ -42,23 +44,6 @@ impl TryFrom<&[u8; 2]> for EtherType {
             [0x86, 0xDD] => Ok(Self::Ipv6),
             [0x88, 0xCC] => Ok(Self::Lldp),
             [0x81, 0x00] => Ok(Self::Vlan),
-            _ => Err(EthernetError::EtherTypeUnknown),
-        }
-    }
-}
-
-impl TryFrom<u16> for EtherType {
-    type Error = EthernetError;
-
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        match value {
-            0x0806 => Ok(Self::Arp),
-            0x0808 => Ok(Self::ArpFrameRelay),
-            0x8035 => Ok(Self::ArpReverse),
-            0x0800 => Ok(Self::Ipv4),
-            0x86DD => Ok(Self::Ipv6),
-            0x88CC => Ok(Self::Lldp),
-            0x8100 => Ok(Self::Vlan),
             _ => Err(EthernetError::EtherTypeUnknown),
         }
     }

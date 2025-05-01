@@ -3,13 +3,15 @@ use crate::protocols::arp::ArpError;
 use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 
 pub const LENGTH_BYTES: usize = 2;
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u16)]
 pub enum Operation {
-    Request,
-    Reply,
+    Request = 1,
+    Reply = 2,
 }
 
 impl Operation {
@@ -29,18 +31,6 @@ impl TryFrom<&[u8; 2]> for Operation {
             [0x00, 0x01] => Ok(Self::Request),
             [0x00, 0x02] => Ok(Self::Reply),
             _ => Err(ArpError::OperationUnknown),
-        }
-    }
-}
-
-impl TryFrom<u16> for Operation {
-    type Error = ArpError;
-
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        match value {
-            0x0001 => Ok(Self::Request),
-            0x0002 => Ok(Self::Reply),
-            _ => Err(ArpError::HardwareTypeUnknown),
         }
     }
 }

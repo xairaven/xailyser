@@ -4,9 +4,9 @@ use nom::IResult;
 use nom::bytes::take;
 use nom::number::{be_u8, be_u16, be_u32};
 use nom::{Finish, Parser, bits};
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use std::net::{Ipv4Addr, Ipv6Addr};
-use thiserror::Error;
 
 // DNS Protocol
 // RFC 1035: https://datatracker.ietf.org/doc/html/rfc1035
@@ -242,7 +242,7 @@ fn parse_resource_record<'a>(
     // RDATA
     let (rest, data) = take(data_length).parse(rest)?;
     let data = DnsTypeData::try_from_bytes(data, &record_type)
-        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
+        .map_err(|err| err.to_nom(bytes))?;
 
     let record = ResourceRecord {
         name,
@@ -299,47 +299,26 @@ pub struct ResourceRecord {
     pub data: DnsTypeData,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u8)]
 pub enum MessageType {
     Query = 0,
     Response = 1,
 }
 
-impl TryFrom<u8> for MessageType {
-    type Error = DnsError;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Query),
-            1 => Ok(Self::Response),
-            _ => Err(Self::Error::MessageTypeUnknown),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u8)]
 pub enum OperationCode {
     StandardQuery = 0,
     InverseQuery = 1,
     ServerStatusRequest = 2,
-    Reserved,
+
+    #[num_enum(alternatives = [3..15])]
+    Reserved = 15,
 }
 
-impl TryFrom<u8> for OperationCode {
-    type Error = DnsError;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::StandardQuery),
-            1 => Ok(Self::InverseQuery),
-            2 => Ok(Self::ServerStatusRequest),
-            3..=15 => Ok(Self::Reserved),
-            _ => Err(Self::Error::OperationCodeUnknown),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u8)]
 pub enum ResponseCode {
     NoErrorCondition = 0,
     FormatError = 1,
@@ -347,27 +326,13 @@ pub enum ResponseCode {
     NameError = 3,
     NotImplemented = 4,
     Refused = 5,
-    Reserved,
+
+    #[num_enum(alternatives = [6..15])]
+    Reserved = 15,
 }
 
-impl TryFrom<u8> for ResponseCode {
-    type Error = DnsError;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::NoErrorCondition),
-            1 => Ok(Self::FormatError),
-            2 => Ok(Self::ServerFailure),
-            3 => Ok(Self::NameError),
-            4 => Ok(Self::NotImplemented),
-            5 => Ok(Self::Refused),
-            6..=15 => Ok(Self::Reserved),
-            _ => Err(Self::Error::ResponseCodeUnknown),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u16)]
 pub enum DnsType {
     A = 1,           // A host address
     NS = 2,          // An authoritative name server
@@ -433,77 +398,6 @@ pub enum DnsType {
     DLV = 32769, // DNSSEC Lookaside Validation record
 }
 
-impl TryFrom<u16> for DnsType {
-    type Error = DnsError;
-
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(Self::A),
-            2 => Ok(Self::NS),
-            3 => Ok(Self::MD),
-            4 => Ok(Self::MF),
-            5 => Ok(Self::CNAME),
-            6 => Ok(Self::SOA),
-            7 => Ok(Self::MB),
-            8 => Ok(Self::MG),
-            9 => Ok(Self::MR),
-            10 => Ok(Self::NULL),
-            11 => Ok(Self::WKS),
-            12 => Ok(Self::PTR),
-            13 => Ok(Self::HINFO),
-            14 => Ok(Self::MINFO),
-            15 => Ok(Self::MX),
-            16 => Ok(Self::TXT),
-
-            17 => Ok(Self::RP),
-            18 => Ok(Self::AFSDB),
-            24 => Ok(Self::SIG),
-            25 => Ok(Self::KEY),
-            28 => Ok(Self::AAAA),
-            29 => Ok(Self::LOC),
-            33 => Ok(Self::SRV),
-            35 => Ok(Self::NAPTR),
-            36 => Ok(Self::KX),
-            37 => Ok(Self::CERT),
-            39 => Ok(Self::DNAME),
-            42 => Ok(Self::APL),
-            43 => Ok(Self::DS),
-            44 => Ok(Self::SSHFP),
-            45 => Ok(Self::IPSECKEY),
-            46 => Ok(Self::RPSIG),
-            47 => Ok(Self::NSEC),
-            48 => Ok(Self::DNSKEY),
-            49 => Ok(Self::DHCID),
-            50 => Ok(Self::NSEC3),
-            51 => Ok(Self::NSEC3PARAM),
-            52 => Ok(Self::TLSA),
-            53 => Ok(Self::SMIMEA),
-            55 => Ok(Self::HIP),
-            59 => Ok(Self::CDS),
-            60 => Ok(Self::CDNSKEY),
-            61 => Ok(Self::OPENPGPKEY),
-            62 => Ok(Self::CSYNC),
-            63 => Ok(Self::ZONEMD),
-            64 => Ok(Self::SVCB),
-            65 => Ok(Self::HTTPS),
-            108 => Ok(Self::EUI48),
-            109 => Ok(Self::EUI64),
-            249 => Ok(Self::TKEY),
-            250 => Ok(Self::TSIG),
-            252 => Ok(Self::AXFR),
-            253 => Ok(Self::MAILB),
-            254 => Ok(Self::MAILA),
-            255 => Ok(Self::ALL),
-            256 => Ok(Self::URI),
-            257 => Ok(Self::CAA),
-            32768 => Ok(Self::TA),
-            32769 => Ok(Self::DLV),
-
-            _ => Err(Self::Error::DnsTypeUnknown),
-        }
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum DnsTypeData {
     AIPv4(Ipv4Addr),
@@ -513,26 +407,26 @@ pub enum DnsTypeData {
 }
 
 impl DnsTypeData {
-    pub fn try_from_bytes(bytes: &[u8], dns_type: &DnsType) -> Result<Self, DnsError> {
+    pub fn try_from_bytes(bytes: &[u8], dns_type: &DnsType) -> Result<Self, ParserError> {
         match dns_type {
             DnsType::A => match bytes.len() {
                 4 => {
                     let bytes = <[u8; 4]>::try_from(bytes)
-                        .map_err(|_| DnsError::FailedConvertResourceData)?;
+                        .map_err(|_| ParserError::ErrorVerify)?;
                     let address = Ipv4Addr::from(bytes);
                     Ok(Self::AIPv4(address))
                 },
                 16 => {
                     let bytes = <[u8; 16]>::try_from(bytes)
-                        .map_err(|_| DnsError::FailedConvertResourceData)?;
+                        .map_err(|_| ParserError::ErrorVerify)?;
                     let address = Ipv6Addr::from(bytes);
                     Ok(Self::AIPv6(address))
                 },
-                _ => Err(DnsError::FailedConvertResourceData),
+                _ => Err(ParserError::ErrorVerify),
             },
             DnsType::CNAME => {
                 let str = String::from_utf8(bytes.to_vec())
-                    .map_err(|_| DnsError::FailedConvertResourceData)?;
+                    .map_err(|_| ParserError::ErrorVerify)?;
 
                 Ok(Self::CNAME(str))
             },
@@ -541,7 +435,8 @@ impl DnsTypeData {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u16)]
 pub enum Class {
     IN = 1, // The Internet
     CS = 2, // The CSNET class (Obsolete - used only for examples in some obsolete RFCs)
@@ -549,44 +444,6 @@ pub enum Class {
     HS = 4, // Hesiod [Dyer 87]
 
     ALL = 255,
-}
-
-impl TryFrom<u16> for Class {
-    type Error = DnsError;
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(Self::IN),
-            2 => Ok(Self::CS),
-            3 => Ok(Self::CH),
-            4 => Ok(Self::HS),
-            255 => Ok(Self::ALL),
-            _ => Err(Self::Error::ClassUnknown),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
-pub enum DnsError {
-    #[error("Unknown Class")]
-    ClassUnknown,
-
-    #[error("Unknown DNS Type")]
-    DnsTypeUnknown,
-
-    #[error("Failed to convert resource data")]
-    FailedConvertResourceData,
-
-    #[error("Unknown QR (Message type)")]
-    MessageTypeUnknown,
-
-    #[error("Unknown OPCODE (Operation code)")]
-    OperationCodeUnknown,
-
-    #[error("Unknown RCODE (Response Code)")]
-    ResponseCodeUnknown,
-
-    #[error("Unknown DNS QType")]
-    QTypeUnknown,
 }
 
 #[cfg(test)]
