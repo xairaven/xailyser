@@ -24,6 +24,7 @@ pub enum ProtocolId {
     TCP,
     UDP,
 
+    DHCPv4,
     DNS,
     // FTP,
     // HTTP,
@@ -46,6 +47,7 @@ impl ProtocolId {
         match self {
             Self::Ethernet => ethernet::parse,
             Self::Arp => arp::parse,
+            Self::DHCPv4 => dhcpv4::parse,
             Self::DNS => dns::parse,
             Self::ICMPv4 => icmpv4::parse,
             Self::ICMPv6 => icmpv6::parse,
@@ -58,15 +60,16 @@ impl ProtocolId {
 
     pub fn check_ports(&self) -> Option<PortFn> {
         match self {
-            ProtocolId::Ethernet => None,
-            ProtocolId::Arp => None,
-            ProtocolId::IPv4 => None,
-            ProtocolId::IPv6 => None,
-            ProtocolId::ICMPv4 => None,
-            ProtocolId::ICMPv6 => None,
-            ProtocolId::TCP => None,
-            ProtocolId::UDP => None,
-            ProtocolId::DNS => Some(dns::is_protocol_default),
+            Self::Ethernet => None,
+            Self::Arp => None,
+            Self::IPv4 => None,
+            Self::IPv6 => None,
+            Self::ICMPv4 => None,
+            Self::ICMPv6 => None,
+            Self::TCP => None,
+            Self::UDP => None,
+            Self::DHCPv4 => Some(dhcpv4::is_protocol_default),
+            Self::DNS => Some(dns::is_protocol_default),
         }
     }
 
@@ -74,6 +77,7 @@ impl ProtocolId {
         match self {
             Self::Ethernet => ethernet::best_children(metadata),
             Self::Arp => None,
+            Self::DHCPv4 => None,
             Self::DNS => None,
             Self::ICMPv4 => None,
             Self::ICMPv6 => None,
@@ -96,9 +100,10 @@ impl ProtocolId {
 
             // TODO: TCP. Add HTTP, HTTPS
             // TODO: UDP. ...
-            Self::TCP => Some(vec![Self::DNS]),
-            Self::UDP => Some(vec![Self::DNS]),
+            Self::TCP => Some(vec![Self::DNS, Self::DHCPv4]),
+            Self::UDP => Some(vec![Self::DNS, Self::DHCPv4]),
 
+            Self::DHCPv4 => None,
             Self::DNS => None,
             // Self::FTP => None,
             // Self::HTTP => None,
@@ -117,6 +122,7 @@ pub enum ProtocolData {
 
     Arp(arp::Arp),
 
+    DHCPv4(dhcpv4::DHCPv4),
     DNS(dns::DNS),
 
     IPv4(ipv4::IPv4),
@@ -130,6 +136,7 @@ pub enum ProtocolData {
 }
 
 pub mod arp;
+pub mod dhcpv4;
 pub mod dns;
 pub mod ethernet;
 pub mod icmpv4;
