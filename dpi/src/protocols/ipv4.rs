@@ -66,7 +66,8 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
     // Protocol field
     let (rest, inner_protocol) = be_u8().parse(rest)?;
-    let protocol_inner = IpNextLevelProtocol::from(inner_protocol);
+    let protocol_inner = IpNextLevelProtocol::try_from(inner_protocol)
+        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Checksum
     let (rest, checksum) = be_u16().parse(rest)?;

@@ -31,7 +31,8 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
     // Next Header (1 byte)
     let (rest, next_header) = be_u8().parse(rest)?;
-    let next_header = IpNextLevelProtocol::from(next_header);
+    let next_header = IpNextLevelProtocol::try_from(next_header)
+        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Hop Limit (1 byte)
     let (rest, hop_limit) = be_u8().parse(rest)?;
