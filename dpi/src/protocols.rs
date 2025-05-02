@@ -25,6 +25,7 @@ pub enum ProtocolId {
     UDP,
 
     DHCPv4,
+    DHCPv6,
     DNS,
     // FTP,
     // HTTP,
@@ -48,6 +49,7 @@ impl ProtocolId {
             Self::Ethernet => ethernet::parse,
             Self::Arp => arp::parse,
             Self::DHCPv4 => dhcpv4::parse,
+            Self::DHCPv6 => dhcpv6::parse,
             Self::DNS => dns::parse,
             Self::ICMPv4 => icmpv4::parse,
             Self::ICMPv6 => icmpv6::parse,
@@ -69,6 +71,7 @@ impl ProtocolId {
             Self::TCP => None,
             Self::UDP => None,
             Self::DHCPv4 => Some(dhcpv4::is_protocol_default),
+            Self::DHCPv6 => Some(dhcpv6::is_protocol_default),
             Self::DNS => Some(dns::is_protocol_default),
         }
     }
@@ -78,6 +81,7 @@ impl ProtocolId {
             Self::Ethernet => ethernet::best_children(metadata),
             Self::Arp => None,
             Self::DHCPv4 => None,
+            Self::DHCPv6 => None,
             Self::DNS => None,
             Self::ICMPv4 => None,
             Self::ICMPv6 => None,
@@ -100,10 +104,11 @@ impl ProtocolId {
 
             // TODO: TCP. Add HTTP, HTTPS
             // TODO: UDP. ...
-            Self::TCP => Some(vec![Self::DNS, Self::DHCPv4]),
-            Self::UDP => Some(vec![Self::DNS, Self::DHCPv4]),
+            Self::TCP => Some(vec![Self::DNS, Self::DHCPv4, Self::DHCPv6]),
+            Self::UDP => Some(vec![Self::DNS, Self::DHCPv4, Self::DHCPv6]),
 
             Self::DHCPv4 => None,
+            Self::DHCPv6 => None,
             Self::DNS => None,
             // Self::FTP => None,
             // Self::HTTP => None,
@@ -123,6 +128,7 @@ pub enum ProtocolData {
     Arp(arp::Arp),
 
     DHCPv4(dhcpv4::DHCPv4),
+    DHCPv6(dhcpv6::DHCPv6),
     DNS(dns::DNS),
 
     IPv4(ipv4::IPv4),
@@ -137,6 +143,7 @@ pub enum ProtocolData {
 
 pub mod arp;
 pub mod dhcpv4;
+pub mod dhcpv6;
 pub mod dns;
 pub mod ethernet;
 pub mod icmpv4;

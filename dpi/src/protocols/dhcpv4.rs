@@ -143,21 +143,21 @@ pub fn is_protocol_default(port_source: u16, port_destination: u16) -> bool {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct DHCPv4 {
-    message_type: OperationType,
-    hardware_type: HardwareType,
-    hardware_length: u8,
-    hops: u8,
-    x_id: u32,
-    secs: u16,
-    broadcast_flag: u8,
-    old_client_address: Ipv4Addr,
-    new_client_address: Ipv4Addr,
-    server_address: Ipv4Addr,
-    relay_agent_address: Ipv4Addr,
-    hardware_address_client: MacAddress,
-    server_name: Option<String>,
-    file_name: Option<String>,
-    options: Vec<OptionData>,
+    pub message_type: OperationType,
+    pub hardware_type: HardwareType,
+    pub hardware_length: u8,
+    pub hops: u8,
+    pub x_id: u32,
+    pub secs: u16,
+    pub broadcast_flag: u8,
+    pub old_client_address: Ipv4Addr,
+    pub new_client_address: Ipv4Addr,
+    pub server_address: Ipv4Addr,
+    pub relay_agent_address: Ipv4Addr,
+    pub hardware_address_client: MacAddress,
+    pub server_name: Option<String>,
+    pub file_name: Option<String>,
+    pub options: Vec<OptionData>,
 }
 
 // FUTURE: Other options...
