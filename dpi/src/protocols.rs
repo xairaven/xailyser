@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 /// 5. In `ProtocolId::children`, specify whether there are any nested protocols.
 ///
 /// That's it! After that, write tests and verify that parsing works correctly.
+
+// FEATURE: FTP, HTTPS, IMAP, POP3, SMTP, SSH
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ProtocolId {
     Ethernet,
@@ -27,13 +29,7 @@ pub enum ProtocolId {
     DHCPv4,
     DHCPv6,
     DNS,
-    // FTP,
-    // HTTP,
-    // HTTPS,
-    // IMAP,
-    // POP3,
-    // SMTP,
-    // SSH,
+    HTTP,
 }
 
 impl ProtocolId {
@@ -51,6 +47,7 @@ impl ProtocolId {
             Self::DHCPv4 => dhcpv4::parse,
             Self::DHCPv6 => dhcpv6::parse,
             Self::DNS => dns::parse,
+            Self::HTTP => http::parse,
             Self::ICMPv4 => icmpv4::parse,
             Self::ICMPv6 => icmpv6::parse,
             Self::IPv4 => ipv4::parse,
@@ -73,6 +70,7 @@ impl ProtocolId {
             Self::DHCPv4 => Some(dhcpv4::is_protocol_default),
             Self::DHCPv6 => Some(dhcpv6::is_protocol_default),
             Self::DNS => Some(dns::is_protocol_default),
+            Self::HTTP => Some(http::is_protocol_default),
         }
     }
 
@@ -83,6 +81,7 @@ impl ProtocolId {
             Self::DHCPv4 => None,
             Self::DHCPv6 => None,
             Self::DNS => None,
+            Self::HTTP => None,
             Self::ICMPv4 => None,
             Self::ICMPv6 => None,
             Self::IPv4 => ipv4::best_children(metadata),
@@ -102,21 +101,14 @@ impl ProtocolId {
             Self::ICMPv4 => None,
             Self::ICMPv6 => None,
 
-            // TODO: TCP. Add HTTP, HTTPS
-            // TODO: UDP. ...
-            Self::TCP => Some(vec![Self::DNS, Self::DHCPv4, Self::DHCPv6]),
-            Self::UDP => Some(vec![Self::DNS, Self::DHCPv4, Self::DHCPv6]),
+            // TODO: TCP, UDP: Add HTTPS
+            Self::TCP => Some(vec![Self::HTTP, Self::DNS, Self::DHCPv4, Self::DHCPv6]),
+            Self::UDP => Some(vec![Self::HTTP, Self::DNS, Self::DHCPv4, Self::DHCPv6]),
 
             Self::DHCPv4 => None,
             Self::DHCPv6 => None,
             Self::DNS => None,
-            // Self::FTP => None,
-            // Self::HTTP => None,
-            // Self::HTTPS => None,
-            // Self::IMAP => None,
-            // Self::POP3 => None,
-            // Self::SMTP => None,
-            // Self::SSH => None,
+            Self::HTTP => None,
         }
     }
 }
@@ -130,6 +122,7 @@ pub enum ProtocolData {
     DHCPv4(dhcpv4::DHCPv4),
     DHCPv6(dhcpv6::DHCPv6),
     DNS(dns::DNS),
+    HTTP(http::HTTP),
 
     IPv4(ipv4::IPv4),
     IPv6(ipv6::IPv6),
@@ -146,6 +139,7 @@ pub mod dhcpv4;
 pub mod dhcpv6;
 pub mod dns;
 pub mod ethernet;
+pub mod http;
 pub mod icmpv4;
 pub mod icmpv6;
 pub mod ip {
