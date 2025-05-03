@@ -15,6 +15,9 @@ pub fn data(ctx: &mut Context, response: Response) {
         FrameType::Metadata(metadata) => {
             // TODO: Process parsed metadata
         },
+        FrameType::Header(header) => {
+            // TODO: ...
+        }
         FrameType::Raw(frame) => {
             if !ctx.client_settings.unparsed_frames_drop {
                 ctx.net_storage.raw.add(frame);
