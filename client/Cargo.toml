@@ -18,7 +18,7 @@ repository = "https://github.com/xairaven/xailyser"
 common = { path = "../common" }
 dpi = { path = "../dpi" }
 
-chrono = "0.4.40"
+chrono = "0.4.41"
 crossbeam = "0.8.4"
 egui = "0.31.1"
 egui-aesthetix = { git="https://github.com/thebashpotato/egui-aesthetix.git", rev="c26c1dd543819fc46bfebe4cb1f42ee84ed14416", features = ["all_themes"]}
@@ -40,5 +40,5 @@ serde_json = "1.0.140"
 strum = "0.27.1"
 strum_macros = "0.27.1"
 thiserror = "2.0.12"
-toml = "0.8.21"
+toml = "0.8.22"
 tungstenite = "0.26.2"
