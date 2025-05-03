@@ -124,7 +124,7 @@ mod tests {
         let metadata = match result {
             Some(value) => match value {
                 FrameType::Metadata(value) => value,
-                FrameType::Raw(_) => panic!(),
+                _ => panic!(),
             },
             None => panic!(),
         };
@@ -204,7 +204,7 @@ mod tests {
         let metadata = match result {
             Some(value) => match value {
                 FrameType::Metadata(value) => value,
-                FrameType::Raw(_) => panic!(),
+                _ => panic!(),
             },
             None => panic!(),
         };
@@ -284,7 +284,7 @@ mod tests {
         let metadata = match result {
             Some(value) => match value {
                 FrameType::Metadata(value) => value,
-                FrameType::Raw(_) => panic!(),
+                _ => panic!(),
             },
             None => panic!(),
         };

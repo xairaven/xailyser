@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum FrameType {
     Metadata(FrameMetadata),
+    Header(FrameHeader),
     Raw(OwnedFrame),
 }
 

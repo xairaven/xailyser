@@ -23,19 +23,13 @@ impl ProtocolParser {
             let result = Self::traversal(root_protocol, &packet, &mut metadata);
             return match result {
                 ProcessResult::Complete => Some(FrameType::Metadata(metadata)),
-                ProcessResult::Incomplete => {
-                    if !self.raw_needed {
-                        Some(FrameType::Metadata(metadata))
-                    } else {
-                        Some(FrameType::Raw(OwnedFrame::from(packet)))
-                    }
+                ProcessResult::Incomplete => match self.raw_needed {
+                    true => Some(FrameType::Raw(OwnedFrame::from(packet))),
+                    false => Some(FrameType::Metadata(metadata)),
                 },
-                ProcessResult::Failed => {
-                    if !self.raw_needed {
-                        None
-                    } else {
-                        Some(FrameType::Raw(OwnedFrame::from(packet)))
-                    }
+                ProcessResult::Failed => match self.raw_needed {
+                    true => Some(FrameType::Raw(OwnedFrame::from(packet))),
+                    false => Some(FrameType::Header(metadata.header)),
                 },
             };
         }

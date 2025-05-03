@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// That's it! After that, write tests and verify that parsing works correctly.
 
-// FEATURE: FTP, HTTPS, IMAP, POP3, SMTP, SSH
+// FEATURE: FTP, TLS/SSL, IMAP, POP3, SMTP, SSH, SIP, RTP
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ProtocolId {
     Ethernet,
