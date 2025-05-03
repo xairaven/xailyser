@@ -19,7 +19,7 @@ pub const FRAGMENT_OFFSET_LENGTH_BITS: usize = 13;
 pub const PACKET_NECESSARY_LENGTH_BYTES: usize = 20;
 pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Version (4 bits), Internet Header Length (4 bits)
-    let (rest, (version, ihl)): (&[u8], (u8, u8)) =
+    let (rest, (version, ihl)): (&[u8], (u8, u16)) =
         bits::bits::<_, _, nom::error::Error<_>, _, _>(sequence::pair(
             bits::complete::take(PROTOCOL_VERSION_LENGTH_BITS),
             bits::complete::take(IHL_LENGTH_BITS),
@@ -28,7 +28,9 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
     // IHL is stored in 32bit words. So, we are doing IHL * 32 / 8 (bits in bytes)
-    let ihl = ihl * 4;
+    let ihl = ihl
+        .checked_mul(4)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Differentiated Services Code Point (6 bits), Explicit Congestion Notification (2 bits)
     let (rest, (dscp, ecn)): (&[u8], (u8, u8)) =
@@ -42,13 +44,20 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
     // Totally parsed = 4 bytes. So, we can cut ethernet padding there.
     let packet = rest
-        .get(..total_len as usize - 4)
+        .get(
+            ..total_len
+                .checked_sub(4)
+                .ok_or(ParserError::ErrorVerify.to_nom(bytes))? as usize,
+        )
         .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
+    let boundary = ihl
+        .checked_sub(4)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))? as usize;
     let rest = packet
-        .get(..ihl as usize - 4)
+        .get(..boundary)
         .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
     let payload = packet
-        .get(ihl as usize - 4..)
+        .get(boundary..)
         .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Identification - 2 bytes
@@ -77,7 +86,11 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Destination Address
     let (rest, address_destination) = ip::address::v4_parse(rest)?;
 
-    if rest.len() as isize != ihl as isize - PACKET_NECESSARY_LENGTH_BYTES as isize {
+    if rest.len()
+        != (ihl as usize)
+            .checked_sub(PACKET_NECESSARY_LENGTH_BYTES)
+            .ok_or(ParserError::ErrorVerify.to_nom(bytes))?
+    {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
 
@@ -118,7 +131,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct IPv4 {
     pub version: u8,
-    pub internet_header_length: u8,
+    pub internet_header_length: u16,
     pub differentiated_services_code_point: u8,
     pub explicit_congestion_notification: u8,
     pub total_length: u16,

@@ -2,6 +2,7 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 #![deny(clippy::panic)]
+#![deny(clippy::arithmetic_side_effects)]
 #![deny(clippy::indexing_slicing)]
 #![deny(unsafe_code)]
 

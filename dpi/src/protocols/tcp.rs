@@ -23,20 +23,25 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     let (rest, acknowledgement_number) = be_u32().parse(rest)?;
 
     // Data Offset, Reserved. Both - 4 bits
-    let (rest, (data_offset, reserved)): (&[u8], (u8, u8)) =
+    let (rest, (data_offset, reserved)): (&[u8], (u16, u8)) =
         bits::bits::<_, _, nom::error::Error<_>, _, _>(nom::sequence::pair(
             bits::complete::take(DATA_OFFSET_LENGTH_BITS),
             bits::complete::take(RESERVED_LENGTH_BITS),
         ))(rest)?;
     // Data Offset is stored in 32bit words. So, we are doing DOffset * 32 / 8 (bits in bytes)
-    let data_offset = data_offset * 4;
+    let data_offset = data_offset
+        .checked_mul(4)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Already parsed 13 bytes, so doing sub 13.
+    let boundary = data_offset
+        .checked_sub(13)
+        .ok_or(ParserError::ErrorVerify.to_nom(bytes))? as usize;
     let payload = rest
-        .get(data_offset as usize - 13..)
+        .get(boundary..)
         .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
     let rest = rest
-        .get(..data_offset as usize - 13)
+        .get(..boundary)
         .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Flags: 8 flags by 1 bit.
@@ -106,7 +111,7 @@ pub struct TCP {
     pub port_destination: u16,
     pub sequence_number: u32,
     pub acknowledgement_number: u32,
-    pub data_offset: u8,
+    pub data_offset: u16,
     pub reserved: u8,
     pub flags: [u8; 8],
     pub window: u16,
