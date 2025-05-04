@@ -13,12 +13,21 @@ pub fn data(ctx: &mut Context, response: Response) {
 
     match frame {
         FrameType::Metadata(metadata) => {
+            if let Err(err) = ctx.net_storage.speed.get_info_metadata(&metadata) {
+                log::error!("Speed Error: {}", err);
+            }
             // TODO: Process parsed metadata
         },
         FrameType::Header(header) => {
+            if let Err(err) = ctx.net_storage.speed.get_info_header(&header) {
+                log::error!("Speed Error: {}", err);
+            }
             // TODO: ...
-        }
+        },
         FrameType::Raw(frame) => {
+            if let Err(err) = ctx.net_storage.speed.get_info_header(&frame.header) {
+                log::error!("Speed Error: {}", err);
+            }
             if !ctx.client_settings.unparsed_frames_drop {
                 ctx.net_storage.raw.add(frame);
                 // TODO: Handle raw frames

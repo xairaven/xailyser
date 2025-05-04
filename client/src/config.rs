@@ -1,4 +1,5 @@
 use crate::communication::heartbeat;
+use crate::net::speed::SpeedUnitPerSecond;
 use crate::ui::styles::themes;
 use common::io::FileKind;
 use common::logging;
@@ -19,8 +20,10 @@ pub struct Config {
     pub language: Language,
     pub log_format: String,
     pub log_level: LevelFilter,
-    pub theme: themes::Preference,
+    pub plot_display_window_seconds: u32,
+    pub plot_speed_units: SpeedUnitPerSecond,
     pub sync_delay_seconds: i64,
+    pub theme: themes::Preference,
     pub unparsed_frames_drop: bool,
     pub unparsed_frames_threshold: Option<usize>,
 }
@@ -32,6 +35,8 @@ impl Default for Config {
             language: Language::English,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
+            plot_display_window_seconds: 10,
+            plot_speed_units: SpeedUnitPerSecond::Kilobytes,
             theme: themes::Preference::default(),
             sync_delay_seconds: heartbeat::DEFAULT_PING_DELAY_SECONDS,
             unparsed_frames_drop: true,
@@ -50,8 +55,13 @@ impl Serialize for Config {
         state.serialize_field("language", &self.language.to_string())?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
-        state.serialize_field("theme", &self.theme.to_string())?;
+        state.serialize_field(
+            "plot_display_window_seconds",
+            &self.plot_display_window_seconds,
+        )?;
+        state.serialize_field("plot_speed_units", &self.plot_speed_units.to_string())?;
         state.serialize_field("sync_delay_seconds", &self.sync_delay_seconds)?;
+        state.serialize_field("theme", &self.theme.to_string())?;
 
         state.serialize_field("unparsed_frames_drop", &self.unparsed_frames_drop)?;
         let threshold = match &self.unparsed_frames_threshold {
@@ -101,8 +111,10 @@ struct ConfigDto {
     language: String,
     log_format: String,
     log_level: String,
-    theme: String,
+    plot_display_window_seconds: u32,
+    plot_speed_units: String,
     sync_delay_seconds: i64,
+    theme: String,
     unparsed_frames_drop: bool,
     unparsed_frames_threshold: String,
 }
@@ -116,9 +128,14 @@ impl ConfigDto {
             log_format: self.log_format.trim().to_string(),
             log_level: LevelFilter::from_str(self.log_level.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
+            plot_display_window_seconds: self.plot_display_window_seconds,
+            plot_speed_units: SpeedUnitPerSecond::try_from(
+                self.plot_speed_units.as_str(),
+            )
+            .map_err(|_| ConfigError::UnknownSpeedUnits)?,
+            sync_delay_seconds: self.sync_delay_seconds,
             theme: themes::Preference::from_str(self.theme.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownTheme)?,
-            sync_delay_seconds: self.sync_delay_seconds,
             unparsed_frames_drop: self.unparsed_frames_drop,
             unparsed_frames_threshold: usize::from_str(&self.unparsed_frames_threshold)
                 .ok(),
@@ -144,6 +161,9 @@ pub enum ConfigError {
 
     #[error("Unknown log level.")]
     UnknownLogLevel,
+
+    #[error("Unknown speed units.")]
+    UnknownSpeedUnits,
 
     #[error("Unknown theme.")]
     UnknownTheme,

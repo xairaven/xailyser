@@ -84,6 +84,13 @@
   "Tab.About.CheckGithub": "Перегляньте код на GitHub!",
   "Tab.About.LatestRelease": "Останній реліз",
 
+  "Tab.Status.Label.DisplayPeriod": "Період",
+  "Tab.Status.Label.SpeedUnits": "Од. швидкості",
+  "Tab.Status.Legend.Throughput": "Пропускна здатність",
+  "Tab.Status.Legend.Send": "Відправлено",
+  "Tab.Status.Legend.Receive": "Отримано",
+  "Tab.Status.Suffix.DisplayInterval": "с.",
+
   "Tab.SettingsClient.Hover.FieldNotApplied": "Це поле відрізняється від встановленого. Також не забудьте зберегти файл конфігурації, якщо потрібно.",
   "Tab.SettingsClient.Hover.SettingSavesConfig": "Це налаштування лише зберігає файл конфігурації.",
   "Tab.SettingsClient.Label.SaveConfig": "Зберегти конфігурацію",

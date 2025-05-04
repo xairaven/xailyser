@@ -3,6 +3,7 @@ use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::net::NetStorage;
 use crate::net::raw::RawStorage;
+use crate::net::speed::PlotSettings;
 use crate::profiles::ProfilesStorage;
 use crate::ui::modals::Modal;
 use crate::ui::styles::themes;
@@ -51,8 +52,12 @@ impl Context {
         Self {
             client_settings: ClientSettings {
                 compression: config.compression,
-                theme: config.theme,
+                plot: PlotSettings {
+                    display_window_seconds: config.plot_display_window_seconds,
+                    units: config.plot_speed_units.clone(),
+                },
                 sync_delay_seconds: config.sync_delay_seconds,
+                theme: config.theme,
                 unparsed_frames_drop: config.unparsed_frames_drop,
                 unparsed_frames_threshold: config.unparsed_frames_threshold,
             },
@@ -60,6 +65,7 @@ impl Context {
             heartbeat: Default::default(),
             net_storage: NetStorage {
                 raw: RawStorage::new(config.unparsed_frames_threshold),
+                speed: Default::default(),
             },
 
             config,
@@ -103,6 +109,7 @@ pub struct ServerSettings {
 pub struct ClientSettings {
     pub compression: bool,
     pub sync_delay_seconds: i64,
+    pub plot: PlotSettings,
     pub theme: themes::Preference,
     pub unparsed_frames_drop: bool,
     pub unparsed_frames_threshold: Option<usize>,

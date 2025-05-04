@@ -84,6 +84,13 @@
   "Tab.About.CheckGithub": "Check out the code on GitHub!",
   "Tab.About.LatestRelease": "Latest release",
 
+  "Tab.Status.Label.DisplayPeriod": "Display Period",
+  "Tab.Status.Label.SpeedUnits": "Speed Units",
+  "Tab.Status.Legend.Throughput": "Throughput",
+  "Tab.Status.Legend.Send": "Send",
+  "Tab.Status.Legend.Receive": "Receive",
+  "Tab.Status.Suffix.DisplayInterval": "sec.",
+
   "Tab.SettingsClient.Hover.FieldNotApplied": "This field is differ from set up. Also, don’t forget to save the config file if needed.",
   "Tab.SettingsClient.Hover.SettingSavesConfig": "Setting just saves the config file.",
   "Tab.SettingsClient.Label.SaveConfig": "Save Config",

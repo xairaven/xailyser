@@ -42,7 +42,7 @@ impl RootComponent {
 
             logout_requested: false,
 
-            status_tab: Default::default(),
+            status_tab: StatusTab::new(ctx),
             settings_client_tab: SettingsClientTab::new(ctx),
             settings_server_tab: Default::default(),
             about_tab: Default::default(),
