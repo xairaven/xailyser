@@ -107,7 +107,8 @@ impl WsHandler {
 
     fn send_receive_messages(&mut self, mut stream: WSStream) {
         while !self.shutdown_flag.load(Ordering::Acquire) {
-            if self.receive_messages(&mut stream).is_err() {
+            if let Err(err) = self.receive_messages(&mut stream) {
+                log::debug!("WS-{}. Got error while receiving messages: {}", self.id, err);
                 return;
             }
             self.send_messages(&mut stream);
@@ -115,6 +116,7 @@ impl WsHandler {
                 match self.frame_receiver.try_recv() {
                     Ok(data) => {
                         self.response_queue.push_back(Response::Data(data));
+                        log::debug!("WS-{}. Pushing data from frame receiver to queue.", self.id);
                     },
                     Err(err) if err == TryRecvError::Disconnected => {
                         log::error!(
@@ -149,10 +151,12 @@ impl WsHandler {
     fn receive_messages(
         &mut self, stream: &mut WSStream,
     ) -> Result<(), tungstenite::Error> {
+        log::debug!("WS-{}. Reading next message...", self.id);
         let msg = match stream.read() {
             Ok(msg) => msg,
             Err(err) => return self.handle_read_error(err),
         };
+        log::debug!("WS-{}. Message successfully read.", self.id);
 
         if msg.is_close() {
             log::info!("WS-{}. Client closed connection.", self.id);
@@ -176,11 +180,14 @@ impl WsHandler {
 
     fn send_messages(&mut self, stream: &mut WSStream) {
         while let Some(response) = self.response_queue.pop_front() {
+            log::debug!("WS-{}. Response from queue popped out.", self.id);
             if let Ok(serialized) = serde_json::to_string(&response) {
                 if self.compression {
                     match compress(&serialized) {
                         Ok(bytes) => {
+                            log::debug!("WS-{}. Will send compressed message now..", self.id);
                             let _ = stream.send(Message::Binary(Bytes::from(bytes)));
+                            log::debug!("WS-{}. Message successfully sent.", self.id);
                         },
                         Err(_) => {
                             log::error!(
@@ -191,7 +198,9 @@ impl WsHandler {
                         },
                     }
                 } else {
+                    log::debug!("WS-{}. Will send uncompressed message now..", self.id);
                     let _ = stream.send(Message::text(serialized));
+                    log::debug!("WS-{}. Message successfully sent.", self.id);
                 }
             } else {
                 log::error!("WS-{}. Can't serialize message! {:#?}", self.id, response);
@@ -214,6 +223,7 @@ impl WsHandler {
             },
             Io(io_err) if io_err.kind() == std::io::ErrorKind::WouldBlock => {
                 thread::sleep(CONNECTION_TIMEOUT);
+                log::debug!("WS-{}. Connection timeout. Sleeping...", self.id);
                 Ok(())
             },
             Io(io_err) => {
@@ -276,6 +286,7 @@ impl WsHandler {
                     request::core::process(message, &self.context, &self.shutdown_flag)
                 {
                     self.response_queue.push_back(response);
+                    log::debug!("WS-{}. Pushed back processed request to queue.", self.id);
                 }
             },
             Err(_) => {
@@ -293,9 +304,13 @@ impl WsHandler {
         if let Ok(text) = serde_json::to_string(&message) {
             if self.compression {
                 let compressed = compress(&text)?;
+                log::debug!("WS-{}. Trying to send error response.. (bytes)", self.id);
                 let _ = stream.send(Message::Binary(Bytes::from(compressed)));
+                log::debug!("WS-{}. Error response successfully sent! (bytes)", self.id);
             } else {
+                log::debug!("WS-{}. Trying to send error response.. (text)", self.id);
                 let _ = stream.send(Message::Text(Utf8Bytes::from(text)));
+                log::debug!("WS-{}. Error response successfully sent! (text)", self.id);
             }
         }
         Ok(())
