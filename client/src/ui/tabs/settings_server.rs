@@ -2,6 +2,7 @@ use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui::styles;
 use crate::ui::styles::{colors, spacing};
+use crate::ui::tabs::Tab;
 use chrono::{DateTime, Local};
 use common::messages::Request;
 use egui::{Grid, RichText, TextBuffer, TextEdit};
@@ -19,6 +20,8 @@ pub struct SettingsServerTab {
 
 impl SettingsServerTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        self.tab_heading(ui);
+
         const GRID_COLUMNS: usize = 4;
         let available_width = ui.available_width();
 
@@ -55,6 +58,14 @@ impl SettingsServerTab {
                 },
             );
         });
+    }
+
+    fn tab_heading(&self, ui: &mut egui::Ui) {
+        ui.add_space(styles::space::TAB);
+        ui.heading(
+            RichText::new(Tab::ServerSettings.to_string().as_str())
+                .size(styles::heading::HUGE),
+        );
     }
 
     fn request_settings_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {

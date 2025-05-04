@@ -79,19 +79,24 @@
   "Response.Error.MutexPoisoned": "Unexpected error appeared while blocking some memory.",
   "Response.Error.PasswordChange": "Failed to change password.",
 
+  "Styles.Hover.FieldNotApplied": "This field is differ from set up. Also, don’t forget to save the config file if needed.",
+
   "Tab.About.Description": "Client-server analyser of network traffic on a home network",
   "Tab.About.Developer": "Developer: Alex Kovalov",
   "Tab.About.CheckGithub": "Check out the code on GitHub!",
   "Tab.About.LatestRelease": "Latest release",
 
-  "Tab.Status.Label.DisplayPeriod": "Display Period",
-  "Tab.Status.Label.SpeedUnits": "Speed Units",
+  "Tab.Status.Hover.PlotSettings": "Plot settings",
   "Tab.Status.Legend.Throughput": "Throughput",
   "Tab.Status.Legend.Send": "Send",
   "Tab.Status.Legend.Receive": "Receive",
-  "Tab.Status.Suffix.DisplayInterval": "sec.",
+  "Tab.ThroughputSettings.Header": "Throughput Plot Settings",
+  "Tab.ThroughputSettings.Hover.SettingSavesConfig": "Setting just saves the config file.",
+  "Tab.ThroughputSettings.Label.DisplayPeriod": "Display Period",
+  "Tab.ThroughputSettings.Label.SaveConfig": "Save Config",
+  "Tab.ThroughputSettings.Label.SpeedUnits": "Speed Units",
+  "Tab.ThroughputSettings.Suffix.DisplayInterval": "sec.",
 
-  "Tab.SettingsClient.Hover.FieldNotApplied": "This field is differ from set up. Also, don’t forget to save the config file if needed.",
   "Tab.SettingsClient.Hover.SettingSavesConfig": "Setting just saves the config file.",
   "Tab.SettingsClient.Label.SaveConfig": "Save Config",
   "Tab.SettingsClient.Label.Compression": "Compression",
@@ -122,7 +127,6 @@
   "Tab.SettingsServer.Label.SendUnparsedFrames": "Sending Unparsed Frames",
   "Tab.SettingsServer.Note.RestartServer": "After confirmation, you may not receive a message about the reboot.\nMonitor the server status.",
 
-  "Tabs.Placeholder": "Tab",
   "Tabs.Status": "Status",
   "Tabs.ClientSettings": "Client Settings",
   "Tabs.ServerSettings": "Server Settings",

@@ -1,7 +1,8 @@
 use crate::context::Context;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::styles;
-use crate::ui::styles::{colors, spacing, themes};
+use crate::ui::styles::{spacing, themes};
+use crate::ui::tabs::Tab;
 use crate::{config, logging};
 use egui::{Checkbox, DragValue, Grid, RichText, TextEdit};
 use log::LevelFilter;
@@ -51,6 +52,8 @@ impl SettingsClientTab {
 
 impl SettingsClientTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        self.tab_heading(ui);
+
         const GRID_COLUMNS: usize = 5;
 
         egui::ScrollArea::vertical()
@@ -98,6 +101,14 @@ impl SettingsClientTab {
             });
     }
 
+    fn tab_heading(&self, ui: &mut egui::Ui) {
+        ui.add_space(styles::space::TAB);
+        ui.heading(
+            RichText::new(Tab::ClientSettings.to_string().as_str())
+                .size(styles::heading::HUGE),
+        );
+    }
+
     fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.SettingsClient.Label.SaveConfig"
@@ -140,7 +151,7 @@ impl SettingsClientTab {
     fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Compression"));
         let not_applied = self.compression != ctx.client_settings.compression;
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterLogout"));
 
         ui.add(Checkbox::without_text(&mut self.compression));
@@ -160,7 +171,7 @@ impl SettingsClientTab {
     fn language_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Language"));
         let not_applied = self.language != ctx.config.language;
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
 
         ui.with_layout(
@@ -190,7 +201,7 @@ impl SettingsClientTab {
         let not_applied = !self
             .log_format_choice
             .eq_ignore_ascii_case(&ctx.config.log_format);
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
 
         ui.add(TextEdit::multiline(&mut self.log_format_choice));
@@ -211,7 +222,7 @@ impl SettingsClientTab {
     fn logs_level_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.LogLevel"));
         let not_applied = self.log_level_choice != ctx.config.log_level;
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
 
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
@@ -242,7 +253,7 @@ impl SettingsClientTab {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.SyncDelay"));
         let not_applied =
             self.ping_delay_seconds != ctx.client_settings.sync_delay_seconds;
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
 
         ui.add(
@@ -268,7 +279,7 @@ impl SettingsClientTab {
     fn theme_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Theme"));
         let not_applied = self.theme != ctx.client_settings.theme;
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
 
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
@@ -299,7 +310,7 @@ impl SettingsClientTab {
             styles::heading::normal(&t!("Tab.SettingsClient.Label.UnparsedFramesDrop"));
         let not_applied =
             self.unparsed_frames_drop != ctx.client_settings.unparsed_frames_drop;
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesDrop.Note"))
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
 
@@ -326,7 +337,7 @@ impl SettingsClientTab {
             "Tab.SettingsClient.Label.UnparsedFramesThreshold"
         ));
         let not_applied = setting != ctx.client_settings.unparsed_frames_threshold;
-        Self::label_not_applied(ui, label, not_applied)
+        styles::text::field_not_applied(ui, label, not_applied)
             .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesThreshold.Note"))
             .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
 
@@ -361,18 +372,6 @@ impl SettingsClientTab {
 
         fn into_setting(is_enabled: bool, amount: usize) -> Option<usize> {
             if is_enabled { Some(amount) } else { None }
-        }
-    }
-
-    fn label_not_applied(
-        ui: &mut egui::Ui, mut label: RichText, is_different: bool,
-    ) -> egui::Response {
-        if is_different {
-            label = label.color(colors::FIELD_NOT_APPLIED);
-            ui.add(egui::Label::new(label))
-                .on_hover_text(t!("Tab.SettingsClient.Hover.FieldNotApplied"))
-        } else {
-            ui.add(egui::Label::new(label))
         }
     }
 }

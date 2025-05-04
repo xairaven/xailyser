@@ -38,6 +38,7 @@ pub mod components {
     pub mod connection_profiles;
     pub mod preauth_client_settings;
     pub mod root;
+    pub mod throughput_settings;
 }
 pub mod modals;
 pub mod styles;

@@ -84,12 +84,16 @@
   "Tab.About.CheckGithub": "Перегляньте код на GitHub!",
   "Tab.About.LatestRelease": "Останній реліз",
 
-  "Tab.Status.Label.DisplayPeriod": "Період",
-  "Tab.Status.Label.SpeedUnits": "Од. швидкості",
+  "Tab.Status.Hover.PlotSettings": "Налаштування графіку",
   "Tab.Status.Legend.Throughput": "Пропускна здатність",
   "Tab.Status.Legend.Send": "Відправлено",
   "Tab.Status.Legend.Receive": "Отримано",
-  "Tab.Status.Suffix.DisplayInterval": "с.",
+  "Tab.ThroughputSettings.Header": "Налаштування графіку пропускної здатності",
+  "Tab.ThroughputSettings.Hover.SettingSavesConfig": "Це налаштування лише зберігає файл конфігурації.",
+  "Tab.ThroughputSettings.Label.DisplayPeriod": "Період",
+  "Tab.ThroughputSettings.Label.SaveConfig": "Зберегти конфігурацію",
+  "Tab.ThroughputSettings.Label.SpeedUnits": "Од. швидкості",
+  "Tab.ThroughputSettings.Suffix.DisplayInterval": "с.",
 
   "Tab.SettingsClient.Hover.FieldNotApplied": "Це поле відрізняється від встановленого. Також не забудьте зберегти файл конфігурації, якщо потрібно.",
   "Tab.SettingsClient.Hover.SettingSavesConfig": "Це налаштування лише зберігає файл конфігурації.",
@@ -121,8 +125,7 @@
   "Tab.SettingsServer.Label.InterfaceConfig": "Інтерфейс в конфігурації",
   "Tab.SettingsServer.Label.SendUnparsedFrames": "Відправка необроблених фреймів",
   "Tab.SettingsServer.Note.RestartServer": "Після підтвердження ви можете не отримати повідомлення про перезапуск.\nСлідкуйте за станом сервера.",
-
-  "Tabs.Placeholder": "Вкладка",
+  
   "Tabs.Status": "Статус",
   "Tabs.ClientSettings": "Клієнт",
   "Tabs.ServerSettings": "Сервер",

@@ -139,15 +139,12 @@ impl RootComponent {
             )
             .show(ui.ctx(), |ui| match self.active_tab {
                 Tab::Status => {
-                    self.tab_heading(ui);
                     self.status_tab.show(ui, ctx);
                 },
                 Tab::ClientSettings => {
-                    self.tab_heading(ui);
                     self.settings_client_tab.show(ui, ctx);
                 },
                 Tab::ServerSettings => {
-                    self.tab_heading(ui);
                     self.settings_server_tab.show(ui, ctx);
 
                     if self.settings_server_tab.reboot_requested {
@@ -157,7 +154,6 @@ impl RootComponent {
                     }
                 },
                 Tab::About => {
-                    self.tab_heading(ui);
                     self.about_tab.show(ui, ctx);
                 },
                 Tab::Logout => {
@@ -168,18 +164,6 @@ impl RootComponent {
                     ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                 },
             });
-    }
-
-    fn tab_heading(&self, ui: &mut egui::Ui) {
-        ui.add_space(styles::space::TAB);
-        ui.heading(
-            RichText::new(
-                self.tabs
-                    .get(&self.active_tab)
-                    .unwrap_or(&String::from(t!("Tabs.Placeholder"))),
-            )
-            .size(styles::heading::HUGE),
-        );
     }
 
     pub fn logout_requested(&self) -> bool {

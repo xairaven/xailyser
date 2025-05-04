@@ -101,6 +101,18 @@ pub mod text {
             RichText::new(t!("Button.Action.Enable"))
         }
     }
+
+    pub fn field_not_applied(
+        ui: &mut egui::Ui, mut label: RichText, is_not_applied: bool,
+    ) -> egui::Response {
+        if is_not_applied {
+            label = label.color(colors::FIELD_NOT_APPLIED);
+            ui.add(egui::Label::new(label))
+                .on_hover_text(t!("Styles.Hover.FieldNotApplied"))
+        } else {
+            ui.add(egui::Label::new(label))
+        }
+    }
 }
 
 pub mod themes {

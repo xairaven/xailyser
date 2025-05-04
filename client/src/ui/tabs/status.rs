@@ -1,38 +1,70 @@
 use crate::context::Context;
 use crate::net;
-use crate::net::speed::SpeedUnitPerSecond;
+use crate::ui::components::throughput_settings::ThroughputSettings;
 use crate::ui::modals::message::MessageModal;
-use egui::{DragValue, Grid, ScrollArea};
-use strum::IntoEnumIterator;
+use crate::ui::styles;
+use crate::ui::tabs::Tab;
+use egui::{RichText, ScrollArea};
 
 pub struct StatusTab {
-    display_window_seconds: u32,
-    display_unit: SpeedUnitPerSecond,
+    throughput_settings: ThroughputSettings,
 }
 
 impl StatusTab {
     pub fn new(ctx: &Context) -> Self {
         Self {
-            display_window_seconds: ctx.client_settings.plot.display_window_seconds,
-            display_unit: ctx.client_settings.plot.units.clone(),
+            throughput_settings: ThroughputSettings::new(ctx),
         }
     }
 }
 
 impl StatusTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        if self.throughput_settings.is_opened() {
+            self.throughput_settings.show(ui, ctx);
+            return;
+        }
+
+        self.tab_heading(ui);
+
         ScrollArea::vertical()
             .auto_shrink([false, false])
             .show(ui, |ui| {
                 ui.horizontal_centered(|ui| {
                     self.plot_view(ui, ctx);
-                    //self.plot_settings_view(ui, ctx);
                 });
                 self.pcap_save_view(ui, ctx);
             });
     }
 
-    pub fn plot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    pub fn tab_heading(&mut self, ui: &mut egui::Ui) {
+        ui.add_space(styles::space::TAB);
+        ui.columns(2, |columns| {
+            const LEFT_COLUMN: usize = 0;
+            const RIGHT_COLUMN: usize = 1;
+            columns[LEFT_COLUMN].vertical(|ui| {
+                ui.heading(
+                    RichText::new(Tab::Status.to_string().as_str())
+                        .size(styles::heading::HUGE),
+                );
+            });
+
+            columns[RIGHT_COLUMN].with_layout(
+                egui::Layout::right_to_left(egui::Align::Min),
+                |ui| {
+                    if ui
+                        .button("⚙")
+                        .on_hover_text(t!("Tab.Status.Hover.PlotSettings"))
+                        .clicked()
+                    {
+                        self.throughput_settings.open();
+                    }
+                },
+            );
+        });
+    }
+
+    fn plot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         use egui_plot::Legend;
         use egui_plot::Line;
         use egui_plot::Plot;
@@ -65,76 +97,6 @@ impl StatusTab {
                 plot_ui.line(throughput_line);
                 plot_ui.line(send_line);
                 plot_ui.line(receive_line);
-            });
-    }
-
-    pub fn plot_settings_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        Grid::new("Status.Tab.Settings.Plot.Grid")
-            .striped(false)
-            .num_columns(2)
-            .show(ui, |ui| {
-                ui.label(format!("{}:", t!("Tab.Status.Label.DisplayPeriod")));
-                ui.add(
-                    DragValue::new(&mut self.display_window_seconds)
-                        .speed(1)
-                        .range(1..=u32::MAX)
-                        .suffix(format!(" {}", t!("Tab.Status.Suffix.DisplayInterval"))),
-                );
-                ui.end_row();
-
-                ui.label(format!("{}:", t!("Tab.Status.Label.SpeedUnits")));
-                ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-                    egui::ComboBox::from_id_salt("Settings.Status.SpeedUnits.ComboBox")
-                        .selected_text(self.display_unit.to_string())
-                        .show_ui(ui, |ui| {
-                            for unit in SpeedUnitPerSecond::iter() {
-                                let text = unit.to_string();
-                                ui.selectable_value(&mut self.display_unit, unit, text);
-                            }
-                        });
-                });
-                ui.end_row();
-
-                ui.horizontal_centered(|ui| {
-                    if ui.button(t!("Button.Apply")).clicked() {
-                        ctx.client_settings.plot.display_window_seconds =
-                            self.display_window_seconds;
-                        ctx.client_settings.plot.units = self.display_unit.clone();
-                    }
-                });
-
-                ui.horizontal_centered(|ui| {
-                    if ui.button(t!("Button.Save")).clicked() {
-                        ctx.config.plot_display_window_seconds =
-                            ctx.client_settings.plot.display_window_seconds;
-                        ctx.config.plot_speed_units =
-                            ctx.client_settings.plot.units.clone();
-
-                        match ctx.config.save_to_file() {
-                            Ok(_) => {
-                                log::info!(
-                                    "Plot Settings: Successfully saved client config."
-                                );
-                                MessageModal::info(&t!(
-                                    "Message.Success.ClientConfigSaved"
-                                ))
-                                .try_send_by(&ctx.modals_tx);
-                            },
-                            Err(err) => {
-                                log::error!(
-                                    "Plot Settings: Failed to save client config: {}",
-                                    err
-                                );
-                                MessageModal::error(&format!(
-                                    "{} {}",
-                                    t!("Error.FailedSaveClientConfigIntoFile"),
-                                    err
-                                ))
-                                .try_send_by(&ctx.modals_tx);
-                            },
-                        };
-                    }
-                });
             });
     }
 

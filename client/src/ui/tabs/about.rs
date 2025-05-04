@@ -1,4 +1,7 @@
 use crate::context::Context;
+use crate::ui::styles;
+use crate::ui::tabs::Tab;
+use egui::RichText;
 
 // Constant so we can dynamically center the contents slightly above the center of the frame
 const UPPER_CENTER: f32 = 5.0;
@@ -25,6 +28,8 @@ impl Default for AboutTab {
 
 impl AboutTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        self.tab_heading(ui);
+
         let theme = ctx.client_settings.theme.into_aesthetix_theme();
 
         let computed_upper_center = ui.ctx().screen_rect().height() / UPPER_CENTER;
@@ -52,5 +57,12 @@ impl AboutTab {
                 "https://github.com/xairaven/xailyser/releases",
             );
         });
+    }
+
+    fn tab_heading(&self, ui: &mut egui::Ui) {
+        ui.add_space(styles::space::TAB);
+        ui.heading(
+            RichText::new(Tab::About.to_string().as_str()).size(styles::heading::HUGE),
+        );
     }
 }
