@@ -108,26 +108,31 @@ impl WsHandler {
     fn send_receive_messages(&mut self, mut stream: WSStream) {
         while !self.shutdown_flag.load(Ordering::Acquire) {
             if let Err(err) = self.receive_messages(&mut stream) {
-                log::debug!("WS-{}. Got error while receiving messages: {}", self.id, err);
+                log::debug!(
+                    "WS-{}. Got error while receiving messages: {}",
+                    self.id,
+                    err
+                );
                 return;
             }
             self.send_messages(&mut stream);
-            loop {
-                match self.frame_receiver.try_recv() {
-                    Ok(data) => {
-                        self.response_queue.push_back(Response::Data(data));
-                        log::debug!("WS-{}. Pushing data from frame receiver to queue.", self.id);
-                    },
-                    Err(err) if err == TryRecvError::Disconnected => {
-                        log::error!(
-                            "WS-{}. Broadcast channel sender disconnected. {}",
-                            self.id,
-                            err
-                        );
-                        break;
-                    },
-                    _ => break,
-                }
+            match self.frame_receiver.try_recv() {
+                Ok(data) => {
+                    self.response_queue.push_back(Response::Data(data));
+                    log::debug!(
+                        "WS-{}. Pushing data from frame receiver to queue.",
+                        self.id
+                    );
+                },
+                Err(err) if err == TryRecvError::Disconnected => {
+                    log::error!(
+                        "WS-{}. Broadcast channel sender disconnected. {}",
+                        self.id,
+                        err
+                    );
+                    continue;
+                },
+                _ => continue,
             }
         }
 
@@ -185,7 +190,10 @@ impl WsHandler {
                 if self.compression {
                     match compress(&serialized) {
                         Ok(bytes) => {
-                            log::debug!("WS-{}. Will send compressed message now..", self.id);
+                            log::debug!(
+                                "WS-{}. Will send compressed message now..",
+                                self.id
+                            );
                             let _ = stream.send(Message::Binary(Bytes::from(bytes)));
                             log::debug!("WS-{}. Message successfully sent.", self.id);
                         },
@@ -286,7 +294,10 @@ impl WsHandler {
                     request::core::process(message, &self.context, &self.shutdown_flag)
                 {
                     self.response_queue.push_back(response);
-                    log::debug!("WS-{}. Pushed back processed request to queue.", self.id);
+                    log::debug!(
+                        "WS-{}. Pushed back processed request to queue.",
+                        self.id
+                    );
                 }
             },
             Err(_) => {
