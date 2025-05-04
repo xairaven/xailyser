@@ -10,7 +10,7 @@ use std::thread;
 use std::time::Duration;
 use thiserror::Error;
 
-const TIMEOUT_MS: i32 = 100;
+const TIMEOUT_MS: i32 = 10;
 
 pub struct PacketSniffer {
     capture: Capture<Active>,
