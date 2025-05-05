@@ -1,11 +1,11 @@
 use crate::context;
 use crate::context::Context;
 use crate::ws::{WsError, WsHandlerBuilder};
-use common::channel::BroadcastChannel;
+use common::channel::BroadcastPool;
 use common::messages::CONNECTION_TIMEOUT;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::thread::JoinHandle;
 use thiserror::Error;
@@ -13,8 +13,8 @@ use thiserror::Error;
 const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 
 pub struct TcpHandler {
-    frame_channel: Arc<Mutex<BroadcastChannel<dpi::frame::FrameType>>>,
     context: Arc<Mutex<Context>>,
+    frame_channels_pool: Arc<RwLock<BroadcastPool<dpi::frame::FrameType>>>,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
     ws_threads_counter: u16,
@@ -57,12 +57,20 @@ impl TcpHandler {
                         .spawn({
                             let context = Arc::clone(&self.context);
                             let shutdown_flag = Arc::clone(&self.shutdown_flag);
-                            let frame_receiver = match self.frame_channel.lock() {
-                                Ok(mut guard) => guard.add_receiver(),
+                            let frame_receiver = match self.frame_channels_pool.write() {
+                                Ok(mut value) => {
+                                    value.create();
+                                    if let Some(receiver) = value.last_receiver() {
+                                        receiver
+                                    } else {
+                                        log::error!("Failed to create broadcast receiver from pool.");
+                                        std::process::exit(1);
+                                    }
+                                }
                                 Err(err) => {
-                                    log::error!("Broadcast channel lock failed: {}", err);
+                                    log::error!("Broadcast pool lock failed: {}", err);
                                     std::process::exit(1);
-                                },
+                                }
                             };
                             let ws_active_counter = Arc::clone(&self.ws_active_counter);
 
@@ -140,7 +148,7 @@ pub enum TcpError {
 }
 
 pub struct TcpHandlerBuilder {
-    pub frame_channel: Arc<Mutex<BroadcastChannel<dpi::frame::FrameType>>>,
+    pub frame_channels_pool: Arc<RwLock<BroadcastPool<dpi::frame::FrameType>>>,
     pub context: Arc<Mutex<Context>>,
     pub shutdown_flag: Arc<AtomicBool>,
     pub ws_active_counter: Arc<AtomicUsize>,
@@ -149,7 +157,7 @@ pub struct TcpHandlerBuilder {
 impl TcpHandlerBuilder {
     pub fn build(self) -> TcpHandler {
         TcpHandler {
-            frame_channel: self.frame_channel,
+            frame_channels_pool: self.frame_channels_pool,
             context: self.context,
             shutdown_flag: self.shutdown_flag,
             ws_active_counter: self.ws_active_counter,

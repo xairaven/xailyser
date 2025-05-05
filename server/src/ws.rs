@@ -4,7 +4,7 @@ use bytes::Bytes;
 use common::auth;
 use common::compression::{compress, decompress};
 use common::messages::{CONNECTION_TIMEOUT, Request, Response, ServerError};
-use crossbeam::channel::{Receiver, TryRecvError};
+use crossbeam::channel::{Receiver, RecvTimeoutError};
 use std::collections::VecDeque;
 use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -29,6 +29,7 @@ pub struct WsHandler {
 }
 
 type WSStream = WebSocket<TcpStream>;
+const BATCH_SIZE: usize = 100;
 
 impl WsHandler {
     pub fn start(&mut self, tcp_stream: TcpStream) -> Result<(), WsError> {
@@ -101,12 +102,53 @@ impl WsHandler {
                     .unwrap_or_default()),
             }
         };
-        tungstenite::accept_hdr(tcp_stream, check_authentication)
-            .map_err(|err| WsError::AuthFailed(err.to_string()))
+
+        let stream = tungstenite::accept_hdr(tcp_stream, check_authentication)
+            .map_err(|err| WsError::AuthFailed(err.to_string()))?;
+
+        stream
+            .get_ref()
+            .set_nonblocking(true)
+            .map_err(|_| WsError::FailedSetNonBlockingStream)?;
+
+        Ok(stream)
     }
 
     fn send_receive_messages(&mut self, mut stream: WSStream) {
         while !self.shutdown_flag.load(Ordering::Acquire) {
+            match self.frame_receiver.recv_timeout(CONNECTION_TIMEOUT) {
+                Ok(first) => {
+                    self.response_queue.push_back(Response::Data(first));
+                    log::debug!(
+                        "WS-{}. Pushing data from frame receiver to queue.",
+                        self.id
+                    );
+
+                    // Catching others without waiting
+                    for _ in 1..=BATCH_SIZE {
+                        match self.frame_receiver.try_recv() {
+                            Ok(frame) => {
+                                self.response_queue.push_back(Response::Data(frame));
+                                log::debug!(
+                                    "WS-{}. Pushing data from frame receiver to queue.",
+                                    self.id
+                                );
+                            },
+                            _ => break,
+                        }
+                    }
+                    self.send_messages(&mut stream);
+                },
+                Err(err) if err == RecvTimeoutError::Disconnected => {
+                    log::error!(
+                        "WS-{}. Broadcast channel sender disconnected. {}",
+                        self.id,
+                        err
+                    );
+                    break;
+                },
+                _ => {},
+            }
             if let Err(err) = self.receive_messages(&mut stream) {
                 log::debug!(
                     "WS-{}. Got error while receiving messages: {}",
@@ -114,25 +156,6 @@ impl WsHandler {
                     err
                 );
                 return;
-            }
-            self.send_messages(&mut stream);
-            match self.frame_receiver.try_recv() {
-                Ok(data) => {
-                    self.response_queue.push_back(Response::Data(data));
-                    log::debug!(
-                        "WS-{}. Pushing data from frame receiver to queue.",
-                        self.id
-                    );
-                },
-                Err(err) if err == TryRecvError::Disconnected => {
-                    log::error!(
-                        "WS-{}. Broadcast channel sender disconnected. {}",
-                        self.id,
-                        err
-                    );
-                    continue;
-                },
-                _ => continue,
             }
         }
 
@@ -338,6 +361,9 @@ pub enum WsError {
 
     #[error("Invalid password header")]
     InvalidPasswordHeader,
+
+    #[error("Failed to set non-blocking stream")]
+    FailedSetNonBlockingStream,
 }
 
 pub struct WsHandlerBuilder {

@@ -3,9 +3,9 @@ use crate::context;
 use crate::context::Context;
 use crate::net::PacketSnifferBuilder;
 use crate::tcp::TcpHandlerBuilder;
-use common::channel::BroadcastChannel;
+use common::channel::BroadcastPool;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 
 pub fn start(config: Config) {
@@ -17,8 +17,9 @@ pub fn start(config: Config) {
         },
     }));
     let shutdown_flag = Arc::new(AtomicBool::new(false));
-    let frame_channel =
-        Arc::new(Mutex::new(BroadcastChannel::<dpi::frame::FrameType>::new()));
+    let frame_channels_pool = Arc::new(RwLock::new(
+        BroadcastPool::<dpi::frame::FrameType>::default(),
+    ));
     let ws_active_counter = Arc::new(AtomicUsize::new(0));
 
     if let Err(err) = ctrlc::set_handler({
@@ -40,7 +41,7 @@ pub fn start(config: Config) {
         } else {
             let context = Arc::clone(&context);
             let shutdown_flag = Arc::clone(&shutdown_flag);
-            let frame_channel = Arc::clone(&frame_channel);
+            let frame_channels_pool = Arc::clone(&frame_channels_pool);
             let ws_active_counter = Arc::clone(&ws_active_counter);
             Some(
                 thread::Builder::new()
@@ -48,7 +49,7 @@ pub fn start(config: Config) {
                     .spawn(move || {
                         log::info!("Packet sniffing thread started.");
                         let result = PacketSnifferBuilder {
-                            frame_channel,
+                            frame_channels_pool,
                             context,
                             shutdown_flag: shutdown_flag.clone(),
                             ws_active_counter,
@@ -84,7 +85,7 @@ pub fn start(config: Config) {
             move || {
                 log::info!("TCP Listening thread started.");
                 let mut tcp_handler = TcpHandlerBuilder {
-                    frame_channel,
+                    frame_channels_pool,
                     context,
                     shutdown_flag: shutdown_flag.clone(),
                     ws_active_counter,
