@@ -79,15 +79,24 @@
   "Response.Error.MutexPoisoned": "Несподівана помилка виникла при блокуванні певної пам'яті.",
   "Response.Error.PasswordChange": "Не вдалося змінити пароль.",
 
+  "Styles.Hover.FieldNotApplied": "Це поле відрізняється від встановленого. Також, не забудьте зберегти конфігурацію, якщо потрібно.",
+
   "Tab.About.Description": "Клієнт-серверний аналізатор мережевого трафіку у домашній мережі.",
   "Tab.About.Developer": "Розробник: Ковальов Олександр",
   "Tab.About.CheckGithub": "Перегляньте код на GitHub!",
   "Tab.About.LatestRelease": "Останній реліз",
-
+  
+  "Tab.Status.NetworkData.Label.Peak": "Peak",
+  "Tab.Status.NetworkData.Label.Throughput": "Throughput",
+  "Tab.Status.NetworkData.Label.Received": "Received",
+  "Tab.Status.NetworkData.Label.Sent": "Sent",
   "Tab.Status.Hover.PlotSettings": "Налаштування графіку",
   "Tab.Status.Legend.Throughput": "Пропускна здатність",
   "Tab.Status.Legend.Send": "Відправлено",
   "Tab.Status.Legend.Receive": "Отримано",
+  "Tab.Status.Plot.Axis.X.Label": "Час",
+  "Tab.Status.Plot.Axis.X.Label.Suffix": "с.",
+  "Tab.Status.Plot.Axis.Y.Label": "Швидкість",
   "Tab.ThroughputSettings.Header": "Налаштування графіку пропускної здатності",
   "Tab.ThroughputSettings.Hover.SettingSavesConfig": "Це налаштування лише зберігає файл конфігурації.",
   "Tab.ThroughputSettings.Label.DisplayPeriod": "Період",
@@ -95,7 +104,6 @@
   "Tab.ThroughputSettings.Label.SpeedUnits": "Од. швидкості",
   "Tab.ThroughputSettings.Suffix.DisplayInterval": "с.",
 
-  "Tab.SettingsClient.Hover.FieldNotApplied": "Це поле відрізняється від встановленого. Також не забудьте зберегти файл конфігурації, якщо потрібно.",
   "Tab.SettingsClient.Hover.SettingSavesConfig": "Це налаштування лише зберігає файл конфігурації.",
   "Tab.SettingsClient.Label.SaveConfig": "Зберегти конфігурацію",
   "Tab.SettingsClient.Label.Compression": "Стиснення",

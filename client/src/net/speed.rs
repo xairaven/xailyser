@@ -110,6 +110,26 @@ impl SpeedData {
             .map(|(i, value)| [i as f64, *value])
     }
 
+    pub fn peak_throughput(&self) -> f64 {
+        Self::peak(&self.bucket_throughput)
+    }
+
+    pub fn peak_received(&self) -> f64 {
+        Self::peak(&self.bucket_receive)
+    }
+
+    pub fn peak_sent(&self) -> f64 {
+        Self::peak(&self.bucket_send)
+    }
+
+    pub fn peak(bucket: &[f64]) -> f64 {
+        bucket
+            .iter()
+            .copied()
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap_or(0.0)
+    }
+
     fn bucket_per_second(
         bucket: &mut Vec<f64>, deque: &VecDeque<Sample>, settings: &PlotSettings,
         now: DateTime<Local>,
@@ -127,7 +147,7 @@ impl SpeedData {
                 Err(_) => continue,
             };
             if second < seconds_max {
-                bucket[second] += settings.units.value(sample.captured_bytes);
+                bucket[second] += settings.units.value(sample.captured_bytes as f64);
             }
         }
     }
@@ -159,13 +179,13 @@ const MEGABYTE_DIVIDER: f64 = 1024.0 * 1024.0;
 const GIGABYTE_DIVIDER: f64 = 1024.0 * 1024.0 * 1024.0;
 
 impl SpeedUnitPerSecond {
-    pub fn value(&self, value: u32) -> f64 {
+    pub fn value(&self, value: f64) -> f64 {
         match self {
-            SpeedUnitPerSecond::Bits => value as f64 * BIT_MULTIPLIER,
-            SpeedUnitPerSecond::Bytes => value as f64,
-            SpeedUnitPerSecond::Kilobytes => value as f64 / KILOBYTE_DIVIDER,
-            SpeedUnitPerSecond::Megabytes => value as f64 / MEGABYTE_DIVIDER,
-            SpeedUnitPerSecond::Gigabytes => value as f64 / GIGABYTE_DIVIDER,
+            SpeedUnitPerSecond::Bits => value * BIT_MULTIPLIER,
+            SpeedUnitPerSecond::Bytes => value,
+            SpeedUnitPerSecond::Kilobytes => value / KILOBYTE_DIVIDER,
+            SpeedUnitPerSecond::Megabytes => value / MEGABYTE_DIVIDER,
+            SpeedUnitPerSecond::Gigabytes => value / GIGABYTE_DIVIDER,
         }
     }
 }

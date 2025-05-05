@@ -33,6 +33,7 @@ impl StatusTab {
                 ui.horizontal_centered(|ui| {
                     self.plot_view(ui, ctx);
                 });
+                self.current_peak_stats_view(ui, ctx);
                 self.pcap_save_view(ui, ctx);
             });
     }
@@ -92,6 +93,20 @@ impl StatusTab {
             .allow_drag(false)
             .allow_scroll(false)
             .allow_zoom(false)
+            .default_x_bounds(
+                0.0,
+                ctx.client_settings.plot.display_window_seconds as f64 + 1.0,
+            )
+            .x_axis_label(format!(
+                "{}, {}",
+                t!("Tab.Status.Plot.Axis.X.Label"),
+                t!("Tab.Status.Plot.Axis.X.Label.Suffix")
+            ))
+            .y_axis_label(format!(
+                "{}, {}",
+                t!("Tab.Status.Plot.Axis.Y.Label"),
+                ctx.client_settings.plot.units
+            ))
             .height(plot_height)
             .show(ui, |plot_ui| {
                 plot_ui.line(throughput_line);
@@ -100,7 +115,32 @@ impl StatusTab {
             });
     }
 
-    pub fn pcap_save_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn current_peak_stats_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+            ui.label(format!(
+                "⬆ {}: {:.2}",
+                t!("Tab.Status.NetworkData.Label.Sent"),
+                ctx.net_storage.speed.peak_sent()
+            ));
+            ui.label(format!(
+                "⬇ {}: {:.2}",
+                t!("Tab.Status.NetworkData.Label.Received"),
+                ctx.net_storage.speed.peak_received()
+            ));
+            ui.label(format!(
+                "🔀 {}: {:.2}",
+                t!("Tab.Status.NetworkData.Label.Throughput"),
+                ctx.net_storage.speed.peak_throughput()
+            ));
+            ui.label(format!(
+                "{} ({}):",
+                t!("Tab.Status.NetworkData.Label.Peak"),
+                ctx.client_settings.plot.units
+            ));
+        });
+    }
+
+    fn pcap_save_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         if !ctx.net_storage.raw.is_empty() {
             ui.horizontal(|ui| {
                 ui.label(format!("Unparsed Frames: {}", ctx.net_storage.raw.amount()));
