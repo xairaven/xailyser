@@ -103,7 +103,7 @@ impl WsHandler {
                         Ok(())
                     },
                     tungstenite::Error::Io(err) => {
-                        log::warn!("WS-Stream: {}", err);
+                        log::warn!("WS-Stream: {}. Kind: {}", err, err.kind());
                         Err(tungstenite::Error::Io(err))
                     },
                     _ => {
