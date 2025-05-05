@@ -23,30 +23,26 @@ impl SpeedData {
     pub fn get_info_metadata(
         &mut self, metadata: &FrameMetadata,
     ) -> Result<(), SpeedError> {
-        let captured_info = Sample::try_from(&metadata.header)?;
-        self.throughput.push_back(captured_info.clone());
+        let sample = Sample::try_from(&metadata.header)?;
+        self.throughput.push_back(sample.clone());
 
-        if let Some(ProtocolData::IPv4(value)) = metadata
-            .layers
-            .iter()
-            .find(|&layer| matches!(layer, ProtocolData::IPv4(_)))
-        {
-            if value.address_destination.is_private() {
-                self.receive.push_back(captured_info.clone());
+        if let Some(proto) = metadata.layers.iter().find_map(|layer| match layer {
+            ProtocolData::IPv4(v) => Some((
+                v.address_source.is_private(),
+                v.address_destination.is_private(),
+            )),
+            ProtocolData::IPv6(v) => Some((
+                v.address_source.is_unique_local(),
+                v.address_destination.is_unique_local(),
+            )),
+            _ => None,
+        }) {
+            let (src_private, dst_private) = proto;
+            if dst_private {
+                self.receive.push_back(sample.clone());
             }
-            if value.address_source.is_private() {
-                self.send.push_back(captured_info);
-            }
-        } else if let Some(ProtocolData::IPv6(value)) = metadata
-            .layers
-            .iter()
-            .find(|&layer| matches!(layer, ProtocolData::IPv6(_)))
-        {
-            if value.address_destination.is_unique_local() {
-                self.receive.push_back(captured_info.clone());
-            }
-            if value.address_source.is_unique_local() {
-                self.send.push_back(captured_info);
+            if src_private {
+                self.send.push_back(sample);
             }
         }
 
@@ -60,24 +56,32 @@ impl SpeedData {
     }
 
     pub fn update_info(&mut self, settings: &ClientSettings) {
-        Self::clear_outdated_info(&mut self.throughput, settings);
-        Self::clear_outdated_info(&mut self.send, settings);
-        Self::clear_outdated_info(&mut self.receive, settings);
+        let now = Local::now();
+
+        Self::clear_deque_outdated(&mut self.throughput, settings, now);
+        Self::clear_deque_outdated(&mut self.send, settings, now);
+        Self::clear_deque_outdated(&mut self.receive, settings, now);
 
         Self::bucket_per_second(
             &mut self.bucket_throughput,
             &self.throughput,
             &settings.plot,
+            now,
         );
-        Self::bucket_per_second(&mut self.bucket_send, &self.send, &settings.plot);
-        Self::bucket_per_second(&mut self.bucket_receive, &self.receive, &settings.plot);
+        Self::bucket_per_second(&mut self.bucket_send, &self.send, &settings.plot, now);
+        Self::bucket_per_second(
+            &mut self.bucket_receive,
+            &self.receive,
+            &settings.plot,
+            now,
+        );
     }
 
-    fn clear_outdated_info(deque: &mut VecDeque<Sample>, settings: &ClientSettings) {
-        while let Some(info) = deque.front() {
-            if (Local::now() - info.time_captured).num_seconds()
-                > settings.plot.display_window_seconds as i64
-            {
+    fn clear_deque_outdated(
+        deque: &mut VecDeque<Sample>, settings: &ClientSettings, now: DateTime<Local>,
+    ) {
+        while let Some(sample) = deque.front() {
+            if sample.is_outdated(now, settings) {
                 deque.pop_front();
             } else {
                 break;
@@ -108,12 +112,13 @@ impl SpeedData {
 
     fn bucket_per_second(
         bucket: &mut Vec<f64>, deque: &VecDeque<Sample>, settings: &PlotSettings,
+        now: DateTime<Local>,
     ) {
         let seconds_max = settings.display_window_seconds as usize + 1;
         bucket.clear();
-        bucket.resize(seconds_max, 0.0);
-
-        let now = Local::now();
+        if bucket.len() != seconds_max {
+            bucket.resize(seconds_max, 0.0);
+        }
 
         for sample in deque {
             let second = (now - sample.time_captured).num_seconds();
@@ -122,7 +127,7 @@ impl SpeedData {
                 Err(_) => continue,
             };
             if second < seconds_max {
-                bucket[second] += settings.units.value(sample.captured_bytes) as f64;
+                bucket[second] += settings.units.value(sample.captured_bytes);
             }
         }
     }
@@ -148,14 +153,19 @@ pub const KILOBYTES_PER_SECOND: &str = "kB/s";
 pub const MEGABYTES_PER_SECOND: &str = "MB/s";
 pub const GIGABYTES_PER_SECOND: &str = "GB/s";
 
+const BIT_MULTIPLIER: f64 = 8.0;
+const KILOBYTE_DIVIDER: f64 = 1024.0;
+const MEGABYTE_DIVIDER: f64 = 1024.0 * 1024.0;
+const GIGABYTE_DIVIDER: f64 = 1024.0 * 1024.0 * 1024.0;
+
 impl SpeedUnitPerSecond {
-    pub fn value(&self, value: u32) -> u32 {
+    pub fn value(&self, value: u32) -> f64 {
         match self {
-            SpeedUnitPerSecond::Bits => value * 8,
-            SpeedUnitPerSecond::Bytes => value,
-            SpeedUnitPerSecond::Kilobytes => value / 1024,
-            SpeedUnitPerSecond::Megabytes => value / (1024 * 1024),
-            SpeedUnitPerSecond::Gigabytes => value / (1024 * 1024 * 1024),
+            SpeedUnitPerSecond::Bits => value as f64 * BIT_MULTIPLIER,
+            SpeedUnitPerSecond::Bytes => value as f64,
+            SpeedUnitPerSecond::Kilobytes => value as f64 / KILOBYTE_DIVIDER,
+            SpeedUnitPerSecond::Megabytes => value as f64 / MEGABYTE_DIVIDER,
+            SpeedUnitPerSecond::Gigabytes => value as f64 / GIGABYTE_DIVIDER,
         }
     }
 }
@@ -190,8 +200,15 @@ impl TryFrom<&str> for SpeedUnitPerSecond {
 
 #[derive(Debug, Clone)]
 pub struct Sample {
-    captured_bytes: u32,
-    time_captured: DateTime<Local>,
+    pub captured_bytes: u32,
+    pub time_captured: DateTime<Local>,
+}
+
+impl Sample {
+    fn is_outdated(&self, now: DateTime<Local>, settings: &ClientSettings) -> bool {
+        (now - self.time_captured).num_seconds()
+            > settings.plot.display_window_seconds as i64
+    }
 }
 
 impl TryFrom<&FrameHeader> for Sample {
