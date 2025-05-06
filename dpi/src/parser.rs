@@ -38,13 +38,13 @@ impl ProtocolParser {
     }
 
     fn traversal(
-        id: &ProtocolId, bytes: &[u8], metadata: &mut FrameMetadata, depth: usize
+        id: &ProtocolId, bytes: &[u8], metadata: &mut FrameMetadata, depth: usize,
     ) -> ProcessResult {
         const MAX_DEPTH: usize = 16;
         if depth > MAX_DEPTH {
             return ProcessResult::Failed;
         }
-        
+
         let result = id.parse()(bytes);
 
         match result {
@@ -56,7 +56,12 @@ impl ProtocolParser {
                 metadata.layers.push(layer);
 
                 if let Some(best) = id.best_children(metadata) {
-                    return Self::traversal(&best, rest, metadata, depth + 1);
+                    return match depth.checked_add(1) {
+                        Some(new_depth) => {
+                            Self::traversal(&best, rest, metadata, new_depth)
+                        },
+                        None => ProcessResult::Failed,
+                    };
                 }
 
                 let children = match id.children() {
@@ -67,7 +72,12 @@ impl ProtocolParser {
                 };
 
                 for id in children {
-                    let result = Self::traversal(&id, rest, metadata, depth + 1);
+                    let result = match depth.checked_add(1) {
+                        Some(new_depth) => {
+                            Self::traversal(&id, rest, metadata, new_depth)
+                        },
+                        None => return ProcessResult::Failed,
+                    };
 
                     match result {
                         ProcessResult::Complete | ProcessResult::Incomplete => {
