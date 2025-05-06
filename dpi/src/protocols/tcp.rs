@@ -1,8 +1,9 @@
 use crate::frame::FrameMetadata;
 use crate::parser::ParserError;
 use crate::protocols::{ProtocolData, ProtocolId};
-use nom::number::{be_u16, be_u32};
+use nom::number::{be_u8, be_u16, be_u32, be_u64, be_u128};
 use nom::{IResult, Parser, bits};
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 
 // TCP Protocol
@@ -67,7 +68,16 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     let (rest, urgent_pointer) = be_u16().parse(rest)?;
 
     // Options - up to 320 bits.
-    let options = rest.to_vec();
+    let mut options: Vec<OptionData> = Vec::new();
+    let mut option_bytes_buffer = rest;
+    while !option_bytes_buffer.is_empty() {
+        let (rest, kind) = be_u8().parse(option_bytes_buffer)?;
+        let (rest, value) = OptionId::try_from(kind)
+            .map_err(|_| ParserError::ErrorVerify.to_nom(rest))?
+            .parse(rest)?;
+        options.push(value);
+        option_bytes_buffer = rest;
+    }
 
     let protocol = TCP {
         port_source,
@@ -117,7 +127,107 @@ pub struct TCP {
     pub window: u16,
     pub checksum: u16,
     pub urgent_pointer: u16,
-    pub options: Vec<u8>,
+    pub options: Vec<OptionData>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u8)]
+pub enum OptionId {
+    EndOfOptionList = 0,
+    NoOperation = 1,
+    MaximumSegmentSize = 2,
+    WindowScaling = 3,
+    SAckPermitted = 4,
+    SAck = 5,
+
+    Timestamps = 8,
+    FastOpen = 34,
+}
+
+impl OptionId {
+    pub fn parse<'a>(&self, bytes: &'a [u8]) -> IResult<&'a [u8], OptionData> {
+        match self {
+            Self::EndOfOptionList => Ok((bytes, OptionData::EndOfOptionList)),
+
+            Self::NoOperation => Ok((bytes, OptionData::NoOperation)),
+
+            Self::MaximumSegmentSize => {
+                let (rest, length) = be_u8().parse(bytes)?;
+                if length != 4 {
+                    return Err(ParserError::ErrorVerify.to_nom(bytes));
+                }
+                let (rest, maximum_segment_size) = be_u16().parse(rest)?;
+                Ok((rest, OptionData::MaximumSegmentSize(maximum_segment_size)))
+            },
+
+            Self::WindowScaling => {
+                let (rest, length) = be_u8().parse(bytes)?;
+                if length != 3 {
+                    return Err(ParserError::ErrorVerify.to_nom(bytes));
+                }
+                let (rest, window) = be_u8().parse(rest)?;
+                Ok((rest, OptionData::WindowScaling(window)))
+            },
+
+            Self::SAckPermitted => {
+                let (rest, length) = be_u8().parse(bytes)?;
+                if length != 2 {
+                    return Err(ParserError::ErrorVerify.to_nom(bytes));
+                }
+                Ok((rest, OptionData::SAckPermitted))
+            },
+
+            Self::SAck => {
+                let (rest, length) = be_u8().parse(bytes)?;
+                if length % 8 != 0 {
+                    return Err(ParserError::ErrorVerify.to_nom(bytes));
+                }
+                let mut values = Vec::with_capacity(length as usize / 8);
+                let mut buffer = rest;
+                for _ in 0..(length / 8) {
+                    let (rest, value) = be_u64().parse(buffer)?;
+                    values.push(value);
+                    buffer = rest;
+                }
+
+                Ok((rest, OptionData::SAck(values)))
+            },
+
+            Self::Timestamps => {
+                let (rest, length) = be_u8().parse(bytes)?;
+                if length != 10 {
+                    return Err(ParserError::ErrorVerify.to_nom(bytes));
+                }
+
+                let (rest, initial_time) = be_u32().parse(rest)?;
+                let (rest, reply_time) = be_u32().parse(rest)?;
+
+                Ok((rest, OptionData::Timestamps(initial_time, reply_time)))
+            },
+
+            Self::FastOpen => {
+                let (rest, length) = be_u8().parse(bytes)?;
+                if length != 18 {
+                    return Err(ParserError::ErrorVerify.to_nom(bytes));
+                }
+                let (rest, cookie) = be_u128().parse(rest)?;
+
+                Ok((rest, OptionData::FastOpen(cookie)))
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum OptionData {
+    EndOfOptionList,
+    NoOperation,
+    MaximumSegmentSize(u16),
+    WindowScaling(u8),
+    SAckPermitted,
+    SAck(Vec<u64>),
+    Timestamps(u32, u32),
+    FastOpen(u128),
 }
 
 #[cfg(test)]
@@ -211,18 +321,12 @@ mod tests {
             checksum: 0xa094,
             urgent_pointer: 0,
             options: vec![
-                u8::from_str_radix("02", 16).unwrap(),
-                u8::from_str_radix("04", 16).unwrap(),
-                u8::from_str_radix("05", 16).unwrap(),
-                u8::from_str_radix("96", 16).unwrap(),
-                u8::from_str_radix("01", 16).unwrap(),
-                u8::from_str_radix("01", 16).unwrap(),
-                u8::from_str_radix("04", 16).unwrap(),
-                u8::from_str_radix("02", 16).unwrap(),
-                u8::from_str_radix("01", 16).unwrap(),
-                u8::from_str_radix("03", 16).unwrap(),
-                u8::from_str_radix("03", 16).unwrap(),
-                u8::from_str_radix("06", 16).unwrap(),
+                OptionData::MaximumSegmentSize(1430),
+                OptionData::NoOperation,
+                OptionData::NoOperation,
+                OptionData::SAckPermitted,
+                OptionData::NoOperation,
+                OptionData::WindowScaling(6),
             ],
         };
 

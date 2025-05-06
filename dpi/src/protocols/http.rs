@@ -250,6 +250,7 @@ mod tests {
     use crate::protocols::ethernet::mac::MacAddress;
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv4::IPv4;
+    use crate::protocols::tcp;
     use crate::protocols::tcp::TCP;
     use crate::wrapper::FrameHeader;
     use std::net::Ipv4Addr;
@@ -333,7 +334,9 @@ mod tests {
             checksum: 0x1a7e,
             urgent_pointer: 0,
             options: vec![
-                0x01, 0x01, 0x08, 0x0A, 0x1A, 0x7D, 0x84, 0x38, 0xAA, 0xE7, 0x7F, 0xC8,
+                tcp::OptionData::NoOperation,
+                tcp::OptionData::NoOperation,
+                tcp::OptionData::Timestamps(444433464, 2867298248),
             ],
         };
 

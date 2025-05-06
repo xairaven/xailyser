@@ -92,7 +92,6 @@ pub struct IPv6 {
 mod tests {
     use crate::frame::FrameType;
     use crate::parser::ProtocolParser;
-    use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
@@ -100,6 +99,7 @@ mod tests {
     use crate::protocols::ipv4::IPv4;
     use crate::protocols::ipv6::IPv6;
     use crate::protocols::tcp::TCP;
+    use crate::protocols::{ProtocolData, tcp};
     use crate::wrapper::FrameHeader;
     use std::net::{Ipv4Addr, Ipv6Addr};
     use std::str::FromStr;
@@ -177,7 +177,9 @@ mod tests {
             checksum: 0xc92e,
             urgent_pointer: 0,
             options: vec![
-                0x01, 0x01, 0x08, 0x0A, 0x80, 0x1D, 0xA5, 0x22, 0x80, 0x1D, 0xA5, 0x22,
+                tcp::OptionData::NoOperation,
+                tcp::OptionData::NoOperation,
+                tcp::OptionData::Timestamps(2149426466, 2149426466),
             ],
         };
 
@@ -257,7 +259,9 @@ mod tests {
             checksum: 0x2a66,
             urgent_pointer: 0,
             options: vec![
-                0x01, 0x01, 0x08, 0x0A, 0x80, 0x1D, 0xA5, 0x25, 0x80, 0x1D, 0xA5, 0x25,
+                tcp::OptionData::NoOperation,
+                tcp::OptionData::NoOperation,
+                tcp::OptionData::Timestamps(2149426469, 2149426469),
             ],
         };
 
