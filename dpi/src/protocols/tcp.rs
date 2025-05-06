@@ -1,5 +1,5 @@
 use crate::frame::FrameMetadata;
-use crate::parser::ParserError;
+use crate::parser::{ParserError, ProtocolParser};
 use crate::protocols::{ProtocolData, ProtocolId};
 use nom::number::{be_u8, be_u16, be_u32, be_u64, be_u128};
 use nom::{IResult, Parser, bits};
@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 pub const DATA_OFFSET_LENGTH_BITS: usize = 4;
 pub const RESERVED_LENGTH_BITS: usize = 4;
 pub const FLAG_LENGTH_BITS: usize = 1;
+type TcpFlags = (u8, u8, u8, u8, u8, u8, u8, u8);
 pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Source port. 2 bytes
     let (rest, port_source) = be_u16().parse(bytes)?;
@@ -46,8 +47,7 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
         .ok_or(ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Flags: 8 flags by 1 bit.
-    type TcpFlags = (u8, u8, u8, u8, u8, u8, u8, u8);
-    let (rest, (cwr, ece, urg, ack, psh, rst, syn, fin)): (&[u8], TcpFlags) =
+    let (rest, flags): (&[u8], TcpFlags) =
         bits::bits::<_, _, nom::error::Error<_>, _, _>((
             bits::complete::take(FLAG_LENGTH_BITS),
             bits::complete::take(FLAG_LENGTH_BITS),
@@ -58,7 +58,8 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
             bits::complete::take(FLAG_LENGTH_BITS),
             bits::complete::take(FLAG_LENGTH_BITS),
         ))(rest)?;
-    let flags: [u8; 8] = [cwr, ece, urg, ack, psh, rst, syn, fin];
+    let flags =
+        Flags::try_from(flags).map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Window: 2 bytes.
     let (rest, window) = be_u16().parse(rest)?;
@@ -123,11 +124,40 @@ pub struct TCP {
     pub acknowledgement_number: u32,
     pub data_offset: u16,
     pub reserved: u8,
-    pub flags: [u8; 8],
+    pub flags: Flags,
     pub window: u16,
     pub checksum: u16,
     pub urgent_pointer: u16,
     pub options: Vec<OptionData>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct Flags {
+    pub congestion_window_reduced: bool,
+    pub ecn_echo: bool,
+    pub urgent: bool,
+    pub acknowledgment: bool,
+    pub push: bool,
+    pub reset: bool,
+    pub syn: bool,
+    pub fin: bool,
+}
+
+impl TryFrom<TcpFlags> for Flags {
+    type Error = ParserError;
+
+    fn try_from(value: TcpFlags) -> Result<Self, Self::Error> {
+        Ok(Self {
+            congestion_window_reduced: ProtocolParser::cast_to_bool(value.0)?,
+            ecn_echo: ProtocolParser::cast_to_bool(value.1)?,
+            urgent: ProtocolParser::cast_to_bool(value.2)?,
+            acknowledgment: ProtocolParser::cast_to_bool(value.3)?,
+            push: ProtocolParser::cast_to_bool(value.4)?,
+            reset: ProtocolParser::cast_to_bool(value.5)?,
+            syn: ProtocolParser::cast_to_bool(value.6)?,
+            fin: ProtocolParser::cast_to_bool(value.7)?,
+        })
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
@@ -316,7 +346,16 @@ mod tests {
             acknowledgement_number: 0x5d1abea5,
             data_offset: 32,
             reserved: 0,
-            flags: [0, 0, 0, 1, 0, 0, 1, 0],
+            flags: Flags {
+                congestion_window_reduced: false,
+                ecn_echo: false,
+                urgent: false,
+                acknowledgment: true,
+                push: false,
+                reset: false,
+                syn: true,
+                fin: false,
+            },
             window: 5720,
             checksum: 0xa094,
             urgent_pointer: 0,
@@ -406,7 +445,16 @@ mod tests {
             acknowledgement_number: 416922975,
             data_offset: 20,
             reserved: 0,
-            flags: [0, 0, 0, 1, 1, 0, 0, 0],
+            flags: Flags {
+                congestion_window_reduced: false,
+                ecn_echo: false,
+                urgent: false,
+                acknowledgment: true,
+                push: true,
+                reset: false,
+                syn: false,
+                fin: false,
+            },
             window: 213,
             checksum: 0x3724,
             urgent_pointer: 0,
