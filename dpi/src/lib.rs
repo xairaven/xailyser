@@ -7,6 +7,7 @@
 #![deny(unsafe_code)]
 
 pub mod analysis {
+    pub mod ports;
     pub mod vendor;
 }
 pub mod dto {
