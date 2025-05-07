@@ -10,6 +10,12 @@ pub const LENGTH_BYTES: usize = 6;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MacAddress(pub [u8; LENGTH_BYTES]);
 
+impl MacAddress {
+    pub fn to_bit_string(&self) -> String {
+        self.0.map(|num| format!("{:08b}", num)).join("")
+    }
+}
+
 impl From<[u8; LENGTH_BYTES]> for MacAddress {
     fn from(value: [u8; LENGTH_BYTES]) -> Self {
         Self(value)
@@ -49,6 +55,12 @@ impl std::fmt::Display for MacAddress {
 
         write!(f, "{}", string)
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Vendor {
+    pub short: String,
+    pub full: String,
 }
 
 pub fn parse(input: &[u8]) -> IResult<&[u8], MacAddress> {

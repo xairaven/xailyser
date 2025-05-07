@@ -6,6 +6,9 @@
 #![deny(clippy::indexing_slicing)]
 #![deny(unsafe_code)]
 
+pub mod analysis {
+    pub mod vendor;
+}
 pub mod dto {
     pub mod frame;
 }
