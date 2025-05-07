@@ -1,4 +1,4 @@
-use dpi::wrapper::OwnedFrame;
+use dpi::dto::frame::OwnedFrame;
 use std::collections::VecDeque;
 use std::path::PathBuf;
 
@@ -43,7 +43,7 @@ impl RawStorage {
     pub fn save_pcap(
         &mut self, path: PathBuf, link_type: pcap::Linktype,
     ) -> Result<(), pcap::Error> {
-        let result = dpi::wrapper::save_pcap(path, &self.vec, link_type);
+        let result = dpi::dto::frame::save_pcap(path, &self.vec, link_type);
         if result.is_ok() {
             self.vec.clear();
         }

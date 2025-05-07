@@ -1,4 +1,4 @@
-use crate::frame::FrameMetadata;
+use crate::dto::frame::FrameMetadata;
 use crate::parser::ParserError;
 use crate::protocols::ip::protocol::IpNextLevelProtocol;
 use crate::protocols::{ProtocolData, ProtocolId, ip};
@@ -148,12 +148,12 @@ pub struct IPv4 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::frame::FrameType;
+    use crate::dto::frame::{FrameHeader, FrameType};
     use crate::parser::ProtocolParser;
+    use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
-    use crate::wrapper::FrameHeader;
 
     #[test]
     fn test_ipv4_with_ethernet_padding() {

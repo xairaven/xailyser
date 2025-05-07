@@ -1,10 +1,9 @@
-use crate::frame::FrameMetadata;
+use crate::dto::frame::FrameMetadata;
 use crate::protocols::{ProtocolData, ProtocolId};
 use nom::IResult;
 use nom::Parser;
 use nom::number::be_u16;
 use serde::{Deserialize, Serialize};
-
 // UDP Protocol
 // RFC 768: https://datatracker.ietf.org/doc/html/rfc768
 
@@ -59,14 +58,14 @@ pub struct UDP {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::frame::FrameType;
+    use crate::dto::frame::{FrameHeader, FrameType};
     use crate::parser::ProtocolParser;
+    use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv4::IPv4;
-    use crate::wrapper::FrameHeader;
     use std::net::Ipv4Addr;
 
     #[test]

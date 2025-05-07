@@ -1,3 +1,4 @@
+use dpi::dto::frame::FrameType;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use thiserror::Error;
@@ -18,7 +19,7 @@ pub enum Request {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
     // Data itself
-    Data(dpi::frame::FrameType),
+    Data(FrameType),
 
     // Pong (Heartbeat)
     SuccessSync,

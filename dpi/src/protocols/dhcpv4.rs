@@ -300,14 +300,16 @@ pub enum MessageType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::frame::FrameType;
+    use crate::dto::frame::{FrameHeader, FrameType};
     use crate::parser::ProtocolParser;
+    use crate::protocols::ProtocolData;
+    use crate::protocols::arp::hardware_type::HardwareType;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
+    use crate::protocols::ethernet::mac::MacAddress;
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv4::IPv4;
     use crate::protocols::udp::UDP;
-    use crate::wrapper::FrameHeader;
     use std::str::FromStr;
 
     #[test]

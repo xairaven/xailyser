@@ -1,6 +1,29 @@
+use crate::protocols::ProtocolData;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::path::Path;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum FrameType {
+    Metadata(FrameMetadata),
+    Header(FrameHeader),
+    Raw(OwnedFrame),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FrameMetadata {
+    pub header: FrameHeader,
+    pub layers: Vec<ProtocolData>,
+}
+
+impl FrameMetadata {
+    pub fn from_header(header: &pcap::PacketHeader) -> Self {
+        Self {
+            header: FrameHeader::from(header),
+            layers: vec![],
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OwnedFrame {

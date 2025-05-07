@@ -228,7 +228,7 @@ pub enum MessageType {
 
 #[cfg(test)]
 mod tests {
-    use crate::frame::FrameType;
+    use crate::dto::frame::{FrameHeader, FrameType};
     use crate::parser::ProtocolParser;
     use crate::protocols::ProtocolData;
     use crate::protocols::dhcpv6::OptionData::{ClientFQDN, VendorData};
@@ -239,7 +239,6 @@ mod tests {
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv6::IPv6;
     use crate::protocols::udp::UDP;
-    use crate::wrapper::FrameHeader;
     use std::net::Ipv6Addr;
     use std::str::FromStr;
 

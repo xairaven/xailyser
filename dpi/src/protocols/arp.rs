@@ -121,11 +121,10 @@ pub mod operation;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::frame::FrameType;
+    use crate::dto::frame::{FrameHeader, FrameType};
     use crate::parser::ProtocolParser;
     use crate::protocols::arp::operation::Operation;
     use crate::protocols::ethernet::Ethernet;
-    use crate::wrapper::FrameHeader;
 
     #[test]
     fn test_arp_without_ethernet_padding() {

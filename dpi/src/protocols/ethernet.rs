@@ -1,4 +1,4 @@
-use crate::frame::FrameMetadata;
+use crate::dto::frame::FrameMetadata;
 use crate::parser::ParserError;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;

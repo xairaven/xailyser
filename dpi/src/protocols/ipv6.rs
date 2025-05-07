@@ -1,4 +1,4 @@
-use crate::frame::FrameMetadata;
+use crate::dto::frame::FrameMetadata;
 use crate::parser::ParserError;
 use crate::protocols::ip::protocol::IpNextLevelProtocol;
 use crate::protocols::{ProtocolData, ProtocolId, ip};
@@ -7,7 +7,6 @@ use nom::number::{be_u8, be_u16};
 use nom::{IResult, bits};
 use serde::{Deserialize, Serialize};
 use std::net::Ipv6Addr;
-
 // IPv6 Protocol
 // RFC 8200: https://datatracker.ietf.org/doc/html/rfc8200
 
@@ -90,7 +89,7 @@ pub struct IPv6 {
 
 #[cfg(test)]
 mod tests {
-    use crate::frame::FrameType;
+    use crate::dto::frame::{FrameHeader, FrameType};
     use crate::parser::ProtocolParser;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
@@ -100,7 +99,6 @@ mod tests {
     use crate::protocols::ipv6::IPv6;
     use crate::protocols::tcp::TCP;
     use crate::protocols::{ProtocolData, tcp};
-    use crate::wrapper::FrameHeader;
     use std::net::{Ipv4Addr, Ipv6Addr};
     use std::str::FromStr;
 

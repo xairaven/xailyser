@@ -1,4 +1,4 @@
-use crate::frame::FrameMetadata;
+use crate::dto::frame::FrameMetadata;
 use crate::parser::{ParseFn, PortFn};
 use serde::{Deserialize, Serialize};
 

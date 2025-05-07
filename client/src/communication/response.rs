@@ -1,6 +1,6 @@
 use crate::context::Context;
 use common::messages::Response;
-use dpi::frame::FrameType;
+use dpi::dto::frame::FrameType;
 
 pub fn data(ctx: &mut Context, response: Response) {
     let frame = match response {

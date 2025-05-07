@@ -4,6 +4,7 @@ use crate::context::Context;
 use crate::net::PacketSnifferBuilder;
 use crate::tcp::TcpHandlerBuilder;
 use common::channel::BroadcastPool;
+use dpi::dto::frame::FrameType;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
@@ -17,9 +18,8 @@ pub fn start(config: Config) {
         },
     }));
     let shutdown_flag = Arc::new(AtomicBool::new(false));
-    let frame_channels_pool = Arc::new(RwLock::new(
-        BroadcastPool::<dpi::frame::FrameType>::default(),
-    ));
+    let frame_channels_pool =
+        Arc::new(RwLock::new(BroadcastPool::<FrameType>::default()));
     let ws_active_counter = Arc::new(AtomicUsize::new(0));
 
     if let Err(err) = ctrlc::set_handler({

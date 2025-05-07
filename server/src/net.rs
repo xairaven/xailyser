@@ -2,6 +2,7 @@ use crate::context;
 use crate::context::Context;
 use crate::net::interface::InterfaceError;
 use common::channel::{BroadcastChannel, BroadcastPool};
+use dpi::dto::frame::FrameType;
 use dpi::parser::ProtocolParser;
 use pcap::{Active, Capture};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -14,8 +15,8 @@ const TIMEOUT_MS: i32 = 10;
 
 pub struct PacketSniffer {
     capture: Capture<Active>,
-    frame_channel: BroadcastChannel<dpi::frame::FrameType>,
-    frame_channels_pool: Arc<RwLock<BroadcastPool<dpi::frame::FrameType>>>,
+    frame_channel: BroadcastChannel<FrameType>,
+    frame_channels_pool: Arc<RwLock<BroadcastPool<FrameType>>>,
     parser: ProtocolParser,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
@@ -86,7 +87,7 @@ pub enum NetworkError {
 }
 
 pub struct PacketSnifferBuilder {
-    pub frame_channels_pool: Arc<RwLock<BroadcastPool<dpi::frame::FrameType>>>,
+    pub frame_channels_pool: Arc<RwLock<BroadcastPool<FrameType>>>,
     pub context: Arc<Mutex<Context>>,
     pub shutdown_flag: Arc<AtomicBool>,
     pub ws_active_counter: Arc<AtomicUsize>,
@@ -110,7 +111,7 @@ impl PacketSnifferBuilder {
 
         let sniffer = PacketSniffer {
             capture,
-            frame_channel: BroadcastChannel::<dpi::frame::FrameType>::new(),
+            frame_channel: BroadcastChannel::<FrameType>::new(),
             frame_channels_pool: self.frame_channels_pool,
             parser,
             shutdown_flag: self.shutdown_flag,

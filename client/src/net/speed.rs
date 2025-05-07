@@ -1,8 +1,7 @@
 use crate::context::ClientSettings;
 use chrono::{DateTime, Local, TimeZone};
-use dpi::frame::FrameMetadata;
+use dpi::dto::frame::{FrameHeader, FrameMetadata};
 use dpi::protocols::ProtocolData;
-use dpi::wrapper::FrameHeader;
 use std::collections::VecDeque;
 use std::fmt::Formatter;
 use strum_macros::EnumIter;

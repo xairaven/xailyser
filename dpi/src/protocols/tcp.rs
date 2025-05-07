@@ -1,11 +1,10 @@
-use crate::frame::FrameMetadata;
+use crate::dto::frame::FrameMetadata;
 use crate::parser::{ParserError, ProtocolParser};
 use crate::protocols::{ProtocolData, ProtocolId};
 use nom::number::{be_u8, be_u16, be_u32, be_u64, be_u128};
 use nom::{IResult, Parser, bits};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-
 // TCP Protocol
 // RFC 9293: https://datatracker.ietf.org/doc/html/rfc9293
 
@@ -263,14 +262,14 @@ pub enum OptionData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::frame::FrameType;
+    use crate::dto::frame::{FrameHeader, FrameType};
     use crate::parser::ProtocolParser;
+    use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv4::IPv4;
-    use crate::wrapper::FrameHeader;
     use std::net::Ipv4Addr;
 
     #[test]

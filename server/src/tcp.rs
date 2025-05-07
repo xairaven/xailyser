@@ -3,6 +3,7 @@ use crate::context::Context;
 use crate::ws::{WsError, WsHandlerBuilder};
 use common::channel::BroadcastPool;
 use common::messages::CONNECTION_TIMEOUT;
+use dpi::dto::frame::FrameType;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
@@ -14,7 +15,7 @@ const LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 
 pub struct TcpHandler {
     context: Arc<Mutex<Context>>,
-    frame_channels_pool: Arc<RwLock<BroadcastPool<dpi::frame::FrameType>>>,
+    frame_channels_pool: Arc<RwLock<BroadcastPool<FrameType>>>,
     shutdown_flag: Arc<AtomicBool>,
     ws_active_counter: Arc<AtomicUsize>,
     ws_threads_counter: u16,
@@ -148,7 +149,7 @@ pub enum TcpError {
 }
 
 pub struct TcpHandlerBuilder {
-    pub frame_channels_pool: Arc<RwLock<BroadcastPool<dpi::frame::FrameType>>>,
+    pub frame_channels_pool: Arc<RwLock<BroadcastPool<FrameType>>>,
     pub context: Arc<Mutex<Context>>,
     pub shutdown_flag: Arc<AtomicBool>,
     pub ws_active_counter: Arc<AtomicUsize>,

@@ -1,6 +1,5 @@
-use crate::frame::{FrameMetadata, FrameType};
+use crate::dto::frame::{FrameMetadata, FrameType, OwnedFrame};
 use crate::protocols::{ProtocolData, ProtocolId};
-use crate::wrapper::OwnedFrame;
 use nom::IResult;
 
 pub struct ProtocolParser {
