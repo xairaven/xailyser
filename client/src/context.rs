@@ -1,10 +1,10 @@
 use crate::communication::heartbeat::Heartbeat;
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
-use crate::net::NetStorage;
 use crate::net::device::DeviceStorage;
 use crate::net::raw::RawStorage;
 use crate::net::speed::PlotSettings;
+use crate::net::{Lookup, NetStorage};
 use crate::profiles::ProfilesStorage;
 use crate::ui::modals::Modal;
 use crate::ui::styles::themes;
@@ -49,6 +49,13 @@ impl Context {
             unbounded::<UiClientRequest>();
 
         let profiles_storage = ProfilesStorage::from_file().unwrap_or_default();
+        let lookup = match Lookup::load() {
+            Ok(lookup) => lookup,
+            Err(err) => {
+                log::error!("Failed to load lookup database: {}", err);
+                std::process::exit(1);
+            },
+        };
 
         Self {
             client_settings: ClientSettings {
@@ -66,6 +73,7 @@ impl Context {
             heartbeat: Default::default(),
             net_storage: NetStorage {
                 devices: DeviceStorage::default(),
+                lookup,
                 raw: RawStorage::new(config.unparsed_frames_threshold),
                 speed: Default::default(),
             },
