@@ -2,6 +2,7 @@ use crate::communication::heartbeat::Heartbeat;
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::net::NetStorage;
+use crate::net::device::DeviceStorage;
 use crate::net::raw::RawStorage;
 use crate::net::speed::PlotSettings;
 use crate::profiles::ProfilesStorage;
@@ -64,6 +65,7 @@ impl Context {
             settings_server: Default::default(),
             heartbeat: Default::default(),
             net_storage: NetStorage {
+                devices: DeviceStorage::default(),
                 raw: RawStorage::new(config.unparsed_frames_threshold),
                 speed: Default::default(),
             },
