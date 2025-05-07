@@ -20,5 +20,6 @@ pcap = "2.2.0"
 hex = "0.4.3"
 num_enum = { version = "0.7.3", features = ["complex-expressions"] }
 nom = "8.0.0"
+radix-tree = "0.2.0"
 serde = { version = "1.0.219", features = ["derive"] }
 thiserror = "2.0.12"
