@@ -198,6 +198,21 @@ pub enum OptionData {
     },
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct DHCPv6Dto {
+    pub message_type: MessageType,
+    pub options: Vec<OptionData>,
+}
+
+impl From<DHCPv6> for DHCPv6Dto {
+    fn from(value: DHCPv6) -> Self {
+        Self {
+            message_type: value.message_type,
+            options: value.options,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum MessageType {
@@ -228,8 +243,9 @@ pub enum MessageType {
 
 #[cfg(test)]
 mod tests {
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ProtocolData;
     use crate::protocols::dhcpv6::OptionData::{ClientFQDN, VendorData};
     use crate::protocols::dhcpv6::{DHCPv6, MessageType, OptionData, Options};

@@ -145,11 +145,29 @@ pub struct IPv4 {
     pub address_destination: Ipv4Addr,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct IPv4Dto {
+    pub address_source: Ipv4Addr,
+    pub address_destination: Ipv4Addr,
+    pub time_to_live: u8,
+}
+
+impl From<IPv4> for IPv4Dto {
+    fn from(value: IPv4) -> Self {
+        Self {
+            address_source: value.address_source,
+            address_destination: value.address_destination,
+            time_to_live: value.time_to_live,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;

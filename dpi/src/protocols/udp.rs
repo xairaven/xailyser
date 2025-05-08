@@ -55,11 +55,27 @@ pub struct UDP {
     pub checksum: u16,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct UdpDto {
+    pub port_source: u16,
+    pub port_destination: u16,
+}
+
+impl From<UDP> for UdpDto {
+    fn from(value: UDP) -> Self {
+        Self {
+            port_source: value.port_source,
+            port_destination: value.port_destination,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;

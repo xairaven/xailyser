@@ -1,6 +1,6 @@
 use crate::parser::ParserError;
 use crate::protocols::arp::hardware_type::HardwareType;
-use crate::protocols::arp::operation::Operation;
+pub use crate::protocols::arp::operation::Operation;
 use crate::protocols::ethernet::ether_type::EtherType;
 use crate::protocols::ethernet::mac::MacAddress;
 use crate::protocols::{ProtocolData, ethernet, ip};
@@ -115,14 +115,38 @@ pub enum ArpError {
     OperationUnknown,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ArpDto {
+    pub operation: Operation,
+
+    pub sender_mac: MacAddress,
+    pub sender_ip: Ipv4Addr,
+
+    pub target_mac: MacAddress,
+    pub target_ip: Ipv4Addr,
+}
+
+impl From<Arp> for ArpDto {
+    fn from(value: Arp) -> Self {
+        Self {
+            operation: value.operation,
+            sender_mac: value.sender_mac,
+            sender_ip: value.sender_ip,
+            target_mac: value.target_mac,
+            target_ip: value.target_ip,
+        }
+    }
+}
+
 pub mod hardware_type;
 pub mod operation;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::arp::operation::Operation;
     use crate::protocols::ethernet::Ethernet;
 

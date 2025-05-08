@@ -50,6 +50,21 @@ pub struct Ethernet {
     pub ether_type: EtherType,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct EthernetDto {
+    pub destination_mac: MacAddress,
+    pub source_mac: MacAddress,
+}
+
+impl From<Ethernet> for EthernetDto {
+    fn from(value: Ethernet) -> Self {
+        Self {
+            destination_mac: value.destination_mac,
+            source_mac: value.source_mac,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
 pub enum EthernetError {
     #[error("Unknown EtherType")]

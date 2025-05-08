@@ -12,6 +12,7 @@ pub mod analysis {
 }
 pub mod dto {
     pub mod frame;
+    pub mod metadata;
 }
 pub mod parser;
 pub mod protocols;

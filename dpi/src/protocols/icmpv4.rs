@@ -38,11 +38,27 @@ pub struct ICMPv4 {
     pub data: Vec<u8>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ICMPv4Dto {
+    pub message_type: u8,
+    pub code: u8,
+}
+
+impl From<ICMPv4> for ICMPv4Dto {
+    fn from(value: ICMPv4) -> Self {
+        Self {
+            message_type: value.message_type,
+            code: value.code,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;

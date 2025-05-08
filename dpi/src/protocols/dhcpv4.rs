@@ -297,11 +297,35 @@ pub enum MessageType {
     Inform = 8,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct DHCPv4Dto {
+    pub message_type: OperationType,
+    pub old_client_address: Ipv4Addr,
+    pub new_client_address: Ipv4Addr,
+    pub server_address: Ipv4Addr,
+    pub relay_agent_address: Ipv4Addr,
+    pub hardware_address_client: MacAddress,
+}
+
+impl From<DHCPv4> for DHCPv4Dto {
+    fn from(value: DHCPv4) -> Self {
+        Self {
+            message_type: value.message_type,
+            old_client_address: value.old_client_address,
+            new_client_address: value.new_client_address,
+            server_address: value.server_address,
+            relay_agent_address: value.relay_agent_address,
+            hardware_address_client: value.hardware_address_client,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ProtocolData;
     use crate::protocols::arp::hardware_type::HardwareType;
     use crate::protocols::ethernet::Ethernet;

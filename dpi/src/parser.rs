@@ -19,12 +19,12 @@ impl ProtocolParser {
         let mut metadata = FrameMetadata::from_header(packet.header);
 
         if let Some(root_protocol) = &self.root {
-            let result = Self::traversal(root_protocol, &packet, &mut metadata, 0);
+            let result = traversal(root_protocol, &packet, &mut metadata, 0);
             return match result {
-                ProcessResult::Complete => Some(FrameType::Metadata(metadata)),
+                ProcessResult::Complete => Some(FrameType::Metadata(metadata.into())),
                 ProcessResult::Incomplete => match self.raw_needed {
                     true => Some(FrameType::Raw(OwnedFrame::from(packet))),
-                    false => Some(FrameType::Metadata(metadata)),
+                    false => Some(FrameType::Metadata(metadata.into())),
                 },
                 ProcessResult::Failed => match self.raw_needed {
                     true => Some(FrameType::Raw(OwnedFrame::from(packet))),
@@ -35,71 +35,68 @@ impl ProtocolParser {
 
         None
     }
+}
 
-    fn traversal(
-        id: &ProtocolId, bytes: &[u8], metadata: &mut FrameMetadata, depth: usize,
-    ) -> ProcessResult {
-        const MAX_DEPTH: usize = 16;
-        if depth > MAX_DEPTH {
-            return ProcessResult::Failed;
-        }
+fn traversal(
+    id: &ProtocolId, bytes: &[u8], metadata: &mut FrameMetadata, depth: usize,
+) -> ProcessResult {
+    const MAX_DEPTH: usize = 16;
+    if depth > MAX_DEPTH {
+        return ProcessResult::Failed;
+    }
 
-        let result = id.parse()(bytes);
+    let result = id.parse()(bytes);
 
-        match result {
-            Ok(([], layer)) => {
-                metadata.layers.push(layer);
-                ProcessResult::Complete
-            },
-            Ok((rest, layer)) => {
-                metadata.layers.push(layer);
+    match result {
+        Ok(([], layer)) => {
+            metadata.layers.push(layer);
+            ProcessResult::Complete
+        },
+        Ok((rest, layer)) => {
+            metadata.layers.push(layer);
 
-                if let Some(best) = id.best_children(metadata) {
-                    return match depth.checked_add(1) {
-                        Some(new_depth) => {
-                            Self::traversal(&best, rest, metadata, new_depth)
-                        },
-                        None => ProcessResult::Failed,
-                    };
-                }
+            if let Some(best) = id.best_children(metadata) {
+                return match depth.checked_add(1) {
+                    Some(new_depth) => traversal(&best, rest, metadata, new_depth),
+                    None => ProcessResult::Failed,
+                };
+            }
 
-                let children = match id.children() {
-                    Some(value) => value,
-                    None => {
-                        return ProcessResult::Incomplete;
-                    },
+            let children = match id.children() {
+                Some(value) => value,
+                None => {
+                    return ProcessResult::Incomplete;
+                },
+            };
+
+            for id in children {
+                let result = match depth.checked_add(1) {
+                    Some(new_depth) => traversal(&id, rest, metadata, new_depth),
+                    None => return ProcessResult::Failed,
                 };
 
-                for id in children {
-                    let result = match depth.checked_add(1) {
-                        Some(new_depth) => {
-                            Self::traversal(&id, rest, metadata, new_depth)
-                        },
-                        None => return ProcessResult::Failed,
-                    };
-
-                    match result {
-                        ProcessResult::Complete | ProcessResult::Incomplete => {
-                            return result;
-                        },
-                        ProcessResult::Failed => continue,
-                    }
+                match result {
+                    ProcessResult::Complete | ProcessResult::Incomplete => {
+                        return result;
+                    },
+                    ProcessResult::Failed => continue,
                 }
+            }
 
-                ProcessResult::Incomplete
-            },
-            Err(_) => ProcessResult::Failed,
-        }
-    }
-
-    pub fn cast_to_bool(bit: u8) -> Result<bool, ParserError> {
-        match bit {
-            0 => Ok(false),
-            1 => Ok(true),
-            _ => Err(ParserError::ErrorVerify),
-        }
+            ProcessResult::Incomplete
+        },
+        Err(_) => ProcessResult::Failed,
     }
 }
+
+pub fn cast_to_bool(bit: u8) -> Result<bool, ParserError> {
+    match bit {
+        0 => Ok(false),
+        1 => Ok(true),
+        _ => Err(ParserError::ErrorVerify),
+    }
+}
+
 pub type ParseFn = fn(&[u8]) -> IResult<&[u8], ProtocolData>;
 pub type PortFn = fn(u16, u16) -> bool;
 
@@ -133,4 +130,52 @@ pub enum ProcessResult {
 
     // Not matched
     Failed,
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use crate::dto::frame::FrameMetadata;
+    use crate::parser::ProcessResult;
+    use crate::protocols::ProtocolId;
+
+    pub enum FrameType {
+        Metadata(FrameMetadata),
+        Header(()),
+        Raw(()),
+    }
+
+    pub struct ProtocolParser {
+        raw_needed: bool,
+        root: Option<ProtocolId>,
+    }
+
+    impl ProtocolParser {
+        pub fn new(link_type: &pcap::Linktype, raw_needed: bool) -> Self {
+            Self {
+                raw_needed,
+                root: ProtocolId::root(link_type),
+            }
+        }
+
+        pub fn process(&self, packet: pcap::Packet) -> Option<FrameType> {
+            let mut metadata = FrameMetadata::from_header(packet.header);
+
+            if let Some(root_protocol) = &self.root {
+                let result = super::traversal(root_protocol, &packet, &mut metadata, 0);
+                return match result {
+                    ProcessResult::Complete => Some(FrameType::Metadata(metadata)),
+                    ProcessResult::Incomplete => match self.raw_needed {
+                        true => Some(FrameType::Raw(())),
+                        false => Some(FrameType::Metadata(metadata)),
+                    },
+                    ProcessResult::Failed => match self.raw_needed {
+                        true => Some(FrameType::Raw(())),
+                        false => Some(FrameType::Header(())),
+                    },
+                };
+            }
+
+            None
+        }
+    }
 }

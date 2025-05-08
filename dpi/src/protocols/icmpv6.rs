@@ -38,10 +38,26 @@ pub struct ICMPv6 {
     pub data: Vec<u8>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ICMPv6Dto {
+    pub message_type: u8,
+    pub code: u8,
+}
+
+impl From<ICMPv6> for ICMPv6Dto {
+    fn from(value: ICMPv6) -> Self {
+        Self {
+            message_type: value.message_type,
+            code: value.code,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;

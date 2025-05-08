@@ -1,4 +1,5 @@
-use crate::parser::{ParserError, ProtocolParser};
+use crate::parser;
+use crate::parser::ParserError;
 use crate::protocols::ProtocolData;
 use nom::IResult;
 use nom::bytes::take;
@@ -7,7 +8,6 @@ use nom::{Finish, Parser, bits};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use std::net::{Ipv4Addr, Ipv6Addr};
-
 // DNS Protocol
 // RFC 1035: https://datatracker.ietf.org/doc/html/rfc1035
 
@@ -44,12 +44,11 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     let operation_code = OperationCode::try_from(opcode)
         .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
     let authoritative_answer =
-        ProtocolParser::cast_to_bool(aa).map_err(|err| err.to_nom(bytes))?;
-    let truncation = ProtocolParser::cast_to_bool(tc).map_err(|err| err.to_nom(bytes))?;
-    let recursion_desired =
-        ProtocolParser::cast_to_bool(rd).map_err(|err| err.to_nom(bytes))?;
+        parser::cast_to_bool(aa).map_err(|err| err.to_nom(bytes))?;
+    let truncation = parser::cast_to_bool(tc).map_err(|err| err.to_nom(bytes))?;
+    let recursion_desired = parser::cast_to_bool(rd).map_err(|err| err.to_nom(bytes))?;
     let recursion_available =
-        ProtocolParser::cast_to_bool(ra).map_err(|err| err.to_nom(bytes))?;
+        parser::cast_to_bool(ra).map_err(|err| err.to_nom(bytes))?;
     if z != 0 {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
     }
@@ -446,10 +445,39 @@ pub enum Class {
     ALL = 255,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct DnsDto {
+    pub message_type: MessageType,
+    pub operation_code: OperationCode,
+    pub authoritative_answer: bool,
+    pub response_code: ResponseCode,
+    pub question_section: Option<Vec<QuestionEntry>>,
+    pub answer_section: Option<Vec<ResourceRecord>>,
+    pub authority_section: Option<Vec<ResourceRecord>>,
+    pub additional_section: Option<Vec<ResourceRecord>>,
+}
+
+impl From<DNS> for DnsDto {
+    fn from(value: DNS) -> Self {
+        Self {
+            message_type: value.header.message_type,
+            operation_code: value.header.operation_code,
+            authoritative_answer: value.header.authoritative_answer,
+            response_code: value.header.response_code,
+            question_section: value.question_section,
+            answer_section: value.answer_section,
+            authority_section: value.authority_section,
+            additional_section: value.additional_section,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;

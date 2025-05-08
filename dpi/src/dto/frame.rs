@@ -1,3 +1,4 @@
+use crate::dto::metadata::FrameMetadataDto;
 use crate::protocols::ProtocolData;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
@@ -5,7 +6,7 @@ use std::path::Path;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum FrameType {
-    Metadata(FrameMetadata),
+    Metadata(FrameMetadataDto),
     Header(FrameHeader),
     Raw(OwnedFrame),
 }

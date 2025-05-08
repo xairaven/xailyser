@@ -1,5 +1,6 @@
 use crate::dto::frame::FrameMetadata;
-use crate::parser::{ParserError, ProtocolParser};
+use crate::parser;
+use crate::parser::ParserError;
 use crate::protocols::{ProtocolData, ProtocolId};
 use nom::number::{be_u8, be_u16, be_u32, be_u64, be_u128};
 use nom::{IResult, Parser, bits};
@@ -131,6 +132,21 @@ pub struct TCP {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct TcpDto {
+    pub port_source: u16,
+    pub port_destination: u16,
+}
+
+impl From<TCP> for TcpDto {
+    fn from(value: TCP) -> Self {
+        Self {
+            port_source: value.port_source,
+            port_destination: value.port_destination,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Flags {
     pub congestion_window_reduced: bool,
     pub ecn_echo: bool,
@@ -147,14 +163,14 @@ impl TryFrom<TcpFlags> for Flags {
 
     fn try_from(value: TcpFlags) -> Result<Self, Self::Error> {
         Ok(Self {
-            congestion_window_reduced: ProtocolParser::cast_to_bool(value.0)?,
-            ecn_echo: ProtocolParser::cast_to_bool(value.1)?,
-            urgent: ProtocolParser::cast_to_bool(value.2)?,
-            acknowledgment: ProtocolParser::cast_to_bool(value.3)?,
-            push: ProtocolParser::cast_to_bool(value.4)?,
-            reset: ProtocolParser::cast_to_bool(value.5)?,
-            syn: ProtocolParser::cast_to_bool(value.6)?,
-            fin: ProtocolParser::cast_to_bool(value.7)?,
+            congestion_window_reduced: parser::cast_to_bool(value.0)?,
+            ecn_echo: parser::cast_to_bool(value.1)?,
+            urgent: parser::cast_to_bool(value.2)?,
+            acknowledgment: parser::cast_to_bool(value.3)?,
+            push: parser::cast_to_bool(value.4)?,
+            reset: parser::cast_to_bool(value.5)?,
+            syn: parser::cast_to_bool(value.6)?,
+            fin: parser::cast_to_bool(value.7)?,
         })
     }
 }
@@ -262,8 +278,9 @@ pub enum OptionData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ProtocolData;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;

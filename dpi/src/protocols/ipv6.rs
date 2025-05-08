@@ -87,10 +87,28 @@ pub struct IPv6 {
     pub address_destination: Ipv6Addr,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct IPv6Dto {
+    pub address_source: Ipv6Addr,
+    pub address_destination: Ipv6Addr,
+    pub hop_limit: u8,
+}
+
+impl From<IPv6> for IPv6Dto {
+    fn from(value: IPv6) -> Self {
+        Self {
+            address_source: value.address_source,
+            address_destination: value.address_destination,
+            hop_limit: value.hop_limit,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;

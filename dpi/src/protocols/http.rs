@@ -240,11 +240,61 @@ impl TryFrom<&str> for Methods {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum HttpDto {
+    Request(HTTPRequestDto),
+    Response(HTTPResponseDto),
+}
+
+impl From<HTTP> for HttpDto {
+    fn from(value: HTTP) -> Self {
+        match value {
+            HTTP::Request(value) => Self::Request(value.into()),
+            HTTP::Response(value) => Self::Response(value.into()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct HTTPRequestDto {
+    pub method: Methods,
+    pub target: String,
+    pub headers: Vec<Header>,
+}
+
+impl From<HTTPRequest> for HTTPRequestDto {
+    fn from(value: HTTPRequest) -> Self {
+        Self {
+            method: value.method,
+            target: value.target,
+            headers: value.headers,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct HTTPResponseDto {
+    pub status_code: u16,
+    pub reason: String,
+    pub headers: Vec<Header>,
+}
+
+impl From<HTTPResponse> for HTTPResponseDto {
+    fn from(value: HTTPResponse) -> Self {
+        Self {
+            status_code: value.status_code,
+            reason: value.reason,
+            headers: value.headers,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::frame::{FrameHeader, FrameType};
-    use crate::parser::ProtocolParser;
+    use crate::dto::frame::FrameHeader;
+    use crate::parser::tests::FrameType;
+    use crate::parser::tests::ProtocolParser;
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
