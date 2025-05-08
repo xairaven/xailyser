@@ -173,16 +173,23 @@ impl WsHandler {
     fn pass_responses(&self, text: &str) {
         let deserialized: Result<Response, serde_json::Error> =
             serde_json::from_str(text);
-        if let Ok(message) = deserialized {
-            let result = match message {
-                Response::Data(_) => self.data_response_tx.try_send(message),
-                _ => self.server_response_tx.try_send(message),
-            };
-            if let Err(err) = result {
-                log::error!("WS Channel: Can't send message. Error: {}", err);
-            }
-        } else {
-            log::warn!("Serde: can't deserialize message! {:#?}", text);
+        match deserialized {
+            Ok(message) => {
+                let result = match message {
+                    Response::Data(_) => self.data_response_tx.try_send(message),
+                    _ => self.server_response_tx.try_send(message),
+                };
+                if let Err(err) = result {
+                    log::error!("WS Channel: Can't send message. Error: {}", err);
+                }
+            },
+            Err(err) => {
+                log::warn!(
+                    "Serde: can't deserialize message! Error: {}. Text: {:#?}",
+                    err,
+                    text
+                );
+            },
         }
     }
 
