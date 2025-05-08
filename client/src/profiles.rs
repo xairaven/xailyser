@@ -7,7 +7,7 @@ use thiserror::Error;
 const PROFILES_FILENAME: &str = "profiles.toml";
 const PROFILES_FILETYPE: FileKind = FileKind::Data;
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct ProfilesStorage {
     pub profiles: Vec<Profile>,
 }

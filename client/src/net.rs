@@ -15,6 +15,7 @@ pub struct NetStorage {
     pub speed: SpeedData,
 }
 
+#[derive(Clone)]
 pub struct Lookup {
     pub port_service: PortServiceTable,
     pub vendors: OuiRadixTree,

@@ -95,8 +95,42 @@ impl Context {
     }
 
     pub fn logout(&mut self) {
-        let mut new_context = Context::new(self.config.clone());
-        new_context.client_settings = self.client_settings.clone();
+        // Cloning client settings, config, lookup, profiles storage.
+
+        let (modals_tx, modals_rx) = unbounded::<Box<dyn Modal>>();
+        let (server_response_tx, server_response_rx) = unbounded::<Response>();
+        let (data_response_tx, data_response_rx) = unbounded::<Response>();
+        let (ui_client_requests_tx, ui_client_requests_rx) =
+            unbounded::<UiClientRequest>();
+
+        let profiles_storage = self.profiles_storage.clone();
+
+        let new_context = Self {
+            client_settings: self.client_settings.clone(),
+            settings_server: Default::default(),
+            heartbeat: Default::default(),
+            net_storage: NetStorage {
+                devices: DeviceStorage::default(),
+                lookup: self.net_storage.lookup.clone(),
+                raw: RawStorage::new(self.config.unparsed_frames_threshold),
+                speed: Default::default(),
+            },
+
+            config: self.config.clone(),
+            profiles_storage,
+
+            shutdown_flag: Arc::new(Default::default()),
+
+            modals_tx,
+            modals_rx,
+            data_response_tx,
+            data_response_rx,
+            server_response_tx,
+            server_response_rx,
+            ui_client_requests_tx,
+            ui_client_requests_rx,
+        };
+
         *self = new_context;
     }
 }
