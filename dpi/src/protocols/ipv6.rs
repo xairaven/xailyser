@@ -75,7 +75,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IPv6 {
     pub version: u8,
     pub traffic_class: u8,

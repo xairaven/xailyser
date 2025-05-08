@@ -116,7 +116,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     None
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TCP {
     pub port_source: u16,
     pub port_destination: u16,
@@ -146,7 +146,7 @@ impl From<TCP> for TcpDto {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Flags {
     pub congestion_window_reduced: bool,
     pub ecn_echo: bool,
@@ -175,7 +175,7 @@ impl TryFrom<TcpFlags> for Flags {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum OptionId {
     EndOfOptionList = 0,
@@ -263,7 +263,7 @@ impl OptionId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum OptionData {
     EndOfOptionList,
     NoOperation,

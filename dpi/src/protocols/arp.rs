@@ -86,7 +86,7 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     Finish::finish(Ok((rest, ProtocolData::Arp(arp))))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Arp {
     pub hardware_type: HardwareType,
     pub protocol_type: EtherType,
@@ -103,7 +103,7 @@ pub struct Arp {
     pub target_ip: Ipv4Addr,
 }
 
-#[derive(Clone, Debug, Error, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum ArpError {
     #[error("Bad hardware length")]
     BadHardwareLength,

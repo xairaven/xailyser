@@ -11,7 +11,7 @@ pub enum FrameType {
     Raw(OwnedFrame),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct FrameMetadata {
     pub header: FrameHeader,
     pub layers: Vec<ProtocolData>,

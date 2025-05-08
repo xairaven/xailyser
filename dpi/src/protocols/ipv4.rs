@@ -128,7 +128,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IPv4 {
     pub version: u8,
     pub internet_header_length: u16,

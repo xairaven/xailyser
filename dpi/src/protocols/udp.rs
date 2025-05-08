@@ -47,7 +47,7 @@ pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     None
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UDP {
     pub port_source: u16,
     pub port_destination: u16,

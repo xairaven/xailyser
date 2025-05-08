@@ -255,7 +255,7 @@ fn parse_resource_record<'a>(
     Ok((rest, record))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DNS {
     pub header: Header,
     pub question_section: Option<Vec<QuestionEntry>>,
@@ -264,7 +264,7 @@ pub struct DNS {
     pub additional_section: Option<Vec<ResourceRecord>>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Header {
     pub id: u16,
     pub message_type: MessageType,

@@ -110,7 +110,7 @@ impl ProtocolId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub enum ProtocolData {
     Ethernet(ethernet::Ethernet),
 

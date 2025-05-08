@@ -181,7 +181,7 @@ pub fn is_protocol_default(port_source: u16, port_destination: u16) -> bool {
     port_source == PORT || port_destination == PORT
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum HTTP {
     Request(HTTPRequest),
     Response(HTTPResponse),
@@ -189,7 +189,7 @@ pub enum HTTP {
 
 pub type Header = (String, String);
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HTTPRequest {
     pub method: Methods,
     pub target: String,
@@ -198,7 +198,7 @@ pub struct HTTPRequest {
     pub body: Vec<u8>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HTTPResponse {
     pub version: String,
     pub status_code: u16,

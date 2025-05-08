@@ -54,7 +54,7 @@ pub fn is_protocol_default(port_source: u16, port_destination: u16) -> bool {
         || port_destination == CLIENT_PORT
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DHCPv6 {
     pub message_type: MessageType,
     pub transaction_id: u32,

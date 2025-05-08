@@ -30,7 +30,7 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     Finish::finish(Ok((rest, ProtocolData::ICMPv6(protocol))))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ICMPv6 {
     pub message_type: u8,
     pub code: u8,

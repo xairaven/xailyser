@@ -141,7 +141,7 @@ pub fn is_protocol_default(port_source: u16, port_destination: u16) -> bool {
         || port_destination == CLIENT_PORT
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DHCPv4 {
     pub message_type: OperationType,
     pub hardware_type: HardwareType,
@@ -162,7 +162,7 @@ pub struct DHCPv4 {
 
 // FUTURE: Other options...
 // RFC 2132: https://datatracker.ietf.org/doc/html/rfc2132
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum Options {
     Pad = 0,
@@ -264,7 +264,7 @@ impl Options {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum OptionData {
     Pad,
     End,
