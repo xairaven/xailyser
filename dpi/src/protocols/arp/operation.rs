@@ -5,9 +5,10 @@ use nom::Parser;
 use nom::number::be_u16;
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
 
 pub const LENGTH_BYTES: usize = 2;
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u16)]
 pub enum Operation {
     Request = 1,

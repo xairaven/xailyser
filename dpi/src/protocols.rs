@@ -1,6 +1,7 @@
 use crate::dto::frame::FrameMetadata;
 use crate::parser::{ParseFn, PortFn};
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumIter};
 
 /// Guide: How to Add a Protocol
 /// 1. Add it to the `ProtocolId` enum.
@@ -12,24 +13,20 @@ use serde::{Deserialize, Serialize};
 /// That's it! After that, write tests and verify that parsing works correctly.
 
 // FEATURE: FTP, TLS/SSL, IMAP, POP3, SMTP, SSH, SIP, RTP
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, EnumIter, Display, Serialize, Deserialize, PartialEq, Copy)]
 pub enum ProtocolId {
-    Ethernet,
-
     Arp,
-
-    IPv4,
-    IPv6,
-
-    ICMPv4,
-    ICMPv6,
-    TCP,
-    UDP,
-
     DHCPv4,
     DHCPv6,
     DNS,
+    Ethernet,
     HTTP,
+    ICMPv4,
+    ICMPv6,
+    IPv4,
+    IPv6,
+    TCP,
+    UDP,
 }
 
 impl ProtocolId {
