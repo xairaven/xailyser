@@ -73,7 +73,8 @@ impl Context {
             settings_server: Default::default(),
             heartbeat: Default::default(),
             net_storage: NetStorage {
-                devices: DeviceStorage::default(),
+                devices: Default::default(),
+                inspector: Default::default(),
                 lookup,
                 raw: RawStorage::new(config.unparsed_frames_threshold),
                 speed: Default::default(),
@@ -112,6 +113,7 @@ impl Context {
             heartbeat: Default::default(),
             net_storage: NetStorage {
                 devices: DeviceStorage::default(),
+                inspector: Default::default(),
                 lookup: self.net_storage.lookup.clone(),
                 raw: RawStorage::new(self.config.unparsed_frames_threshold),
                 speed: Default::default(),

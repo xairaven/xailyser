@@ -1,7 +1,6 @@
 use crate::context::ClientSettings;
 use chrono::{DateTime, Local, TimeZone};
-use dpi::dto::frame::{FrameHeader, FrameMetadata};
-use dpi::protocols::ProtocolData;
+use dpi::dto::frame::FrameHeader;
 use std::collections::VecDeque;
 use std::fmt::Formatter;
 use strum_macros::EnumIter;
@@ -19,39 +18,22 @@ pub struct SpeedData {
 }
 
 impl SpeedData {
-    pub fn get_info_metadata(
-        &mut self, metadata: &FrameMetadata,
-    ) -> Result<(), SpeedError> {
-        let sample = Sample::try_from(&metadata.header)?;
-        self.throughput.push_back(sample.clone());
-
-        if let Some(proto) = metadata.layers.iter().find_map(|layer| match layer {
-            ProtocolData::IPv4(v) => Some((
-                v.address_source.is_private(),
-                v.address_destination.is_private(),
-            )),
-            ProtocolData::IPv6(v) => Some((
-                v.address_source.is_unique_local(),
-                v.address_destination.is_unique_local(),
-            )),
-            _ => None,
-        }) {
-            let (src_private, dst_private) = proto;
-            if dst_private {
-                self.receive.push_back(sample.clone());
-            }
-            if src_private {
-                self.send.push_back(sample);
-            }
+    pub fn load_complete_sample(&mut self, directed_sample: SampleDirection) {
+        match directed_sample {
+            SampleDirection::Send(value) => {
+                self.throughput.push_back(value.clone());
+                self.send.push_back(value)
+            },
+            SampleDirection::Receive(value) => {
+                self.throughput.push_back(value.clone());
+                self.receive.push_back(value)
+            },
+            SampleDirection::Throughput(value) => self.throughput.push_back(value),
         }
-
-        Ok(())
     }
 
-    pub fn get_info_header(&mut self, header: &FrameHeader) -> Result<(), SpeedError> {
-        let captured_info = Sample::try_from(header)?;
-        self.throughput.push_back(captured_info);
-        Ok(())
+    pub fn load_raw_sample(&mut self, sample: Sample) {
+        self.throughput.push_back(sample);
     }
 
     pub fn update_info(&mut self, settings: &ClientSettings) {
@@ -221,6 +203,12 @@ impl TryFrom<&str> for SpeedUnitPerSecond {
 pub struct Sample {
     pub captured_bytes: u32,
     pub time_captured: DateTime<Local>,
+}
+
+pub enum SampleDirection {
+    Send(Sample),
+    Receive(Sample),
+    Throughput(Sample),
 }
 
 impl Sample {
