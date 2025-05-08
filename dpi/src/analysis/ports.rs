@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io;
-
-const PATH: &str = "./resources/iana-port-service-database.csv";
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PortInfo {
@@ -15,8 +14,8 @@ pub struct PortInfo {
 pub type Port = u16;
 pub type PortServiceTable = HashMap<Port, Vec<PortInfo>>;
 
-pub fn read_database() -> io::Result<PortServiceTable> {
-    let file = std::fs::File::open(PATH)?;
+pub fn read_database(path: PathBuf) -> io::Result<PortServiceTable> {
+    let file = std::fs::File::open(path)?;
     let mut reader = csv::ReaderBuilder::new().from_reader(io::BufReader::new(file));
 
     let mut map = PortServiceTable::new();
@@ -28,7 +27,7 @@ pub fn read_database() -> io::Result<PortServiceTable> {
     const INDEX_DESCRIPTION: usize = 3;
     for result in reader.records() {
         let record = result?;
-        dbg!(record.len() == CSV_FIELDS);
+        debug_assert!(record.len() == CSV_FIELDS);
 
         let port = match record.get(INDEX_PORT) {
             Some(value) => match value.parse::<u16>() {
@@ -68,7 +67,9 @@ mod tests {
     use super::*;
     use std::sync::LazyLock;
 
-    static TABLE: LazyLock<PortServiceTable> = LazyLock::new(|| read_database().unwrap());
+    const PATH: &str = "./resources/iana-port-service-database.csv";
+    static TABLE: LazyLock<PortServiceTable> =
+        LazyLock::new(|| read_database(PathBuf::from(PATH)).unwrap());
 
     #[test]
     fn test_kerberos() {

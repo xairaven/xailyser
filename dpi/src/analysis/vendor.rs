@@ -2,13 +2,12 @@ use crate::protocols::ethernet::mac::{MacAddress, Vendor};
 use radix_tree::{Node, Radix};
 use std::io;
 use std::io::BufRead;
-
-const PATH: &str = "./resources/oui-database.txt";
+use std::path::PathBuf;
 
 pub type OuiRadixTree = Node<char, Vendor>;
 
-pub fn read_database() -> io::Result<OuiRadixTree> {
-    let file = std::fs::File::open(PATH)?;
+pub fn read_database(path: PathBuf) -> io::Result<OuiRadixTree> {
+    let file = std::fs::File::open(path)?;
     let reader = io::BufReader::new(file);
 
     let mut tree: OuiRadixTree = Node {
@@ -86,7 +85,9 @@ mod tests {
     use super::*;
     use std::sync::LazyLock;
 
-    static TREE: LazyLock<OuiRadixTree> = LazyLock::new(|| read_database().unwrap());
+    const PATH: &str = "./resources/oui-database.txt";
+    static TREE: LazyLock<OuiRadixTree> =
+        LazyLock::new(|| read_database(PathBuf::from(PATH)).unwrap());
 
     #[test]
     fn test_mac_24() {
