@@ -18,6 +18,10 @@ pub mod heading {
     pub const NORMAL: f32 = 16.0;
     pub const HUGE: f32 = 25.0;
 
+    pub fn grid(text: &str) -> egui::RichText {
+        egui::RichText::new(text).underline()
+    }
+
     pub fn normal(title: &str) -> egui::RichText {
         egui::RichText::new(format!("{}:", title))
             .size(NORMAL)

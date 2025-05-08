@@ -2,6 +2,7 @@
   "_version": 1,
 
   "Button.Apply": "Apply",
+  "Button.Clear": "Clear",
   "Button.Confirm": "Confirm",
   "Button.Save": "Save",
   "Button.Cancel": "Cancel",
@@ -86,6 +87,16 @@
   "Tab.About.CheckGithub": "Check out the code on GitHub!",
   "Tab.About.LatestRelease": "Latest release",
   
+  "Tab.Inspector.Label.Captured": "Captured Packets",
+  "Tab.Inspector.Label.Empty": "Empty.",
+  "Tab.Inspector.Label.Protocol": "Protocol",
+  "Tab.Inspector.Label.Number": "#",
+  "Tab.Inspector.Protocol.Arp.Operation": "Operation",
+  "Tab.Inspector.Protocol.Arp.IpSender": "Sender's IP",
+  "Tab.Inspector.Protocol.Arp.IpTarget": "Target's IP",
+  "Tab.Inspector.Protocol.Arp.MacSender": "Sender's MAC",
+  "Tab.Inspector.Protocol.Arp.MacTarget": "Target's Mac",
+  
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",
   "Tab.Status.NetworkData.Label.Received": "Received",
@@ -135,6 +146,7 @@
   "Tab.SettingsServer.Note.RestartServer": "After confirmation, you may not receive a message about the reboot.\nMonitor the server status.",
 
   "Tabs.Status": "Status",
+  "Tabs.Inspector": "Inspector",
   "Tabs.ClientSettings": "Client Settings",
   "Tabs.ServerSettings": "Server Settings",
   "Tabs.About": "About",

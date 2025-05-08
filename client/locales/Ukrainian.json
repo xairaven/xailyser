@@ -2,6 +2,7 @@
   "_version": 1,
 
   "Button.Apply": "Застосувати",
+  "Button.Clear": "Очистити",
   "Button.Confirm": "Підтвердити",
   "Button.Save": "Зберегти",
   "Button.Cancel": "Скасувати",
@@ -85,7 +86,17 @@
   "Tab.About.Developer": "Розробник: Ковальов Олександр",
   "Tab.About.CheckGithub": "Перегляньте код на GitHub!",
   "Tab.About.LatestRelease": "Останній реліз",
-  
+
+  "Tab.Inspector.Label.Captured": "Захоплено пакетів",
+  "Tab.Inspector.Label.Empty": "Порожньо.",
+  "Tab.Inspector.Label.Protocol": "Протокол",
+  "Tab.Inspector.Label.Number": "№",
+  "Tab.Inspector.Protocol.Arp.Operation": "Операція",
+  "Tab.Inspector.Protocol.Arp.IpSender": "IP Відправника",
+  "Tab.Inspector.Protocol.Arp.IpTarget": "IP Цілі",
+  "Tab.Inspector.Protocol.Arp.MacSender": "MAC Відправника",
+  "Tab.Inspector.Protocol.Arp.MacTarget": "MAC Цілі",
+
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",
   "Tab.Status.NetworkData.Label.Received": "Received",
@@ -135,6 +146,7 @@
   "Tab.SettingsServer.Note.RestartServer": "Після підтвердження ви можете не отримати повідомлення про перезапуск.\nСлідкуйте за станом сервера.",
   
   "Tabs.Status": "Статус",
+  "Tabs.Inspector": "Інспектор",
   "Tabs.ClientSettings": "Клієнт",
   "Tabs.ServerSettings": "Сервер",
   "Tabs.About": "Про програму",

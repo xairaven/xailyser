@@ -5,6 +5,7 @@ use strum_macros::EnumIter;
 pub enum Tab {
     #[default]
     Status,
+    Inspector,
     ClientSettings,
     ServerSettings,
     About,
@@ -16,6 +17,7 @@ impl std::fmt::Display for Tab {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let text = match self {
             Tab::Status => format!("🏠 {}", t!("Tabs.Status")),
+            Tab::Inspector => format!("🔍 {}", t!("Tabs.Inspector")),
             Tab::ClientSettings => format!("⚙ {}", t!("Tabs.ClientSettings")),
             Tab::ServerSettings => format!("⚙ {}", t!("Tabs.ServerSettings")),
             Tab::About => format!("ℹ {}", t!("Tabs.About")),
@@ -28,6 +30,7 @@ impl std::fmt::Display for Tab {
 }
 
 pub mod about;
+pub mod inspector;
 pub mod settings_client;
 pub mod settings_server;
 pub mod status;

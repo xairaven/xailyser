@@ -26,3 +26,31 @@ pub struct InspectorStorage {
     pub tcp: Vec<TcpDto>,
     pub udp: Vec<UdpDto>,
 }
+
+impl InspectorStorage {
+    pub fn len(&self) -> usize {
+        self.arp.len()
+            + self.dhcpv4.len()
+            + self.dhcpv6.len()
+            + self.dns.len()
+            + self.ethernet.len()
+            + self.http.len()
+            + self.icmpv4.len()
+            + self.icmpv6.len()
+            + self.tcp.len()
+            + self.udp.len()
+    }
+
+    pub fn clear(&mut self) {
+        self.arp.clear();
+        self.dhcpv4.clear();
+        self.dhcpv6.clear();
+        self.dns.clear();
+        self.ethernet.clear();
+        self.http.clear();
+        self.icmpv4.clear();
+        self.icmpv6.clear();
+        self.tcp.clear();
+        self.udp.clear();
+    }
+}
