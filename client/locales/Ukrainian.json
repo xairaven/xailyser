@@ -46,6 +46,18 @@
   "Error.FailedUnpackLinkType": "Не вдалося отримати лінк-тайп інтерфейсу. Перевірте мережевий інтерфейс серверу.",
   "Error.Pcap": "Виникла помилка з бібліотеки PCAP",
 
+  "Error.Websockets.ConnectionFailed": "Не вдалося підключитися",
+  "Error.Websockets.FailedParseUri": "Не вдалося проаналізувати Uri. Перевірте IP-адресу та порт",
+  "Error.Websockets.BadReadTimeoutDuration": "Неправильний час очікування читання",
+  "Error.Websockets.UnknownStreamType": "Невідомий тип потоку TLS",
+  "Error.Websockets.Additional.BadRequest": "Неправильний запит",
+  "Error.Websockets.Additional.BadRequestHeadersAbsent": "Неправильний запит. Можливо, деякі заголовки відсутні",
+  "Error.Websockets.Additional.ConnectionAttemptFailed": "Спроба підключення не вдалася",
+  "Error.Websockets.Additional.PreconditionFailed": "Попередня умова для підключення не виконана",
+  "Error.Websockets.Additional.SomePreconditionFailed": "Деякі попередні умови підключення не виконані",
+  "Error.Websockets.Additional.Unauthorized": "Неавторизовано",
+  "Error.Websockets.Additional.Url": "Неправильна URL-адреса (або сервер не працює)",
+
   "Language.English": "Англійська",
   "Language.Ukrainian": "Українська",
 

@@ -166,9 +166,9 @@ impl AuthComponent {
                 self.authenticated = true;
             },
             Err(err) => {
-                let message = match err.additional_info() {
-                    None => format!("{}.", err),
-                    Some(info) => format!("{}.\n{}", err, info),
+                let message = match err.additional_info_localized() {
+                    None => format!("{}.", err.localized()),
+                    Some(info) => format!("{}.\n{}", err.localized(), info),
                 };
 
                 let modal = MessageModal::error(&message);

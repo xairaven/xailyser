@@ -46,6 +46,18 @@
   "Error.FailedUnpackLinkType": "Failed to get interface's link-type. Check server's interface.",
   "Error.Pcap": "Error occurred in PCAP library",
 
+  "Error.Websockets.ConnectionFailed": "Failed to connect",
+  "Error.Websockets.FailedParseUri": "Failed to parse Uri. Verify IP address & port",
+  "Error.Websockets.BadReadTimeoutDuration": "Bad read timeout duration",
+  "Error.Websockets.UnknownStreamType": "Unknown TLS stream type",
+  "Error.Websockets.Additional.BadRequest": "Bad request",
+  "Error.Websockets.Additional.BadRequestHeadersAbsent": "Bad request. Maybe, some headers absent",
+  "Error.Websockets.Additional.ConnectionAttemptFailed": "Connection attempt failed",
+  "Error.Websockets.Additional.PreconditionFailed": "Precondition failed",
+  "Error.Websockets.Additional.SomePreconditionFailed": "Some connection precondition failed",
+  "Error.Websockets.Additional.Unauthorized": "Unauthorized",
+  "Error.Websockets.Additional.Url": "Bad url (or server is not working)",
+
   "Language.English": "English",
   "Language.Ukrainian": "Ukrainian",
 

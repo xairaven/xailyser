@@ -228,7 +228,22 @@ pub enum WsError {
 }
 
 impl WsError {
-    pub fn additional_info(&self) -> Option<String> {
+    pub fn localized(&self) -> String {
+        match self {
+            WsError::ConnectionFailed(_) => {
+                t!("Error.Websockets.ConnectionFailed").to_string()
+            },
+            WsError::FailedParseUri => t!("Error.Websockets.FailedParseUri").to_string(),
+            WsError::BadReadTimeoutDuration(_) => {
+                t!("Error.Websockets.BadReadTimeoutDuration").to_string()
+            },
+            WsError::UnknownStreamType => {
+                t!("Error.Websockets.UnknownStreamType").to_string()
+            },
+        }
+    }
+
+    pub fn additional_info_localized(&self) -> Option<String> {
         match self {
             WsError::ConnectionFailed(err) => match err {
                 tungstenite::Error::ConnectionClosed
@@ -242,34 +257,58 @@ impl WsError {
                 | tungstenite::Error::AttackAttempt
                 | tungstenite::Error::HttpFormat(_) => Some(err.to_string()),
                 tungstenite::Error::Url(_) => {
-                    Some("Bad url (or server is not working)".to_string())
+                    Some(t!("Error.Websockets.Additional.Url").to_string())
                 },
                 tungstenite::Error::Http(response) => match response.status() {
                     StatusCode::UNAUTHORIZED => {
                         if let Some(body) =
                             Self::response_body_bytes_to_str(response.body())
                         {
-                            return Some(format!("Unauthorized: {}", body));
+                            return Some(format!(
+                                "{}: {}",
+                                t!("Error.Websockets.Additional.Unauthorized"),
+                                body
+                            ));
                         }
-                        Some("Unauthorized.".to_string())
+                        Some(format!(
+                            "{}.",
+                            t!("Error.Websockets.Additional.Unauthorized")
+                        ))
                     },
                     StatusCode::PRECONDITION_FAILED => {
                         if let Some(body) =
                             Self::response_body_bytes_to_str(response.body())
                         {
-                            return Some(format!("Precondition failed: {}", body));
+                            return Some(format!(
+                                "{}: {}",
+                                t!("Error.Websockets.Additional.PreconditionFailed"),
+                                body
+                            ));
                         }
-                        Some("Some connection precondition failed.".to_string())
+                        Some(format!(
+                            "{}.",
+                            t!("Error.Websockets.Additional.SomePreconditionFailed")
+                        ))
                     },
                     StatusCode::BAD_REQUEST => {
                         if let Some(body) =
                             Self::response_body_bytes_to_str(response.body())
                         {
-                            return Some(format!("Bad request: {}", body));
+                            return Some(format!(
+                                "{}: {}",
+                                t!("Error.Websockets.Additional.BadRequest"),
+                                body
+                            ));
                         }
-                        Some("Bad request. Maybe, some headers absent.".to_string())
+                        Some(format!(
+                            "{}.",
+                            t!("Error.Websockets.Additional.BadRequestHeadersAbsent")
+                        ))
                     },
-                    _ => Some("Connection attempt failed.".to_string()),
+                    _ => Some(format!(
+                        "{}.",
+                        t!("Error.Websockets.Additional.ConnectionAttemptFailed")
+                    )),
                 },
             },
             WsError::BadReadTimeoutDuration(err) => Some(err.to_string()),
