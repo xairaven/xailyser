@@ -206,8 +206,8 @@ fn parse_record_section<'a>(
         true => {
             let mut vec: Vec<ResourceRecord> = vec![];
             for _ in 0..records {
-                let (section_rest, question) = parse_resource_record(rest, whole)?;
-                vec.push(question);
+                let (section_rest, record) = parse_resource_record(rest, whole)?;
+                vec.push(record);
                 rest = section_rest;
             }
             vec
@@ -242,7 +242,7 @@ fn parse_resource_record<'a>(
 
     // RDATA
     let (rest, data) = take(data_length).parse(rest)?;
-    let (_, data) = DnsTypeData::try_from_bytes(data, &record_type)?;
+    let (_, data) = DnsTypeData::try_from_bytes(data, whole, &record_type)?;
 
     let record = ResourceRecord {
         name,
@@ -405,6 +405,15 @@ pub enum DnsTypeData {
     AAAA(Ipv6Addr),
     CNAME(String),
     NS(String),
+    SOA {
+        primary_name_server: String,
+        mailbox: String,
+        serial: u32,
+        refresh_interval: u32,
+        retry_interval: u32,
+        expire_limit: u32,
+        minimum_ttl: u32,
+    },
     Unknown,
 }
 
@@ -416,6 +425,11 @@ impl std::fmt::Display for DnsTypeData {
             DnsTypeData::AAAA(address) => address.to_string(),
             DnsTypeData::CNAME(value) => value.to_string(),
             DnsTypeData::NS(value) => value.to_string(),
+            DnsTypeData::SOA {
+                primary_name_server,
+                mailbox,
+                ..
+            } => format!("{} <{}>", primary_name_server, mailbox),
             DnsTypeData::Unknown => "Unknown".to_string(),
         };
 
@@ -425,7 +439,7 @@ impl std::fmt::Display for DnsTypeData {
 
 impl DnsTypeData {
     pub fn try_from_bytes<'a>(
-        input: &'a [u8], dns_type: &DnsType,
+        input: &'a [u8], whole: &'a [u8], dns_type: &DnsType,
     ) -> IResult<&'a [u8], Self> {
         match dns_type {
             DnsType::A => match input.len() {
@@ -453,12 +467,36 @@ impl DnsTypeData {
                 _ => Err(ParserError::ErrorVerify.to_nom(input)),
             },
             DnsType::CNAME => {
-                let (rest, cname) = parser::wire_format(input)?;
+                let (rest, cname) = parse_name(input, whole)?;
                 Ok((rest, Self::CNAME(cname)))
             },
             DnsType::NS => {
-                let (rest, cname) = parser::wire_format(input)?;
+                let (rest, cname) = parse_name(input, whole)?;
                 Ok((rest, Self::NS(cname)))
+            },
+            DnsType::SOA => {
+                let (rest, primary_name_server) = parse_name(input, whole)?;
+                let (rest, mailbox) = parse_name(rest, whole)?;
+                let (rest, serial) = be_u32().parse(rest)?;
+                let (rest, refresh_interval) = be_u32().parse(rest)?;
+                let (rest, retry_interval) = be_u32().parse(rest)?;
+                let (rest, expire_limit) = be_u32().parse(rest)?;
+                let (rest, minimum_ttl) = be_u32().parse(rest)?;
+
+                debug_assert!(rest.is_empty());
+
+                Ok((
+                    rest,
+                    Self::SOA {
+                        primary_name_server,
+                        mailbox,
+                        serial,
+                        refresh_interval,
+                        retry_interval,
+                        expire_limit,
+                        minimum_ttl,
+                    },
+                ))
             },
             _ => Ok((&[], Self::Unknown)),
         }
@@ -631,7 +669,7 @@ mod tests {
     }
 
     #[test]
-    fn test_dns_query_authoritative() {
+    fn test_dns_query_authoritative_soa() {
         let hex_actual = "04 E8 B9 18 55 10 84 D8 1B 6E C1 4A 08 00 45 00 00 79 56 FF 00 00 3D 11 A4 BC C0 A8 00 01 C0 A8 00 67 00 35 C3 8C 00 65 89 02 BF 9D 81 80 00 01 00 00 00 01 00 00 03 77 77 77 0A 67 6F 6F 67 6C 65 61 70 69 73 03 63 6F 6D 00 00 41 00 01 C0 10 00 06 00 01 00 00 00 37 00 2D 03 6E 73 31 06 67 6F 6F 67 6C 65 C0 1B 09 64 6E 73 2D 61 64 6D 69 6E C0 34 2C C2 48 8D 00 00 03 84 00 00 03 84 00 00 07 08 00 00 00 3C".replace(" ", "");
         let frame = hex::decode(hex_actual).unwrap();
         let header = FrameHeader {
@@ -737,7 +775,15 @@ mod tests {
                 class: Class::IN,
                 time_to_live: 55,
                 data_length: 45,
-                data: DnsTypeData::Unknown,
+                data: DnsTypeData::SOA {
+                    primary_name_server: "ns1.google.com".to_string(),
+                    mailbox: "dns-admin.google.com".to_string(),
+                    serial: 750930061,
+                    refresh_interval: 900,
+                    retry_interval: 900,
+                    expire_limit: 1800,
+                    minimum_ttl: 60,
+                },
             }],
             additional_section: vec![],
         };
