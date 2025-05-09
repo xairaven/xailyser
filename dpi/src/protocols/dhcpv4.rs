@@ -8,6 +8,7 @@ use nom::{Finish, IResult, Parser, bits};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
+use strum_macros::Display;
 
 // DHCPv4 Protocol
 // RFC 2131: https://datatracker.ietf.org/doc/html/rfc2131
@@ -277,7 +278,7 @@ pub enum OptionData {
     SubnetMask(Ipv4Addr),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum OperationType {
     BootRequest = 1,
