@@ -404,6 +404,7 @@ pub enum DnsTypeData {
     AIPv6(Ipv6Addr),
     AAAA(Ipv6Addr),
     CNAME(String),
+    NS(String),
     Unknown,
 }
 
@@ -414,6 +415,7 @@ impl std::fmt::Display for DnsTypeData {
             DnsTypeData::AIPv6(address) => address.to_string(),
             DnsTypeData::AAAA(address) => address.to_string(),
             DnsTypeData::CNAME(value) => value.to_string(),
+            DnsTypeData::NS(value) => value.to_string(),
             DnsTypeData::Unknown => "Unknown".to_string(),
         };
 
@@ -453,6 +455,10 @@ impl DnsTypeData {
             DnsType::CNAME => {
                 let (rest, cname) = parser::wire_format(input)?;
                 Ok((rest, Self::CNAME(cname)))
+            },
+            DnsType::NS => {
+                let (rest, cname) = parser::wire_format(input)?;
+                Ok((rest, Self::NS(cname)))
             },
             _ => Ok((&[], Self::Unknown)),
         }
@@ -862,7 +868,7 @@ mod tests {
                     class: Class::IN,
                     time_to_live: 3600,
                     data_length: 15,
-                    data: DnsTypeData::Unknown,
+                    data: DnsTypeData::NS("ns.wide.ad.jp".to_string()),
                 },
                 ResourceRecord {
                     name: "wide.ad.jp".to_string(),
@@ -870,7 +876,7 @@ mod tests {
                     class: Class::IN,
                     time_to_live: 3600,
                     data_length: 21,
-                    data: DnsTypeData::Unknown,
+                    data: DnsTypeData::NS("ns.tokyo.wide.ad.jp".to_string()),
                 },
                 ResourceRecord {
                     name: "wide.ad.jp".to_string(),
@@ -878,7 +884,7 @@ mod tests {
                     class: Class::IN,
                     time_to_live: 3600,
                     data_length: 19,
-                    data: DnsTypeData::Unknown,
+                    data: DnsTypeData::NS("ns.rcac.tdi.co.jp".to_string()),
                 },
             ],
             additional_section: vec![
