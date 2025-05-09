@@ -108,6 +108,12 @@
   "Tab.Inspector.Protocol.Arp.IpTarget": "IP Цілі",
   "Tab.Inspector.Protocol.Arp.MacSender": "MAC Відправника",
   "Tab.Inspector.Protocol.Arp.MacTarget": "MAC Цілі",
+  "Tab.Inspector.Protocol.DHCPv4.MessageType": "Тип повідомлення",
+  "Tab.Inspector.Protocol.DHCPv4.OldClientAddress": "Адреса старого клієнта",
+  "Tab.Inspector.Protocol.DHCPv4.NewClientAddress": "Адреса нового клієнта",
+  "Tab.Inspector.Protocol.DHCPv4.ServerAddress": "Адреса сервера",
+  "Tab.Inspector.Protocol.DHCPv4.RelayAgentAddress": "Адреса агента ретрансляції",
+  "Tab.Inspector.Protocol.DHCPv4.ClientMAC": "MAC клієнта",
 
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",

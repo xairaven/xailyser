@@ -108,6 +108,12 @@
   "Tab.Inspector.Protocol.Arp.IpTarget": "Target's IP",
   "Tab.Inspector.Protocol.Arp.MacSender": "Sender's MAC",
   "Tab.Inspector.Protocol.Arp.MacTarget": "Target's Mac",
+  "Tab.Inspector.Protocol.DHCPv4.MessageType": "Message Type",
+  "Tab.Inspector.Protocol.DHCPv4.OldClientAddress": "Old Client's Address",
+  "Tab.Inspector.Protocol.DHCPv4.NewClientAddress": "New Client's Address",
+  "Tab.Inspector.Protocol.DHCPv4.ServerAddress": "Server's Address",
+  "Tab.Inspector.Protocol.DHCPv4.RelayAgentAddress": "Relay Agent's Address",
+  "Tab.Inspector.Protocol.DHCPv4.ClientMAC": "Client's MAC",
   
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",
