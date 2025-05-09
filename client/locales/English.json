@@ -114,6 +114,7 @@
   "Tab.Inspector.Protocol.DHCPv4.ServerAddress": "Server's Address",
   "Tab.Inspector.Protocol.DHCPv4.RelayAgentAddress": "Relay Agent's Address",
   "Tab.Inspector.Protocol.DHCPv4.ClientMAC": "Client's MAC",
+  "Tab.Inspector.Protocol.DHCPv6.MessageType": "Message Type",
   
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",

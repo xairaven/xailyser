@@ -7,6 +7,7 @@ use nom::{Finish, Parser};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv6Addr;
+use strum_macros::Display;
 
 // DHCPv6 Protocol
 // RFC 8415: https://datatracker.ietf.org/doc/html/rfc8415
@@ -201,19 +202,17 @@ pub enum OptionData {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct DHCPv6Dto {
     pub message_type: MessageType,
-    pub options: Vec<OptionData>,
 }
 
 impl From<DHCPv6> for DHCPv6Dto {
     fn from(value: DHCPv6) -> Self {
         Self {
             message_type: value.message_type,
-            options: value.options,
         }
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum MessageType {
     Solicit = 1,

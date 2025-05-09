@@ -25,7 +25,7 @@ impl InspectorTab {
         match self.protocol_chosen {
             ProtocolId::Arp => self.arp_view(ui, ctx),
             ProtocolId::DHCPv4 => self.dhcpv4_view(ui, ctx),
-            ProtocolId::DHCPv6 => {},
+            ProtocolId::DHCPv6 => self.dhcpv6_view(ui, ctx),
             ProtocolId::DNS => {},
             ProtocolId::Ethernet => {},
             ProtocolId::HTTP => {},
@@ -152,6 +152,24 @@ impl InspectorTab {
                 ui.label(packet.server_address.to_string());
                 ui.label(packet.relay_agent_address.to_string());
                 ui.label(packet.hardware_address_client.to_string());
+            },
+        );
+    }
+
+    pub fn dhcpv6_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.dhcpv6;
+        InspectorTab::protocol_view(
+            ui,
+            storage,
+            "Inspector.DHCPv6.Packets",
+            2,
+            &[
+                "Tab.Inspector.Label.Number",
+                "Tab.Inspector.Protocol.DHCPv6.MessageType",
+            ],
+            |ui, idx, packet| {
+                ui.label(idx.to_string());
+                ui.label(packet.message_type.to_string());
             },
         );
     }
