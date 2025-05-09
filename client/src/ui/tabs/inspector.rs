@@ -27,7 +27,7 @@ impl InspectorTab {
             ProtocolId::DHCPv4 => self.dhcpv4_view(ui, ctx),
             ProtocolId::DHCPv6 => self.dhcpv6_view(ui, ctx),
             ProtocolId::DNS => self.dns_view(ui, ctx),
-            ProtocolId::Ethernet => {},
+            ProtocolId::Ethernet => self.ethernet_view(ui, ctx),
             ProtocolId::HTTP => {},
             ProtocolId::ICMPv4 => {},
             ProtocolId::ICMPv6 => {},
@@ -260,21 +260,21 @@ impl InspectorTab {
                                 });
                         }
 
-                        Self::record_view(
+                        Self::dns_record_view(
                             ui,
                             index,
                             "Answer",
                             "Tab.Inspector.Protocol.DNS.Answer",
                             &packet.answer_section,
                         );
-                        Self::record_view(
+                        Self::dns_record_view(
                             ui,
                             index,
                             "Authority",
                             "Tab.Inspector.Protocol.DNS.Authority",
                             &packet.authority_section,
                         );
-                        Self::record_view(
+                        Self::dns_record_view(
                             ui,
                             index,
                             "Additional",
@@ -286,7 +286,7 @@ impl InspectorTab {
             });
     }
 
-    fn record_view(
+    fn dns_record_view(
         ui: &mut egui::Ui, packet_id: usize, section_id: &str, name: &str,
         section: &[dpi::protocols::dns::ResourceRecord],
     ) {
@@ -331,6 +331,26 @@ impl InspectorTab {
                     }
                 });
         }
+    }
+
+    pub fn ethernet_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.ethernet;
+        InspectorTab::protocol_view(
+            ui,
+            storage,
+            "Inspector.Ethernet.Packets",
+            3,
+            &[
+                "Tab.Inspector.Label.Number",
+                "Tab.Inspector.Protocol.Ethernet.MacSender",
+                "Tab.Inspector.Protocol.Ethernet.MacTarget",
+            ],
+            |ui, id, packet| {
+                ui.label(id.to_string());
+                ui.label(packet.destination_mac.to_string());
+                ui.label(packet.source_mac.to_string());
+            },
+        );
     }
 
     fn tab_heading(&self, ui: &mut egui::Ui, ctx: &mut Context) {

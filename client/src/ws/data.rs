@@ -15,7 +15,13 @@ pub fn metadata(
     }
 
     let datalink_info = match metadata.layers.first() {
-        Some(ProtocolDto::Ethernet(ethernet_info)) => ethernet_info.clone(),
+        Some(ProtocolDto::Ethernet(ethernet_info)) => {
+            ctx.net_storage
+                .inspector
+                .ethernet
+                .push(ethernet_info.clone());
+            ethernet_info.clone()
+        },
         _ => return Err(ProcessingError::DatalinkNotFirst),
     };
 

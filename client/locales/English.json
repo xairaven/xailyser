@@ -132,6 +132,8 @@
   "Tab.Inspector.Protocol.DNS.Record.Class": "Class",
   "Tab.Inspector.Protocol.DNS.Record.TimeToLive": "Time To Live",
   "Tab.Inspector.Protocol.DNS.Record.Data": "Data",
+  "Tab.Inspector.Protocol.Ethernet.MacSender": "Sender's MAC",
+  "Tab.Inspector.Protocol.Ethernet.MacTarget": "Target's Mac",
 
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",

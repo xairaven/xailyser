@@ -132,6 +132,8 @@
   "Tab.Inspector.Protocol.DNS.Record.Class": "Клас",
   "Tab.Inspector.Protocol.DNS.Record.TimeToLive": "Час життя",
   "Tab.Inspector.Protocol.DNS.Record.Data": "Дані",
+  "Tab.Inspector.Protocol.Ethernet.MacSender": "MAC Відправника",
+  "Tab.Inspector.Protocol.Ethernet.MacTarget": "MAC Цілі",
 
   "Tab.Status.NetworkData.Label.Peak": "Пік",
   "Tab.Status.NetworkData.Label.Throughput": "Загалом",
