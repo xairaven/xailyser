@@ -1,5 +1,5 @@
-use crate::communication::request::UiClientRequest;
 use crate::context::ClientSettings;
+use crate::ws::request::UiClientRequest;
 use chrono::{DateTime, Local};
 use crossbeam::channel::Sender;
 

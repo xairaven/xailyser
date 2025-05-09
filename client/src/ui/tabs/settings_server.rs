@@ -1,8 +1,8 @@
-use crate::communication::request::UiClientRequest;
 use crate::context::Context;
 use crate::ui::styles;
 use crate::ui::styles::{colors, spacing};
 use crate::ui::tabs::Tab;
+use crate::ws::request::UiClientRequest;
 use chrono::{DateTime, Local};
 use common::messages::Request;
 use egui::{Grid, RichText, TextBuffer, TextEdit};

@@ -49,11 +49,6 @@ fn main() {
     });
 }
 
-mod communication {
-    pub mod data;
-    pub mod request;
-    pub mod response;
-}
 mod config;
 mod context;
 mod logging;

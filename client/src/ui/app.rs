@@ -1,10 +1,10 @@
-use crate::communication;
-use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::context::Context;
 use crate::ui::components::auth::AuthComponent;
 use crate::ui::components::root::RootComponent;
 use crate::ui::modals::Modal;
+use crate::ws;
+use crate::ws::request::UiClientRequest;
 use std::sync::atomic::Ordering;
 use std::thread::JoinHandle;
 
@@ -87,10 +87,10 @@ impl eframe::App for App {
 
         // Processing all responses
         while let Ok(response) = self.context.data_response_rx.try_recv() {
-            communication::response::data(&mut self.context, response);
+            ws::response::data(&mut self.context, response);
         }
         while let Ok(response) = self.context.server_response_rx.try_recv() {
-            communication::response::process(&mut self.context, response);
+            ws::response::process(&mut self.context, response);
         }
         ctx.request_repaint();
     }

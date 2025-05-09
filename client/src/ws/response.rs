@@ -1,6 +1,6 @@
-use crate::communication::data;
-use crate::communication::data::ProcessingError;
 use crate::context::Context;
+use crate::ws::data;
+use crate::ws::data::ProcessingError;
 use common::messages::Response;
 use dpi::dto::frame::FrameType;
 
@@ -58,8 +58,8 @@ mod modals {
     type Sender = crossbeam::channel::Sender<Box<dyn Modal>>;
 
     pub mod error {
-        use crate::communication::response::modals::Sender;
         use crate::ui::modals::message::MessageModal;
+        use crate::ws::response::modals::Sender;
         use common::messages::ServerError;
 
         pub fn try_send(tx: &Sender, error: ServerError) {
@@ -91,8 +91,8 @@ mod modals {
     }
 
     pub mod success {
-        use crate::communication::response::modals::Sender;
         use crate::ui::modals::message::MessageModal;
+        use crate::ws::response::modals::Sender;
 
         pub fn compression_set(tx: &Sender, is_enabled: bool) {
             let text: String = if is_enabled {

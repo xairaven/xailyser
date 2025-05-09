@@ -1,4 +1,3 @@
-use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::net::NetStorage;
 use crate::net::device::DeviceStorage;
@@ -9,6 +8,7 @@ use crate::net::speed::PlotSettings;
 use crate::profiles::ProfilesStorage;
 use crate::ui::modals::Modal;
 use crate::ui::styles::themes;
+use crate::ws::request::UiClientRequest;
 use chrono::{DateTime, Local};
 use common::messages::Response;
 use crossbeam::channel::{Receiver, Sender, unbounded};

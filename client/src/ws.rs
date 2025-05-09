@@ -1,4 +1,4 @@
-use crate::communication::request::UiClientRequest;
+use crate::ws::request::UiClientRequest;
 use common::auth::{AUTH_HEADER, COMPRESSION_HEADER};
 use common::compression::decompress;
 use common::cryptography::encrypt_password;
@@ -324,3 +324,7 @@ impl WsError {
         }
     }
 }
+
+pub mod data;
+pub mod request;
+pub mod response;
