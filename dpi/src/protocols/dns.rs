@@ -242,8 +242,7 @@ fn parse_resource_record<'a>(
 
     // RDATA
     let (rest, data) = take(data_length).parse(rest)?;
-    let data = DnsTypeData::try_from_bytes(data, &record_type)
-        .map_err(|err| err.to_nom(bytes))?;
+    let (_, data) = DnsTypeData::try_from_bytes(data, &record_type)?;
 
     let record = ResourceRecord {
         name,
@@ -403,6 +402,7 @@ pub enum DnsType {
 pub enum DnsTypeData {
     AIPv4(Ipv4Addr),
     AIPv6(Ipv6Addr),
+    AAAA(Ipv6Addr),
     CNAME(String),
     Unknown,
 }
@@ -412,6 +412,7 @@ impl std::fmt::Display for DnsTypeData {
         let text = match self {
             DnsTypeData::AIPv4(address) => address.to_string(),
             DnsTypeData::AIPv6(address) => address.to_string(),
+            DnsTypeData::AAAA(address) => address.to_string(),
             DnsTypeData::CNAME(value) => value.to_string(),
             DnsTypeData::Unknown => "Unknown".to_string(),
         };
@@ -421,30 +422,63 @@ impl std::fmt::Display for DnsTypeData {
 }
 
 impl DnsTypeData {
-    pub fn try_from_bytes(bytes: &[u8], dns_type: &DnsType) -> Result<Self, ParserError> {
+    pub fn try_from_bytes<'a>(
+        input: &'a [u8], dns_type: &DnsType,
+    ) -> IResult<&'a [u8], Self> {
         match dns_type {
-            DnsType::A => match bytes.len() {
+            DnsType::A => match input.len() {
                 4 => {
-                    let bytes = <[u8; 4]>::try_from(bytes)
-                        .map_err(|_| ParserError::ErrorVerify)?;
-                    let address = Ipv4Addr::from(bytes);
-                    Ok(Self::AIPv4(address))
+                    let address = <[u8; 4]>::try_from(input)
+                        .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
+                    let address = Ipv4Addr::from(address);
+                    Ok((&[], Self::AIPv4(address)))
                 },
                 16 => {
-                    let bytes = <[u8; 16]>::try_from(bytes)
-                        .map_err(|_| ParserError::ErrorVerify)?;
-                    let address = Ipv6Addr::from(bytes);
-                    Ok(Self::AIPv6(address))
+                    let address = <[u8; 16]>::try_from(input)
+                        .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
+                    let address = Ipv6Addr::from(address);
+                    Ok((&[], Self::AIPv6(address)))
                 },
-                _ => Err(ParserError::ErrorVerify),
+                _ => Err(ParserError::ErrorVerify.to_nom(input)),
+            },
+            DnsType::AAAA => match input.len() {
+                16 => {
+                    let address = <[u8; 16]>::try_from(input)
+                        .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
+                    let address = Ipv6Addr::from(address);
+                    Ok((&[], Self::AAAA(address)))
+                },
+                _ => Err(ParserError::ErrorVerify.to_nom(input)),
             },
             DnsType::CNAME => {
-                let str = String::from_utf8(bytes.to_vec())
-                    .map_err(|_| ParserError::ErrorVerify)?;
+                let mut labels = Vec::new();
+                let mut rest_buffer = input;
+                while !rest_buffer.is_empty() {
+                    let (rest, len_byte) = be_u8().parse(rest_buffer)?;
+                    // Null-terminator
+                    if len_byte == 0 {
+                        debug_assert!(rest.is_empty());
+                        rest_buffer = rest;
+                        break;
+                    }
 
-                Ok(Self::CNAME(str))
+                    // Unexpected length
+                    if len_byte as usize > rest.len() {
+                        return Err(ParserError::ErrorVerify.to_nom(input));
+                    }
+
+                    // Creating label
+                    let (rest, label): (&[u8], &[u8]) = take(len_byte).parse(rest)?;
+                    let label = String::from_utf8(label.to_vec())
+                        .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
+                    labels.push(label);
+
+                    rest_buffer = rest;
+                }
+
+                Ok((rest_buffer, Self::CNAME(labels.join("."))))
             },
-            _ => Ok(Self::Unknown),
+            _ => Ok((&[], Self::Unknown)),
         }
     }
 }
@@ -502,6 +536,7 @@ mod tests {
     use crate::protocols::ethernet::mac::MacAddress;
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv4::IPv4;
+    use crate::protocols::ipv6::IPv6;
     use crate::protocols::udp::UDP;
     use std::str::FromStr;
 
@@ -723,6 +758,185 @@ mod tests {
                 data: DnsTypeData::Unknown,
             }],
             additional_section: vec![],
+        };
+
+        assert_eq!(actual_dns, expected_dns);
+    }
+
+    #[test]
+    fn test_dns_aaaa_ns() {
+        let hex_actual = "00 00 86 05 80 DA 00 60 97 07 69 EA 86 DD 60 00 00 00 01 0C 11 E6 3F FE 05 01 48 19 00 00 00 00 00 00 00 00 00 42 3F FE 05 07 00 00 00 01 02 00 86 FF FE 05 80 DA 00 35 09 65 01 0C 19 FC B3 62 85 80 00 01 00 02 00 03 00 03 03 77 77 77 04 77 69 64 65 02 61 64 02 6A 70 00 00 1C 00 01 C0 0C 00 05 00 01 00 00 0E 10 00 11 04 65 6E 64 6F 04 77 69 64 65 02 61 64 02 6A 70 00 04 65 6E 64 6F C0 10 00 1C 00 01 00 00 0E 10 00 10 3F FE 05 01 00 00 10 01 00 00 00 00 00 00 00 02 C0 10 00 02 00 01 00 00 0E 10 00 0F 02 6E 73 04 77 69 64 65 02 61 64 02 6A 70 00 C0 10 00 02 00 01 00 00 0E 10 00 15 02 6E 73 05 74 6F 6B 79 6F 04 77 69 64 65 02 61 64 02 6A 70 00 C0 10 00 02 00 01 00 00 0E 10 00 13 02 6E 73 04 72 63 61 63 03 74 64 69 02 63 6F 02 6A 70 00 02 6E 73 C0 10 00 01 00 01 00 00 0E 10 00 04 CB B2 88 3F 02 6E 73 05 74 6F 6B 79 6F C0 10 00 01 00 01 00 00 0E 10 00 04 CB B2 88 3D 02 6E 73 04 72 63 61 63 03 74 64 69 02 63 6F C0 18 00 01 00 01 00 01 51 80 00 04 CA F9 11 11".replace(" ", "");
+        let frame = hex::decode(hex_actual).unwrap();
+        let header = FrameHeader {
+            tv_sec: 0,
+            tv_usec: 0,
+            caplen: 322,
+            len: 0,
+        };
+
+        let parser = ProtocolParser::new(&pcap::Linktype(1), false);
+        let packet = pcap::Packet {
+            header: &pcap::PacketHeader::from(&header),
+            data: &frame,
+        };
+        let result = parser.process(packet);
+        let metadata = match result {
+            Some(value) => match value {
+                FrameType::Metadata(value) => value,
+                _ => panic!(),
+            },
+            None => panic!(),
+        };
+
+        let actual_ethernet = match metadata.layers[0].clone() {
+            ProtocolData::Ethernet(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_ethernet = Ethernet {
+            destination_mac: MacAddress::try_from("00:00:86:05:80:da").unwrap(),
+            source_mac: MacAddress::try_from("00:60:97:07:69:ea").unwrap(),
+            ether_type: EtherType::Ipv6,
+        };
+
+        assert_eq!(actual_ethernet, expected_ethernet);
+
+        let actual_ipv6 = match metadata.layers[1].clone() {
+            ProtocolData::IPv6(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_ipv6 = IPv6 {
+            version: 6,
+            traffic_class: 0,
+            flow_label: 0,
+            payload_length: 268,
+            next_header: IpNextLevelProtocol::UDP,
+            hop_limit: 230,
+            address_source: Ipv6Addr::from_str("3ffe:501:4819::42").unwrap(),
+            address_destination: Ipv6Addr::from_str("3ffe:507:0:1:200:86ff:fe05:80da")
+                .unwrap(),
+        };
+
+        assert_eq!(actual_ipv6, expected_ipv6);
+
+        let actual_udp = match metadata.layers[2].clone() {
+            ProtocolData::UDP(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_udp = UDP {
+            port_source: 53,
+            port_destination: 2405,
+            length: 268,
+            checksum: 0x19fc,
+        };
+
+        assert_eq!(actual_udp, expected_udp);
+
+        let actual_dns = match metadata.layers[3].clone() {
+            ProtocolData::DNS(value) => value,
+            _ => panic!(),
+        };
+
+        let expected_dns = DNS {
+            header: Header {
+                id: 0xb362,
+                message_type: MessageType::Response,
+                operation_code: OperationCode::StandardQuery,
+                authoritative_answer: true,
+                truncation: false,
+                recursion_desired: true,
+                recursion_available: true,
+                response_code: ResponseCode::NoErrorCondition,
+                question_entries: 1,
+                answer_records: 2,
+                authority_records: 3,
+                additional_records: 3,
+            },
+            question_section: vec![QuestionEntry {
+                name: "www.wide.ad.jp".to_string(),
+                entry_type: DnsType::AAAA,
+                class: Class::IN,
+            }],
+            answer_section: vec![
+                ResourceRecord {
+                    name: "www.wide.ad.jp".to_string(),
+                    record_type: DnsType::CNAME,
+                    class: Class::IN,
+                    time_to_live: 3600,
+                    data_length: 17,
+                    data: DnsTypeData::CNAME("endo.wide.ad.jp".to_string()),
+                },
+                ResourceRecord {
+                    name: "endo.wide.ad.jp".to_string(),
+                    record_type: DnsType::AAAA,
+                    class: Class::IN,
+                    time_to_live: 3600,
+                    data_length: 16,
+                    data: DnsTypeData::AAAA(
+                        Ipv6Addr::from_str("3ffe:501:0:1001::2").unwrap(),
+                    ),
+                },
+            ],
+            authority_section: vec![
+                ResourceRecord {
+                    name: "wide.ad.jp".to_string(),
+                    record_type: DnsType::NS,
+                    class: Class::IN,
+                    time_to_live: 3600,
+                    data_length: 15,
+                    data: DnsTypeData::Unknown,
+                },
+                ResourceRecord {
+                    name: "wide.ad.jp".to_string(),
+                    record_type: DnsType::NS,
+                    class: Class::IN,
+                    time_to_live: 3600,
+                    data_length: 21,
+                    data: DnsTypeData::Unknown,
+                },
+                ResourceRecord {
+                    name: "wide.ad.jp".to_string(),
+                    record_type: DnsType::NS,
+                    class: Class::IN,
+                    time_to_live: 3600,
+                    data_length: 19,
+                    data: DnsTypeData::Unknown,
+                },
+            ],
+            additional_section: vec![
+                ResourceRecord {
+                    name: "ns.wide.ad.jp".to_string(),
+                    record_type: DnsType::A,
+                    class: Class::IN,
+                    time_to_live: 3600,
+                    data_length: 4,
+                    data: DnsTypeData::AIPv4(
+                        Ipv4Addr::from_str("203.178.136.63").unwrap(),
+                    ),
+                },
+                ResourceRecord {
+                    name: "ns.tokyo.wide.ad.jp".to_string(),
+                    record_type: DnsType::A,
+                    class: Class::IN,
+                    time_to_live: 3600,
+                    data_length: 4,
+                    data: DnsTypeData::AIPv4(
+                        Ipv4Addr::from_str("203.178.136.61").unwrap(),
+                    ),
+                },
+                ResourceRecord {
+                    name: "ns.rcac.tdi.co.jp".to_string(),
+                    record_type: DnsType::A,
+                    class: Class::IN,
+                    time_to_live: 86400,
+                    data_length: 4,
+                    data: DnsTypeData::AIPv4(
+                        Ipv4Addr::from_str("202.249.17.17").unwrap(),
+                    ),
+                },
+            ],
         };
 
         assert_eq!(actual_dns, expected_dns);
