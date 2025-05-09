@@ -26,7 +26,7 @@ impl InspectorTab {
             ProtocolId::Arp => self.arp_view(ui, ctx),
             ProtocolId::DHCPv4 => self.dhcpv4_view(ui, ctx),
             ProtocolId::DHCPv6 => self.dhcpv6_view(ui, ctx),
-            ProtocolId::DNS => {},
+            ProtocolId::DNS => self.dns_view(ui, ctx),
             ProtocolId::Ethernet => {},
             ProtocolId::HTTP => {},
             ProtocolId::ICMPv4 => {},
@@ -172,6 +172,165 @@ impl InspectorTab {
                 ui.label(packet.message_type.to_string());
             },
         );
+    }
+
+    pub fn dns_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.dns;
+        // Clear button or empty label
+        if !storage.is_empty() {
+            ui.vertical_centered_justified(|ui| {
+                if ui.button(t!("Button.Clear")).clicked() {
+                    storage.clear();
+                }
+            });
+        } else {
+            ui.label(RichText::new(t!("Tab.Inspector.Label.Empty")).italics());
+        }
+
+        // Table
+        ScrollArea::both()
+            .auto_shrink([false, true])
+            .show(ui, |ui| {
+                // Data rows
+                for (index, packet) in storage.iter().enumerate() {
+                    ui.collapsing(format!("DNS Packet #{}", index + 1), |ui| {
+                        Grid::new(format!("DNS-Headers-{}", index + 1))
+                            .striped(false)
+                            .num_columns(4)
+                            .show(ui, |ui| {
+                                ui.label(styles::heading::grid(&t!(
+                                    "Tab.Inspector.Protocol.DNS.MessageType"
+                                )));
+                                ui.label(styles::heading::grid(&t!(
+                                    "Tab.Inspector.Protocol.DNS.OperationCode"
+                                )));
+                                ui.label(styles::heading::grid(&t!(
+                                    "Tab.Inspector.Protocol.DNS.AuthoritativeAnswer"
+                                )));
+                                ui.label(styles::heading::grid(&t!(
+                                    "Tab.Inspector.Protocol.DNS.ResponseCode"
+                                )));
+                                ui.end_row();
+
+                                ui.label(packet.message_type.to_string());
+                                ui.label(packet.operation_code.to_string());
+                                match packet.authoritative_answer {
+                                    true => ui.label("+"),
+                                    false => ui.label("-"),
+                                };
+                                ui.label(packet.response_code.to_string());
+                                ui.end_row();
+                            });
+
+                        let question_section_len = packet.question_section.len();
+                        if !question_section_len > 0 {
+                            ui.label(format!(
+                                "{} ({}: {})",
+                                t!("Tab.Inspector.Protocol.DNS.Question"),
+                                t!("Tab.Inspector.Protocol.DNS.Records"),
+                                question_section_len
+                            ));
+                            Grid::new(format!("DNS-Headers-Question-{}", index + 1))
+                                .striped(false)
+                                .num_columns(4)
+                                .show(ui, |ui| {
+                                    ui.label(styles::heading::grid(&t!(
+                                        "Tab.Inspector.Label.Number"
+                                    )));
+                                    ui.label(styles::heading::grid(&t!(
+                                        "Tab.Inspector.Protocol.DNS.Question.Name"
+                                    )));
+                                    ui.label(styles::heading::grid(&t!(
+                                        "Tab.Inspector.Protocol.DNS.Question.EntryType"
+                                    )));
+                                    ui.label(styles::heading::grid(&t!(
+                                        "Tab.Inspector.Protocol.DNS.Question.Class"
+                                    )));
+                                    ui.end_row();
+
+                                    for (index, question) in
+                                        packet.question_section.iter().enumerate()
+                                    {
+                                        ui.label((index + 1).to_string());
+                                        ui.label(question.name.to_string());
+                                        ui.label(question.entry_type.to_string());
+                                        ui.label(question.class.to_string());
+                                        ui.end_row();
+                                    }
+                                });
+                        }
+
+                        Self::record_view(
+                            ui,
+                            index,
+                            "Answer",
+                            "Tab.Inspector.Protocol.DNS.Answer",
+                            &packet.answer_section,
+                        );
+                        Self::record_view(
+                            ui,
+                            index,
+                            "Authority",
+                            "Tab.Inspector.Protocol.DNS.Authority",
+                            &packet.authority_section,
+                        );
+                        Self::record_view(
+                            ui,
+                            index,
+                            "Additional",
+                            "Tab.Inspector.Protocol.DNS.Additional",
+                            &packet.additional_section,
+                        );
+                    });
+                }
+            });
+    }
+
+    fn record_view(
+        ui: &mut egui::Ui, packet_id: usize, section_id: &str, name: &str,
+        section: &[dpi::protocols::dns::ResourceRecord],
+    ) {
+        let len = section.len();
+        if len > 0 {
+            ui.label(format!(
+                "{} ({}: {})",
+                t!(name),
+                t!("Tab.Inspector.Protocol.DNS.Records"),
+                len
+            ));
+            Grid::new(format!("DNS-Records-{}-{}", section_id, packet_id))
+                .striped(false)
+                .num_columns(6)
+                .show(ui, |ui| {
+                    ui.label(styles::heading::grid(&t!("Tab.Inspector.Label.Number")));
+                    ui.label(styles::heading::grid(&t!(
+                        "Tab.Inspector.Protocol.DNS.Record.Name"
+                    )));
+                    ui.label(styles::heading::grid(&t!(
+                        "Tab.Inspector.Protocol.DNS.Record.RecordType"
+                    )));
+                    ui.label(styles::heading::grid(&t!(
+                        "Tab.Inspector.Protocol.DNS.Record.Class"
+                    )));
+                    ui.label(styles::heading::grid(&t!(
+                        "Tab.Inspector.Protocol.DNS.Record.TimeToLive"
+                    )));
+                    ui.label(styles::heading::grid(&t!(
+                        "Tab.Inspector.Protocol.DNS.Record.Data"
+                    )));
+                    ui.end_row();
+
+                    for (index, record) in section.iter().enumerate() {
+                        ui.label((index + 1).to_string());
+                        ui.label(record.name.to_string());
+                        ui.label(record.record_type.to_string());
+                        ui.label(record.class.to_string());
+                        ui.label(record.time_to_live.to_string());
+                        ui.label(record.data.to_string());
+                        ui.end_row();
+                    }
+                });
+        }
     }
 
     fn tab_heading(&self, ui: &mut egui::Ui, ctx: &mut Context) {
