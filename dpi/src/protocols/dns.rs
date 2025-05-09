@@ -8,6 +8,8 @@ use nom::{Finish, Parser, bits};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use std::net::{Ipv4Addr, Ipv6Addr};
+use strum_macros::Display;
+
 // DNS Protocol
 // RFC 1035: https://datatracker.ietf.org/doc/html/rfc1035
 
@@ -84,7 +86,7 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     };
 
     // QUESTION SECTION
-    let question_section: Option<Vec<QuestionEntry>> = match question_entries > 0 {
+    let question_section: Vec<QuestionEntry> = match question_entries > 0 {
         true => {
             let mut vec: Vec<QuestionEntry> = vec![];
             for _ in 0..question_entries {
@@ -92,9 +94,9 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
                 vec.push(question);
                 rest = section_rest;
             }
-            Some(vec)
+            vec
         },
-        false => None,
+        false => vec![],
     };
 
     // ANSWER SECTION
@@ -198,7 +200,7 @@ fn parse_name<'a>(bytes: &'a [u8], whole: &'a [u8]) -> IResult<&'a [u8], String>
 
 fn parse_record_section<'a>(
     bytes: &'a [u8], records: u16, whole: &'a [u8],
-) -> IResult<&'a [u8], Option<Vec<ResourceRecord>>> {
+) -> IResult<&'a [u8], Vec<ResourceRecord>> {
     let mut rest = bytes;
     let result = match records > 0 {
         true => {
@@ -208,9 +210,9 @@ fn parse_record_section<'a>(
                 vec.push(question);
                 rest = section_rest;
             }
-            Some(vec)
+            vec
         },
-        false => None,
+        false => vec![],
     };
 
     Ok((rest, result))
@@ -258,10 +260,10 @@ fn parse_resource_record<'a>(
 #[derive(Clone, Debug, PartialEq)]
 pub struct DNS {
     pub header: Header,
-    pub question_section: Option<Vec<QuestionEntry>>,
-    pub answer_section: Option<Vec<ResourceRecord>>,
-    pub authority_section: Option<Vec<ResourceRecord>>,
-    pub additional_section: Option<Vec<ResourceRecord>>,
+    pub question_section: Vec<QuestionEntry>,
+    pub answer_section: Vec<ResourceRecord>,
+    pub authority_section: Vec<ResourceRecord>,
+    pub additional_section: Vec<ResourceRecord>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -298,14 +300,14 @@ pub struct ResourceRecord {
     pub data: DnsTypeData,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum MessageType {
     Query = 0,
     Response = 1,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum OperationCode {
     StandardQuery = 0,
@@ -316,7 +318,7 @@ pub enum OperationCode {
     Reserved = 15,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum ResponseCode {
     NoErrorCondition = 0,
@@ -330,7 +332,7 @@ pub enum ResponseCode {
     Reserved = 15,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u16)]
 pub enum DnsType {
     A = 1,           // A host address
@@ -402,7 +404,20 @@ pub enum DnsTypeData {
     AIPv4(Ipv4Addr),
     AIPv6(Ipv6Addr),
     CNAME(String),
-    Unknown(Vec<u8>),
+    Unknown,
+}
+
+impl std::fmt::Display for DnsTypeData {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let text = match self {
+            DnsTypeData::AIPv4(address) => address.to_string(),
+            DnsTypeData::AIPv6(address) => address.to_string(),
+            DnsTypeData::CNAME(value) => value.to_string(),
+            DnsTypeData::Unknown => "Unknown".to_string(),
+        };
+
+        write!(f, "{}", text)
+    }
 }
 
 impl DnsTypeData {
@@ -429,12 +444,12 @@ impl DnsTypeData {
 
                 Ok(Self::CNAME(str))
             },
-            _ => Ok(Self::Unknown(bytes.to_vec())),
+            _ => Ok(Self::Unknown),
         }
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
 #[repr(u16)]
 pub enum Class {
     IN = 1, // The Internet
@@ -451,10 +466,14 @@ pub struct DnsDto {
     pub operation_code: OperationCode,
     pub authoritative_answer: bool,
     pub response_code: ResponseCode,
-    pub question_section: Option<Vec<QuestionEntry>>,
-    pub answer_section: Option<Vec<ResourceRecord>>,
-    pub authority_section: Option<Vec<ResourceRecord>>,
-    pub additional_section: Option<Vec<ResourceRecord>>,
+    #[serde(default)]
+    pub question_section: Vec<QuestionEntry>,
+    #[serde(default)]
+    pub answer_section: Vec<ResourceRecord>,
+    #[serde(default)]
+    pub authority_section: Vec<ResourceRecord>,
+    #[serde(default)]
+    pub additional_section: Vec<ResourceRecord>,
 }
 
 impl From<DNS> for DnsDto {
@@ -581,14 +600,14 @@ mod tests {
                 authority_records: 0,
                 additional_records: 0,
             },
-            question_section: Some(vec![QuestionEntry {
+            question_section: vec![QuestionEntry {
                 name: "download.jetbrains.com".to_string(),
                 entry_type: DnsType::A,
                 class: Class::IN,
-            }]),
-            answer_section: None,
-            authority_section: None,
-            additional_section: None,
+            }],
+            answer_section: vec![],
+            authority_section: vec![],
+            additional_section: vec![],
         };
 
         assert_eq!(actual_dns, expected_dns);
@@ -689,27 +708,21 @@ mod tests {
                 authority_records: 1,
                 additional_records: 0,
             },
-            question_section: Some(vec![QuestionEntry {
+            question_section: vec![QuestionEntry {
                 name: "www.googleapis.com".to_string(),
                 entry_type: DnsType::HTTPS,
                 class: Class::IN,
-            }]),
-            answer_section: None,
-            authority_section: Some(vec![ResourceRecord {
+            }],
+            answer_section: vec![],
+            authority_section: vec![ResourceRecord {
                 name: "googleapis.com".to_string(),
                 record_type: DnsType::SOA,
                 class: Class::IN,
                 time_to_live: 55,
                 data_length: 45,
-                data: DnsTypeData::Unknown(vec![
-                    0x03, 0x6E, 0x73, 0x31, 0x06, 0x67, 0x6F, 0x6F, 0x67, 0x6C, 0x65,
-                    0xC0, 0x1B, 0x09, 0x64, 0x6E, 0x73, 0x2D, 0x61, 0x64, 0x6D, 0x69,
-                    0x6E, 0xC0, 0x34, 0x2C, 0xC2, 0x48, 0x8D, 0x00, 0x00, 0x03, 0x84,
-                    0x00, 0x00, 0x03, 0x84, 0x00, 0x00, 0x07, 0x08, 0x00, 0x00, 0x00,
-                    0x3C,
-                ]),
-            }]),
-            additional_section: None,
+                data: DnsTypeData::Unknown,
+            }],
+            additional_section: vec![],
         };
 
         assert_eq!(actual_dns, expected_dns);
