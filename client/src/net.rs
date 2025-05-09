@@ -16,6 +16,7 @@ pub struct NetStorage {
 }
 
 pub mod device;
+pub mod heartbeat;
 pub mod inspector;
 pub mod lookup;
 pub mod raw;

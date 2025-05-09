@@ -1,4 +1,4 @@
-use crate::communication::heartbeat;
+use crate::net::heartbeat;
 use crate::net::speed::SpeedUnitPerSecond;
 use crate::ui::styles::themes;
 use common::io::FileKind;

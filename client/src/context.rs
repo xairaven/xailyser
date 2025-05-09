@@ -1,8 +1,8 @@
-use crate::communication::heartbeat::Heartbeat;
 use crate::communication::request::UiClientRequest;
 use crate::config::Config;
 use crate::net::NetStorage;
 use crate::net::device::DeviceStorage;
+use crate::net::heartbeat::Heartbeat;
 use crate::net::lookup::Lookup;
 use crate::net::raw::RawStorage;
 use crate::net::speed::PlotSettings;
