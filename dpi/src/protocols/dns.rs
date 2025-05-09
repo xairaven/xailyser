@@ -451,32 +451,8 @@ impl DnsTypeData {
                 _ => Err(ParserError::ErrorVerify.to_nom(input)),
             },
             DnsType::CNAME => {
-                let mut labels = Vec::new();
-                let mut rest_buffer = input;
-                while !rest_buffer.is_empty() {
-                    let (rest, len_byte) = be_u8().parse(rest_buffer)?;
-                    // Null-terminator
-                    if len_byte == 0 {
-                        debug_assert!(rest.is_empty());
-                        rest_buffer = rest;
-                        break;
-                    }
-
-                    // Unexpected length
-                    if len_byte as usize > rest.len() {
-                        return Err(ParserError::ErrorVerify.to_nom(input));
-                    }
-
-                    // Creating label
-                    let (rest, label): (&[u8], &[u8]) = take(len_byte).parse(rest)?;
-                    let label = String::from_utf8(label.to_vec())
-                        .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
-                    labels.push(label);
-
-                    rest_buffer = rest;
-                }
-
-                Ok((rest_buffer, Self::CNAME(labels.join("."))))
+                let (rest, cname) = parser::wire_format(input)?;
+                Ok((rest, Self::CNAME(cname)))
             },
             _ => Ok((&[], Self::Unknown)),
         }

@@ -1,3 +1,4 @@
+use crate::parser;
 use crate::parser::ParserError;
 use crate::protocols::{ProtocolData, ip};
 use nom::IResult;
@@ -159,13 +160,7 @@ impl Options {
 
             Options::ClientFQDN => {
                 let (rest, flags) = be_u8().parse(content)?;
-                let domain_name = String::from_utf8(rest.to_vec())
-                    .map_err(|_| ParserError::ErrorVerify.to_nom(rest))?
-                    .trim_matches(['\0', '\u{3}', '\u{6}'])
-                    .split(['\u{3}', '\u{6}'])
-                    .collect::<Vec<&str>>()
-                    .join(".")
-                    .to_string();
+                let (_, domain_name) = parser::wire_format(rest)?;
 
                 OptionData::ClientFQDN { flags, domain_name }
             },

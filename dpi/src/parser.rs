@@ -1,6 +1,9 @@
 use crate::dto::frame::{FrameMetadata, FrameType, OwnedFrame};
 use crate::protocols::{ProtocolData, ProtocolId};
 use nom::IResult;
+use nom::Parser;
+use nom::bytes::take;
+use nom::number::be_u8;
 
 pub struct ProtocolParser {
     raw_needed: bool,
@@ -87,6 +90,35 @@ fn traversal(
         },
         Err(_) => ProcessResult::Failed,
     }
+}
+
+pub fn wire_format(input: &[u8]) -> IResult<&[u8], String> {
+    let mut labels = Vec::new();
+    let mut rest_buffer = input;
+    while !rest_buffer.is_empty() {
+        let (rest, len_byte) = be_u8().parse(rest_buffer)?;
+        // Null-terminator
+        if len_byte == 0 {
+            debug_assert!(rest.is_empty());
+            rest_buffer = rest;
+            break;
+        }
+
+        // Unexpected length
+        if len_byte as usize > rest.len() {
+            return Err(ParserError::ErrorVerify.to_nom(input));
+        }
+
+        // Creating label
+        let (rest, label): (&[u8], &[u8]) = take(len_byte).parse(rest)?;
+        let label = String::from_utf8(label.to_vec())
+            .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
+        labels.push(label);
+
+        rest_buffer = rest;
+    }
+
+    Ok((rest_buffer, labels.join(".")))
 }
 
 pub fn cast_to_bool(bit: u8) -> Result<bool, ParserError> {
