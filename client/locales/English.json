@@ -99,7 +99,8 @@
   "Tab.About.CheckGithub": "Check out the code on GitHub!",
   "Tab.About.LatestRelease": "Latest release",
   
-  "Tab.Inspector.Label.Captured": "Captured Packets",
+  "Tab.Inspector.Label.Captured": "Captured frames",
+  "Tab.Inspector.Label.Records": "total records",
   "Tab.Inspector.Label.Empty": "Empty.",
   "Tab.Inspector.Label.Protocol": "Protocol",
   "Tab.Inspector.Label.Number": "#",

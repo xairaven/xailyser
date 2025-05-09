@@ -99,7 +99,8 @@
   "Tab.About.CheckGithub": "Перегляньте код на GitHub!",
   "Tab.About.LatestRelease": "Останній реліз",
 
-  "Tab.Inspector.Label.Captured": "Захоплено пакетів",
+  "Tab.Inspector.Label.Captured": "Захоплено фреймів",
+  "Tab.Inspector.Label.Records": "всього записів",
   "Tab.Inspector.Label.Empty": "Порожньо.",
   "Tab.Inspector.Label.Protocol": "Протокол",
   "Tab.Inspector.Label.Number": "№",

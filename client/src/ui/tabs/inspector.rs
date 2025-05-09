@@ -117,8 +117,8 @@ impl InspectorTab {
                 "Tab.Inspector.Protocol.Arp.MacSender",
                 "Tab.Inspector.Protocol.Arp.MacTarget",
             ],
-            |ui, idx, packet| {
-                ui.label(idx.to_string());
+            |ui, id, packet| {
+                ui.label((id + 1).to_string());
                 ui.label(packet.operation.to_string());
                 ui.label(packet.sender_ip.to_string());
                 ui.label(packet.target_ip.to_string());
@@ -144,8 +144,8 @@ impl InspectorTab {
                 "Tab.Inspector.Protocol.DHCPv4.RelayAgentAddress",
                 "Tab.Inspector.Protocol.DHCPv4.ClientMAC",
             ],
-            |ui, idx, packet| {
-                ui.label(idx.to_string());
+            |ui, id, packet| {
+                ui.label((id + 1).to_string());
                 ui.label(packet.message_type.to_string());
                 ui.label(packet.old_client_address.to_string());
                 ui.label(packet.new_client_address.to_string());
@@ -167,8 +167,8 @@ impl InspectorTab {
                 "Tab.Inspector.Label.Number",
                 "Tab.Inspector.Protocol.DHCPv6.MessageType",
             ],
-            |ui, idx, packet| {
-                ui.label(idx.to_string());
+            |ui, id, packet| {
+                ui.label((id + 1).to_string());
                 ui.label(packet.message_type.to_string());
             },
         );
@@ -346,7 +346,7 @@ impl InspectorTab {
                 "Tab.Inspector.Protocol.Ethernet.MacTarget",
             ],
             |ui, id, packet| {
-                ui.label(id.to_string());
+                ui.label((id + 1).to_string());
                 ui.label(packet.destination_mac.to_string());
                 ui.label(packet.source_mac.to_string());
             },
@@ -366,9 +366,11 @@ impl InspectorTab {
                 );
                 ui.label(
                     RichText::new(format!(
-                        "\t{}: {}",
+                        "\t{}: {}, {}: {}",
                         t!("Tab.Inspector.Label.Captured"),
-                        ctx.net_storage.inspector.len()
+                        ctx.net_storage.inspector.ethernet.len(),
+                        t!("Tab.Inspector.Label.Records"),
+                        ctx.net_storage.inspector.len(),
                     ))
                     .italics(),
                 );
