@@ -33,7 +33,7 @@ impl InspectorTab {
             ProtocolId::HTTP => self.http_view(ui, ctx),
             ProtocolId::ICMPv4 => self.icmpv4_view(ui, ctx),
             ProtocolId::ICMPv6 => self.icmpv6_view(ui, ctx),
-            ProtocolId::IPv4 => {},
+            ProtocolId::IPv4 => self.ipv4_view(ui, ctx),
             ProtocolId::IPv6 => {},
             ProtocolId::TCP => {},
             ProtocolId::UDP => {},
@@ -498,6 +498,37 @@ impl InspectorTab {
                 ui.label(target_ip);
                 ui.label(locator.mac.0.to_string());
                 ui.label(locator.mac.1.to_string());
+            },
+        );
+    }
+
+    pub fn ipv4_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.ipv4;
+        self.protocol_view(
+            ui,
+            storage,
+            "Inspector.IPv4.Packets",
+            6,
+            &[
+                "Tab.Inspector.Label.Number",
+                "Tab.Inspector.Protocol.IPv4.AddressSource",
+                "Tab.Inspector.Protocol.IPv4.AddressDestination",
+                "Tab.Inspector.Protocol.IPv4.TimeToLive",
+                "Tab.Inspector.Protocol.MacSender",
+                "Tab.Inspector.Protocol.MacTarget",
+            ],
+            |ui, id, package| {
+                let packet = &package.0;
+                let locator = &package.1;
+                let (source_mac, target_mac) =
+                    (locator.mac.0.to_string(), locator.mac.1.to_string());
+
+                ui.label(id.to_string());
+                ui.label(packet.address_source.to_string());
+                ui.label(packet.address_destination.to_string());
+                ui.label(packet.time_to_live.to_string());
+                ui.label(source_mac);
+                ui.label(target_mac);
             },
         );
     }
