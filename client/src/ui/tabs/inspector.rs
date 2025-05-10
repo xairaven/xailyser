@@ -7,12 +7,14 @@ use strum::IntoEnumIterator;
 
 pub struct InspectorTab {
     protocol_chosen: ProtocolId,
+    page: usize,
 }
 
 impl Default for InspectorTab {
     fn default() -> Self {
         Self {
             protocol_chosen: ProtocolId::Arp,
+            page: 1,
         }
     }
 }
@@ -43,7 +45,7 @@ impl InspectorTab {
             ui.label(format!("{}:", t!("Tab.Inspector.Label.Protocol")));
 
             ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-                egui::ComboBox::from_id_salt("Combobox.Inspector.Protocols")
+                if egui::ComboBox::from_id_salt("Combobox.Inspector.Protocols")
                     .selected_text(self.protocol_chosen.to_string())
                     .show_ui(ui, |ui| {
                         for protocol in ProtocolId::iter() {
@@ -53,7 +55,12 @@ impl InspectorTab {
                                 protocol.to_string(),
                             );
                         }
-                    });
+                    })
+                    .response
+                    .changed()
+                {
+                    self.page = 1;
+                };
             });
 
             ui.end_row();
@@ -61,20 +68,13 @@ impl InspectorTab {
     }
 
     fn protocol_view<T, F>(
-        ui: &mut egui::Ui, storage: &mut Vec<T>, grid_id: &str, num_columns: usize,
-        headings: &[&str], mut render_row: F,
+        &mut self, ui: &mut egui::Ui, storage: &mut Vec<T>, grid_id: &str,
+        num_columns: usize, headings: &[&str], mut render_row: F,
     ) where
         F: FnMut(&mut egui::Ui, usize, &T),
     {
-        // Clear button or empty label
-        if !storage.is_empty() {
-            ui.vertical_centered_justified(|ui| {
-                if ui.button(t!("Button.Clear")).clicked() {
-                    storage.clear();
-                }
-            });
-        } else {
-            ui.label(RichText::new(t!("Tab.Inspector.Label.Empty")).italics());
+        if self.clear_pages_buttons(ui, storage) {
+            return;
         }
 
         // Table
@@ -94,8 +94,16 @@ impl InspectorTab {
                         }
 
                         // Data rows
-                        for (idx, packet) in storage.iter().enumerate() {
-                            render_row(ui, idx, packet);
+                        for (id, packet) in
+                            Self::page_slice(storage, self.page).iter().enumerate()
+                        {
+                            render_row(
+                                ui,
+                                (self.page - 1)
+                                    .saturating_mul(Self::PAGE_SIZE)
+                                    .saturating_add(id + 1),
+                                packet,
+                            );
                             ui.end_row();
                         }
                     });
@@ -104,7 +112,7 @@ impl InspectorTab {
 
     pub fn arp_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let storage = &mut ctx.net_storage.inspector.arp;
-        InspectorTab::protocol_view(
+        self.protocol_view(
             ui,
             storage,
             "Inspector.Arp.Packets",
@@ -118,7 +126,7 @@ impl InspectorTab {
                 "Tab.Inspector.Protocol.Arp.MacTarget",
             ],
             |ui, id, packet| {
-                ui.label((id + 1).to_string());
+                ui.label(id.to_string());
                 ui.label(packet.operation.to_string());
                 ui.label(packet.sender_ip.to_string());
                 ui.label(packet.target_ip.to_string());
@@ -130,7 +138,7 @@ impl InspectorTab {
 
     pub fn dhcpv4_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let storage = &mut ctx.net_storage.inspector.dhcpv4;
-        InspectorTab::protocol_view(
+        self.protocol_view(
             ui,
             storage,
             "Inspector.DHCPv4.Packets",
@@ -145,7 +153,7 @@ impl InspectorTab {
                 "Tab.Inspector.Protocol.DHCPv4.ClientMAC",
             ],
             |ui, id, packet| {
-                ui.label((id + 1).to_string());
+                ui.label(id.to_string());
                 ui.label(packet.message_type.to_string());
                 ui.label(packet.old_client_address.to_string());
                 ui.label(packet.new_client_address.to_string());
@@ -158,7 +166,7 @@ impl InspectorTab {
 
     pub fn dhcpv6_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let storage = &mut ctx.net_storage.inspector.dhcpv6;
-        InspectorTab::protocol_view(
+        self.protocol_view(
             ui,
             storage,
             "Inspector.DHCPv6.Packets",
@@ -168,7 +176,7 @@ impl InspectorTab {
                 "Tab.Inspector.Protocol.DHCPv6.MessageType",
             ],
             |ui, id, packet| {
-                ui.label((id + 1).to_string());
+                ui.label(id.to_string());
                 ui.label(packet.message_type.to_string());
             },
         );
@@ -176,15 +184,8 @@ impl InspectorTab {
 
     pub fn dns_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let storage = &mut ctx.net_storage.inspector.dns;
-        // Clear button or empty label
-        if !storage.is_empty() {
-            ui.vertical_centered_justified(|ui| {
-                if ui.button(t!("Button.Clear")).clicked() {
-                    storage.clear();
-                }
-            });
-        } else {
-            ui.label(RichText::new(t!("Tab.Inspector.Label.Empty")).italics());
+        if self.clear_pages_buttons(ui, storage) {
+            return;
         }
 
         // Table
@@ -192,9 +193,15 @@ impl InspectorTab {
             .auto_shrink([false, true])
             .show(ui, |ui| {
                 // Data rows
-                for (index, packet) in storage.iter().enumerate() {
-                    ui.collapsing(format!("DNS Packet #{}", index + 1), |ui| {
-                        Grid::new(format!("DNS-Headers-{}", index + 1))
+                for (index, packet) in
+                    Self::page_slice(storage, self.page).iter().enumerate()
+                {
+                    let record_number = (self.page - 1)
+                        .saturating_mul(Self::PAGE_SIZE)
+                        .saturating_add(index + 1);
+
+                    ui.collapsing(format!("DNS Packet #{}", record_number), |ui| {
+                        Grid::new(format!("DNS-Headers-{}", record_number))
                             .striped(false)
                             .num_columns(4)
                             .show(ui, |ui| {
@@ -230,7 +237,7 @@ impl InspectorTab {
                                 t!("Tab.Inspector.Protocol.DNS.Records"),
                                 question_section_len
                             ));
-                            Grid::new(format!("DNS-Headers-Question-{}", index + 1))
+                            Grid::new(format!("DNS-Headers-Question-{}", record_number))
                                 .striped(false)
                                 .num_columns(4)
                                 .show(ui, |ui| {
@@ -262,21 +269,21 @@ impl InspectorTab {
 
                         Self::dns_record_view(
                             ui,
-                            index,
+                            record_number,
                             "Answer",
                             "Tab.Inspector.Protocol.DNS.Answer",
                             &packet.answer_section,
                         );
                         Self::dns_record_view(
                             ui,
-                            index,
+                            record_number,
                             "Authority",
                             "Tab.Inspector.Protocol.DNS.Authority",
                             &packet.authority_section,
                         );
                         Self::dns_record_view(
                             ui,
-                            index,
+                            record_number,
                             "Additional",
                             "Tab.Inspector.Protocol.DNS.Additional",
                             &packet.additional_section,
@@ -335,7 +342,7 @@ impl InspectorTab {
 
     pub fn ethernet_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         let storage = &mut ctx.net_storage.inspector.ethernet;
-        InspectorTab::protocol_view(
+        self.protocol_view(
             ui,
             storage,
             "Inspector.Ethernet.Packets",
@@ -360,7 +367,7 @@ impl InspectorTab {
                     },
                 };
 
-                ui.label((id + 1).to_string());
+                ui.label(id.to_string());
                 ui.label(packet.destination_mac.to_string());
                 ui.label(packet.source_mac.to_string());
                 ui.label(source_ip);
@@ -369,7 +376,7 @@ impl InspectorTab {
         );
     }
 
-    fn tab_heading(&self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn tab_heading(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add_space(styles::space::TAB);
 
         ui.columns(3, |columns| {
@@ -397,9 +404,91 @@ impl InspectorTab {
                 |ui| {
                     if ui.button(t!("Button.Clear")).clicked() {
                         ctx.net_storage.inspector.clear();
+                        self.page = 1;
                     }
                 },
             );
         });
+    }
+
+    fn clear_pages_buttons<T>(
+        &mut self, ui: &mut egui::Ui, storage: &mut Vec<T>,
+    ) -> bool {
+        let mut to_restart = false;
+
+        // Clear button or empty label
+        if !storage.is_empty() {
+            ui.horizontal_wrapped(|ui| {
+                let total_pages = self.total_pages(storage.len());
+
+                const LEFT_FAR: isize = -5;
+                const LEFT: isize = -1;
+                const RIGHT: isize = 1;
+                const RIGHT_FAR: isize = 5;
+                if ui
+                    .add_enabled(
+                        Self::can_go_to_page(self.page, LEFT_FAR, total_pages),
+                        egui::Button::new("⏪"),
+                    )
+                    .clicked()
+                {
+                    self.page = (self.page as isize + LEFT_FAR) as usize;
+                };
+                if ui
+                    .add_enabled(
+                        Self::can_go_to_page(self.page, LEFT, total_pages),
+                        egui::Button::new("◀"),
+                    )
+                    .clicked()
+                {
+                    self.page = (self.page as isize + LEFT) as usize;
+                };
+                ui.label(format!("Page {} of {} total", self.page, total_pages));
+                if ui
+                    .add_enabled(
+                        Self::can_go_to_page(self.page, RIGHT, total_pages),
+                        egui::Button::new("▶"),
+                    )
+                    .clicked()
+                {
+                    self.page = (self.page as isize + RIGHT) as usize;
+                };
+                if ui
+                    .add_enabled(
+                        Self::can_go_to_page(self.page, RIGHT_FAR, total_pages),
+                        egui::Button::new("⏩"),
+                    )
+                    .clicked()
+                {
+                    self.page = (self.page as isize + RIGHT_FAR) as usize;
+                };
+                if ui.button(t!("Button.Clear")).clicked() {
+                    self.page = 1;
+                    storage.clear();
+                    to_restart = true;
+                }
+            });
+        } else {
+            ui.label(RichText::new(t!("Tab.Inspector.Label.Empty")).italics());
+        }
+
+        to_restart
+    }
+
+    const PAGE_SIZE: usize = 100;
+    fn page_slice<T>(items: &[T], page: usize) -> &[T] {
+        let start = (page - 1).saturating_mul(Self::PAGE_SIZE);
+        let end = (start + Self::PAGE_SIZE).min(items.len());
+        &items[start..end]
+    }
+
+    fn can_go_to_page(current_page: usize, delta: isize, total_pages: usize) -> bool {
+        let target = current_page as isize + delta;
+        (1..=(total_pages as isize)).contains(&target)
+    }
+
+    fn total_pages(&self, total_items: usize) -> usize {
+        let pages = total_items.div_ceil(Self::PAGE_SIZE);
+        usize::max(1, pages)
     }
 }
