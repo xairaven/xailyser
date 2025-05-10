@@ -1,8 +1,11 @@
+use crate::parser::ParserError;
 use crate::protocols::ProtocolData;
 use nom::IResult;
 use nom::number::{be_u8, be_u16};
 use nom::{Finish, Parser};
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
 
 // ICMPv6 Protocol
 // RFC 4443: https://datatracker.ietf.org/doc/html/rfc4443
@@ -10,6 +13,8 @@ use serde::{Deserialize, Serialize};
 pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Message type. 1 byte
     let (rest, message_type) = be_u8().parse(bytes)?;
+    let message_type = MessageType::try_from(message_type)
+        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Code. 1 byte
     let (rest, code) = be_u8().parse(rest)?;
@@ -32,15 +37,66 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ICMPv6 {
-    pub message_type: u8,
+    pub message_type: MessageType,
     pub code: u8,
     pub checksum: u16,
     pub data: Vec<u8>,
 }
 
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u8)]
+pub enum MessageType {
+    Reserved = 0,
+    DestinationUnreachable = 1,
+    PacketTooBig = 2,
+    TimeExceeded = 3,
+    ParameterProblem = 4,
+
+    #[num_enum(alternatives = [6..=99, 102..=126, 162..=199])]
+    Unassigned = 5,
+
+    #[num_enum(alternatives = [101, 200, 201])]
+    PrivateExperimentation = 100,
+    ReservedExpansionErrorMessages = 127,
+    EchoRequest = 128,
+    EchoReply = 129,
+    MulticastListenerQuery = 130,
+    MulticastListenerReport = 131,
+    MulticastListenerDone = 132,
+    RouterSolicitation = 133,
+    RouterAdvertisement = 134,
+    NeighborSolicitation = 135,
+    NeighborAdvertisement = 136,
+    RedirectMessage = 137,
+    RouterRenumbering = 138,
+    NodeInformationQuery = 139,
+    NodeInformationResponse = 140,
+    InverseNeighborDiscoverySolicitationMessage = 141,
+    InverseNeighborDiscoveryAdvertisementMessage = 142,
+    Version2MulticastListenerReport = 143,
+    HomeAgentAddressDiscoveryRequestMessage = 144,
+    HomeAgentAddressDiscoveryReplyMessage = 145,
+    MobilePrefixSolicitation = 146,
+    MobilePrefixAdvertisement = 147,
+    CertificationPathSolicitationMessage = 148,
+    CertificationPathAdvertisementMessage = 149,
+    SeamobyEtc = 150,
+    MulticastRouterAdvertisement = 151,
+    MulticastRouterSolicitation = 152,
+    MulticastRouterTermination = 153,
+    FMIPv6Messages = 154,
+    RPLControlMessage = 155,
+    ILNPv6LocatorUpdateMessage = 156,
+    DuplicateAddressRequest = 157,
+    DuplicateAddressConfirmation = 158,
+    MPLControlMessage = 159,
+    ExtendedEchoRequest = 160,
+    ReservedExpansionInfoMessages = 255,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ICMPv6Dto {
-    pub message_type: u8,
+    pub message_type: MessageType,
     pub code: u8,
 }
 
@@ -62,7 +118,7 @@ mod tests {
     use crate::protocols::ethernet::Ethernet;
     use crate::protocols::ethernet::ether_type::EtherType;
     use crate::protocols::ethernet::mac::MacAddress;
-    use crate::protocols::icmpv6::ICMPv6;
+    use crate::protocols::icmpv6::{ICMPv6, MessageType};
     use crate::protocols::ip::protocol::IpNextLevelProtocol;
     use crate::protocols::ipv6::IPv6;
     use std::net::Ipv6Addr;
@@ -130,7 +186,7 @@ mod tests {
         };
 
         let expected_icmp = ICMPv6 {
-            message_type: 136,
+            message_type: MessageType::NeighborAdvertisement,
             code: 0,
             checksum: 0x2a18,
             data: vec![
@@ -206,7 +262,7 @@ mod tests {
         };
 
         let expected_icmp = ICMPv6 {
-            message_type: 129,
+            message_type: MessageType::EchoReply,
             code: 0,
             checksum: 0x1e76,
             data: vec![
