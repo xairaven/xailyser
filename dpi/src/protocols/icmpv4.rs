@@ -1,8 +1,11 @@
+use crate::parser::ParserError;
 use crate::protocols::ProtocolData;
 use nom::IResult;
 use nom::number::{be_u8, be_u16};
 use nom::{Finish, Parser};
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
 
 // ICMPv4 Protocol
 // RFC 792: https://datatracker.ietf.org/doc/html/rfc792
@@ -10,6 +13,8 @@ use serde::{Deserialize, Serialize};
 pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     // Message type. 1 byte
     let (rest, message_type) = be_u8().parse(bytes)?;
+    let message_type = MessageType::try_from(message_type)
+        .map_err(|_| ParserError::ErrorVerify.to_nom(bytes))?;
 
     // Code. 1 byte
     let (rest, code) = be_u8().parse(rest)?;
@@ -32,15 +37,62 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ICMPv4 {
-    pub message_type: u8,
+    pub message_type: MessageType,
     pub code: u8,
     pub checksum: u16,
     pub data: Vec<u8>,
 }
 
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq, TryFromPrimitive)]
+#[repr(u8)]
+pub enum MessageType {
+    EchoReply = 0,
+
+    #[num_enum(alternatives = [2, 7])]
+    Unassigned = 1,
+
+    DestinationUnreachable = 3,
+    SourceQuench = 4,
+    Redirect = 5,
+    AlternateHostAddress = 6,
+    Echo = 8,
+    RouterAdvertisement = 9,
+    RouterSolicitation = 10,
+    TimeExceeded = 11,
+    ParameterProblem = 12,
+    Timestamp = 13,
+    TimestampReply = 14,
+    InformationRequest = 15,
+    InformationReply = 16,
+    AddressMaskRequest = 17,
+    AddressMaskReply = 18,
+    ReservedSecurity = 19,
+
+    #[num_enum(alternatives = [21..=29, 44..=252])]
+    ReservedRobustness = 20,
+
+    Traceroute = 30,
+    DatagramConversionError = 31,
+    MobileHostRedirect = 32,
+    IPv6WhereAreYou = 33,
+    IPv6IAmHere = 34,
+    MobileRegistrationRequest = 35,
+    MobileRegistrationReply = 36,
+    DomainNameRequest = 37,
+    DomainNameReply = 38,
+    SKIP = 39,
+    Photuris = 40,
+    SeamobyEtc = 41,
+    ExtendedEchoRequest = 42,
+    ExtendedEchoReply = 43,
+    RFC3692StyleExperiment1 = 253,
+    RFC3692StyleExperiment2 = 254,
+    Reserved = 255,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ICMPv4Dto {
-    pub message_type: u8,
+    pub message_type: MessageType,
     pub code: u8,
 }
 
@@ -133,7 +185,7 @@ mod tests {
         };
 
         let expected_icmp = ICMPv4 {
-            message_type: 8,
+            message_type: MessageType::Echo,
             code: 0,
             checksum: 0x4008,
             data: vec![
