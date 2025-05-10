@@ -3,6 +3,8 @@ use crate::net::device::LocalDeviceBuilder;
 use crate::net::speed::{Sample, SampleDirection, SpeedError};
 use dpi::dto::frame::{FrameHeader, OwnedFrame};
 use dpi::dto::metadata::{FrameMetadataDto, ProtocolDto};
+use dpi::protocols::ethernet::mac::MacAddress;
+use std::net::{Ipv4Addr, Ipv6Addr};
 use thiserror::Error;
 
 pub fn metadata(
@@ -15,14 +17,17 @@ pub fn metadata(
     }
 
     let datalink_info = match metadata.layers.first() {
-        Some(ProtocolDto::Ethernet(ethernet_info)) => {
-            ctx.net_storage
-                .inspector
-                .ethernet
-                .push(ethernet_info.clone());
-            ethernet_info.clone()
-        },
+        Some(ProtocolDto::Ethernet(ethernet_info)) => ethernet_info.clone(),
         _ => return Err(ProcessingError::DatalinkNotFirst),
+    };
+
+    let mut locator = Locator {
+        mac: (
+            datalink_info.source_mac.clone(),
+            datalink_info.destination_mac.clone(),
+        ),
+        ipv4: None,
+        ipv6: None,
     };
 
     let mut device_builder: Option<LocalDeviceBuilder> = None;
@@ -33,7 +38,11 @@ pub fn metadata(
             ProtocolDto::DHCPv4(value) => ctx.net_storage.inspector.dhcpv4.push(value),
             ProtocolDto::DHCPv6(value) => ctx.net_storage.inspector.dhcpv6.push(value),
             ProtocolDto::DNS(value) => ctx.net_storage.inspector.dns.push(value),
-            ProtocolDto::HTTP(value) => ctx.net_storage.inspector.http.push(value),
+            ProtocolDto::HTTP(value) => ctx
+                .net_storage
+                .inspector
+                .http
+                .push((value, locator.clone())),
             ProtocolDto::IPv4(ipv4) => {
                 if ipv4.address_source.is_private() {
                     if let Some(sample) = sample.take() {
@@ -57,7 +66,8 @@ pub fn metadata(
                     builder.ip.push(ipv4.address_destination);
                     device_builder = Some(builder);
                 }
-                ctx.net_storage.inspector.ipv4.push(ipv4);
+                locator.ipv4 = Some((ipv4.address_source, ipv4.address_destination));
+                ctx.net_storage.inspector.ipv4.push((ipv4, locator.clone()));
             },
             ProtocolDto::IPv6(ipv6) => {
                 if ipv6.address_source.is_unique_local() {
@@ -82,14 +92,33 @@ pub fn metadata(
                     builder.ipv6.push(ipv6.address_destination);
                     device_builder = Some(builder);
                 }
-                ctx.net_storage.inspector.ipv6.push(ipv6);
+                locator.ipv6 = Some((ipv6.address_source, ipv6.address_destination));
+                ctx.net_storage.inspector.ipv6.push((ipv6, locator.clone()));
             },
-            ProtocolDto::ICMPv4(value) => ctx.net_storage.inspector.icmpv4.push(value),
-            ProtocolDto::ICMPv6(value) => ctx.net_storage.inspector.icmpv6.push(value),
-            ProtocolDto::TCP(value) => ctx.net_storage.inspector.tcp.push(value),
-            ProtocolDto::UDP(value) => ctx.net_storage.inspector.udp.push(value),
+            ProtocolDto::ICMPv4(value) => ctx
+                .net_storage
+                .inspector
+                .icmpv4
+                .push((value, locator.clone())),
+            ProtocolDto::ICMPv6(value) => ctx
+                .net_storage
+                .inspector
+                .icmpv6
+                .push((value, locator.clone())),
+            ProtocolDto::TCP(value) => {
+                ctx.net_storage.inspector.tcp.push((value, locator.clone()))
+            },
+            ProtocolDto::UDP(value) => {
+                ctx.net_storage.inspector.udp.push((value, locator.clone()))
+            },
         }
     }
+
+    // Pushing ethernet
+    ctx.net_storage
+        .inspector
+        .ethernet
+        .push((datalink_info, locator));
 
     // Pushing sample to speed plot (not pushed as sent or received yet)
     if let Some(sample) = sample {
@@ -129,6 +158,13 @@ pub fn raw(ctx: &mut Context, raw: OwnedFrame) -> Result<(), ProcessingError> {
     // Else - pass
 
     Ok(())
+}
+
+#[derive(Clone, Debug)]
+pub struct Locator {
+    pub mac: (MacAddress, MacAddress),
+    pub ipv4: Option<(Ipv4Addr, Ipv4Addr)>,
+    pub ipv6: Option<(Ipv6Addr, Ipv6Addr)>,
 }
 
 #[derive(Debug, Error)]

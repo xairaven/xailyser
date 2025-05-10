@@ -339,16 +339,32 @@ impl InspectorTab {
             ui,
             storage,
             "Inspector.Ethernet.Packets",
-            3,
+            7,
             &[
                 "Tab.Inspector.Label.Number",
                 "Tab.Inspector.Protocol.Ethernet.MacSender",
                 "Tab.Inspector.Protocol.Ethernet.MacTarget",
+                "Tab.Inspector.Protocol.IpSender",
+                "Tab.Inspector.Protocol.IpTarget",
             ],
-            |ui, id, packet| {
+            |ui, id, package| {
+                let packet = &package.0;
+                let locator = &package.1;
+                let (source_ip, target_ip) = match locator.ipv4 {
+                    Some(addresses) => (addresses.0.to_string(), addresses.1.to_string()),
+                    None => match locator.ipv6 {
+                        Some(addresses) => {
+                            (addresses.0.to_string(), addresses.1.to_string())
+                        },
+                        None => ("-".to_string(), "-".to_string()),
+                    },
+                };
+
                 ui.label((id + 1).to_string());
                 ui.label(packet.destination_mac.to_string());
                 ui.label(packet.source_mac.to_string());
+                ui.label(source_ip);
+                ui.label(target_ip);
             },
         );
     }
