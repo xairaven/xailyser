@@ -1,4 +1,4 @@
-use crate::ws::data::Locator;
+use crate::ws::data::{Locator, PortDto};
 use dpi::protocols::arp::ArpDto;
 use dpi::protocols::dhcpv4::DHCPv4Dto;
 use dpi::protocols::dhcpv6::DHCPv6Dto;
@@ -9,8 +9,6 @@ use dpi::protocols::icmpv4::ICMPv4Dto;
 use dpi::protocols::icmpv6::ICMPv6Dto;
 use dpi::protocols::ipv4::IPv4Dto;
 use dpi::protocols::ipv6::IPv6Dto;
-use dpi::protocols::tcp::TcpDto;
-use dpi::protocols::udp::UdpDto;
 
 #[derive(Default)]
 pub struct InspectorStorage {
@@ -24,8 +22,8 @@ pub struct InspectorStorage {
     pub icmpv6: Vec<(ICMPv6Dto, Locator)>,
     pub ipv4: Vec<(IPv4Dto, Locator)>,
     pub ipv6: Vec<(IPv6Dto, Locator)>,
-    pub tcp: Vec<(TcpDto, Locator)>,
-    pub udp: Vec<(UdpDto, Locator)>,
+    pub tcp: Vec<(PortDto, Locator)>,
+    pub udp: Vec<(PortDto, Locator)>,
 }
 
 impl InspectorStorage {

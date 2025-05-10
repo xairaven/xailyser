@@ -1,9 +1,14 @@
 use crate::context::Context;
 use crate::net::device::LocalDeviceBuilder;
+use crate::net::lookup::Lookup;
 use crate::net::speed::{Sample, SampleDirection, SpeedError};
+use dpi::analysis::ports::PortInfo;
 use dpi::dto::frame::{FrameHeader, OwnedFrame};
 use dpi::dto::metadata::{FrameMetadataDto, ProtocolDto};
+use dpi::protocols::ProtocolId;
 use dpi::protocols::ethernet::mac::MacAddress;
+use dpi::protocols::tcp::TcpDto;
+use dpi::protocols::udp::UdpDto;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use thiserror::Error;
 
@@ -137,13 +142,19 @@ pub fn metadata(
             ),
             ProtocolDto::TCP(value) => push_value(
                 &mut ctx.net_storage.inspector.tcp,
-                (value, locator.clone()),
+                (
+                    PortDto::from_tcp(value, &ctx.net_storage.lookup),
+                    locator.clone(),
+                ),
                 limit,
                 frames_len,
             ),
             ProtocolDto::UDP(value) => push_value(
                 &mut ctx.net_storage.inspector.udp,
-                (value, locator.clone()),
+                (
+                    PortDto::from_udp(value, &ctx.net_storage.lookup),
+                    locator.clone(),
+                ),
                 limit,
                 frames_len,
             ),
@@ -215,6 +226,65 @@ impl Locator {
             },
         };
         (source_ip, target_ip)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct PortDto {
+    pub port_source: u16,
+    pub port_destination: u16,
+    pub possible_application: String,
+}
+
+impl PortDto {
+    pub fn find_app(ports: (u16, u16), lookup: &Lookup, protocol: ProtocolId) -> String {
+        if let Some(info_vec) = lookup.find_port(&ports.0) {
+            if let Some(app) = Self::find_app_by_protocol(info_vec, protocol) {
+                return app;
+            }
+        }
+
+        if let Some(info_vec) = lookup.find_port(&ports.1) {
+            if let Some(app) = Self::find_app_by_protocol(info_vec, protocol) {
+                return app;
+            }
+        }
+
+        String::from("-")
+    }
+
+    fn find_app_by_protocol(vec: &[PortInfo], protocol: ProtocolId) -> Option<String> {
+        vec.iter()
+            .find(|info| {
+                info.transport_protocol
+                    .to_ascii_lowercase()
+                    .eq(&protocol.to_string().to_ascii_lowercase())
+            })
+            .map(|info| info.service_name.clone())
+    }
+
+    fn from_tcp(value: TcpDto, lookup: &Lookup) -> Self {
+        Self {
+            port_source: value.port_source,
+            port_destination: value.port_destination,
+            possible_application: PortDto::find_app(
+                (value.port_source, value.port_destination),
+                lookup,
+                ProtocolId::TCP,
+            ),
+        }
+    }
+
+    fn from_udp(value: UdpDto, lookup: &Lookup) -> Self {
+        Self {
+            port_source: value.port_source,
+            port_destination: value.port_destination,
+            possible_application: PortDto::find_app(
+                (value.port_source, value.port_destination),
+                lookup,
+                ProtocolId::UDP,
+            ),
+        }
     }
 }
 

@@ -154,6 +154,12 @@
   "Tab.Inspector.Protocol.IPv6.AddressSource": "Source Address",
   "Tab.Inspector.Protocol.IPv6.AddressDestination": "Destination Address",
   "Tab.Inspector.Protocol.IPv6.HopLimit": "Hop Limit",
+  "Tab.Inspector.Protocol.TCP.PortSource": "Source Port",
+  "Tab.Inspector.Protocol.TCP.PortDestination": "Destination Port",
+  "Tab.Inspector.Protocol.TCP.PossibleApplication": "Possible Application",
+  "Tab.Inspector.Protocol.UDP.PortSource": "Source Port",
+  "Tab.Inspector.Protocol.UDP.PortDestination": "Destination Port",
+  "Tab.Inspector.Protocol.UDP.PossibleApplication": "Possible Application",
 
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",

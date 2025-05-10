@@ -35,8 +35,8 @@ impl InspectorTab {
             ProtocolId::ICMPv6 => self.icmpv6_view(ui, ctx),
             ProtocolId::IPv4 => self.ipv4_view(ui, ctx),
             ProtocolId::IPv6 => self.ipv6_view(ui, ctx),
-            ProtocolId::TCP => {},
-            ProtocolId::UDP => {},
+            ProtocolId::TCP => self.tcp_view(ui, ctx),
+            ProtocolId::UDP => self.udp_view(ui, ctx),
         };
     }
 
@@ -558,6 +558,78 @@ impl InspectorTab {
                 ui.label(packet.address_source.to_string());
                 ui.label(packet.address_destination.to_string());
                 ui.label(packet.hop_limit.to_string());
+                ui.label(source_mac);
+                ui.label(target_mac);
+            },
+        );
+    }
+
+    pub fn tcp_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.tcp;
+        self.protocol_view(
+            ui,
+            storage,
+            "Inspector.TCP.Packets",
+            8,
+            &[
+                "Tab.Inspector.Label.Number",
+                "Tab.Inspector.Protocol.TCP.PortSource",
+                "Tab.Inspector.Protocol.TCP.PortDestination",
+                "Tab.Inspector.Protocol.TCP.PossibleApplication",
+                "Tab.Inspector.Protocol.IpSender",
+                "Tab.Inspector.Protocol.IpTarget",
+                "Tab.Inspector.Protocol.MacSender",
+                "Tab.Inspector.Protocol.MacTarget",
+            ],
+            |ui, id, package| {
+                let packet = &package.0;
+                let locator = &package.1;
+                let (source_ip, target_ip) = locator.ip_to_string();
+                let (source_mac, target_mac) =
+                    (locator.mac.0.to_string(), locator.mac.1.to_string());
+
+                ui.label(id.to_string());
+                ui.label(packet.port_source.to_string());
+                ui.label(packet.port_destination.to_string());
+                ui.label(&packet.possible_application);
+                ui.label(source_ip);
+                ui.label(target_ip);
+                ui.label(source_mac);
+                ui.label(target_mac);
+            },
+        );
+    }
+
+    pub fn udp_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.udp;
+        self.protocol_view(
+            ui,
+            storage,
+            "Inspector.UDP.Packets",
+            8,
+            &[
+                "Tab.Inspector.Label.Number",
+                "Tab.Inspector.Protocol.UDP.PortSource",
+                "Tab.Inspector.Protocol.UDP.PortDestination",
+                "Tab.Inspector.Protocol.UDP.PossibleApplication",
+                "Tab.Inspector.Protocol.IpSender",
+                "Tab.Inspector.Protocol.IpTarget",
+                "Tab.Inspector.Protocol.MacSender",
+                "Tab.Inspector.Protocol.MacTarget",
+            ],
+            |ui, id, package| {
+                let packet = &package.0;
+                let locator = &package.1;
+                let (source_ip, target_ip) = locator.ip_to_string();
+                let (source_mac, target_mac) =
+                    (locator.mac.0.to_string(), locator.mac.1.to_string());
+
+                ui.label(id.to_string());
+                ui.label(packet.port_source.to_string());
+                ui.label(packet.port_destination.to_string());
+                ui.label(&packet.possible_application);
+                ui.label(source_ip);
+                ui.label(target_ip);
                 ui.label(source_mac);
                 ui.label(target_mac);
             },

@@ -154,6 +154,12 @@
   "Tab.Inspector.Protocol.IPv6.AddressSource": "Адреса відправника",
   "Tab.Inspector.Protocol.IPv6.AddressDestination": "Адреса отримувача",
   "Tab.Inspector.Protocol.IPv6.HopLimit": "Ліміт переходів",
+  "Tab.Inspector.Protocol.TCP.PortSource": "Порт відправника",
+  "Tab.Inspector.Protocol.TCP.PortDestination": "Порт отримувача",
+  "Tab.Inspector.Protocol.TCP.PossibleApplication": "Можливий застосунок",
+  "Tab.Inspector.Protocol.UDP.PortSource": "Порт відправника",
+  "Tab.Inspector.Protocol.UDP.PortDestination": "Порт отримувача",
+  "Tab.Inspector.Protocol.UDP.PossibleApplication": "Можливий застосунок",
 
   "Tab.Status.NetworkData.Label.Peak": "Пік",
   "Tab.Status.NetworkData.Label.Throughput": "Загалом",
