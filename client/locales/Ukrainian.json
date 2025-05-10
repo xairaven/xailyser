@@ -146,6 +146,8 @@
   "Tab.Inspector.Protocol.HTTP.Response.Reason": "Причина",
   "Tab.Inspector.Protocol.ICMPv4.MessageType": "Тип повідомлення",
   "Tab.Inspector.Protocol.ICMPv4.Code": "Код",
+  "Tab.Inspector.Protocol.ICMPv6.MessageType": "Тип повідомлення",
+  "Tab.Inspector.Protocol.ICMPv6.Code": "Код",
 
   "Tab.Status.NetworkData.Label.Peak": "Пік",
   "Tab.Status.NetworkData.Label.Throughput": "Загалом",
