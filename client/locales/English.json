@@ -151,6 +151,9 @@
   "Tab.Inspector.Protocol.IPv4.AddressSource": "Source Address",
   "Tab.Inspector.Protocol.IPv4.AddressDestination": "Destination Address",
   "Tab.Inspector.Protocol.IPv4.TimeToLive": "Time to Live",
+  "Tab.Inspector.Protocol.IPv6.AddressSource": "Source Address",
+  "Tab.Inspector.Protocol.IPv6.AddressDestination": "Destination Address",
+  "Tab.Inspector.Protocol.IPv6.HopLimit": "Hop Limit",
 
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",
