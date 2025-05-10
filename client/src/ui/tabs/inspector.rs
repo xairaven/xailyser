@@ -22,7 +22,6 @@ impl Default for InspectorTab {
 impl InspectorTab {
     pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         self.tab_heading(ui, ctx);
-        self.select_view(ui);
 
         match self.protocol_chosen {
             ProtocolId::Arp => self.arp_view(ui, ctx),
@@ -38,33 +37,6 @@ impl InspectorTab {
             ProtocolId::TCP => {},
             ProtocolId::UDP => {},
         };
-    }
-
-    pub fn select_view(&mut self, ui: &mut egui::Ui) {
-        Grid::new("").num_columns(2).striped(false).show(ui, |ui| {
-            ui.label(format!("{}:", t!("Tab.Inspector.Label.Protocol")));
-
-            ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-                if egui::ComboBox::from_id_salt("Combobox.Inspector.Protocols")
-                    .selected_text(self.protocol_chosen.to_string())
-                    .show_ui(ui, |ui| {
-                        for protocol in ProtocolId::iter() {
-                            ui.selectable_value(
-                                &mut self.protocol_chosen,
-                                protocol,
-                                protocol.to_string(),
-                            );
-                        }
-                    })
-                    .response
-                    .changed()
-                {
-                    self.page = 1;
-                };
-            });
-
-            ui.end_row();
-        });
     }
 
     fn protocol_view<T, F>(
@@ -416,9 +388,32 @@ impl InspectorTab {
     ) -> bool {
         let mut to_restart = false;
 
-        // Clear button or empty label
-        if !storage.is_empty() {
-            ui.horizontal_wrapped(|ui| {
+        Grid::new("").num_columns(8).striped(false).show(ui, |ui| {
+            if storage.is_empty() {
+                ui.label(format!("{}:", t!("Tab.Inspector.Label.Protocol")));
+            }
+
+            ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
+                if egui::ComboBox::from_id_salt("Combobox.Inspector.Protocols")
+                    .selected_text(self.protocol_chosen.to_string())
+                    .show_ui(ui, |ui| {
+                        for protocol in ProtocolId::iter() {
+                            ui.selectable_value(
+                                &mut self.protocol_chosen,
+                                protocol,
+                                protocol.to_string(),
+                            );
+                        }
+                    })
+                    .response
+                    .changed()
+                {
+                    self.page = 1;
+                };
+            });
+
+            // Clear button or empty label
+            if !storage.is_empty() {
                 let total_pages = self.total_pages(storage.len());
 
                 const LEFT_FAR: isize = -5;
@@ -467,10 +462,11 @@ impl InspectorTab {
                     storage.clear();
                     to_restart = true;
                 }
-            });
-        } else {
-            ui.label(RichText::new(t!("Tab.Inspector.Label.Empty")).italics());
-        }
+            } else {
+                ui.label(RichText::new(t!("Tab.Inspector.Label.Empty")).italics());
+            }
+            ui.end_row();
+        });
 
         to_restart
     }
