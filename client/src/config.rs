@@ -20,6 +20,7 @@ pub struct Config {
     pub language: Language,
     pub log_format: String,
     pub log_level: LevelFilter,
+    pub parsed_frames_limit: Option<usize>,
     pub plot_display_window_seconds: u32,
     pub plot_speed_units: SpeedUnitPerSecond,
     pub sync_delay_seconds: i64,
@@ -35,6 +36,7 @@ impl Default for Config {
             language: Language::English,
             log_format: logging::DEFAULT_FORMAT.to_string(),
             log_level: LevelFilter::Info,
+            parsed_frames_limit: Some(100000),
             plot_display_window_seconds: 10,
             plot_speed_units: SpeedUnitPerSecond::Kilobytes,
             theme: themes::Preference::default(),
@@ -55,6 +57,11 @@ impl Serialize for Config {
         state.serialize_field("language", &self.language.to_string())?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
+        let limit = match &self.parsed_frames_limit {
+            Some(value) => &value.to_string(),
+            None => "none",
+        };
+        state.serialize_field("parsed_frames_limit", limit)?;
         state.serialize_field(
             "plot_display_window_seconds",
             &self.plot_display_window_seconds,
@@ -111,6 +118,7 @@ struct ConfigDto {
     language: String,
     log_format: String,
     log_level: String,
+    parsed_frames_limit: String,
     plot_display_window_seconds: u32,
     plot_speed_units: String,
     sync_delay_seconds: i64,
@@ -128,6 +136,7 @@ impl ConfigDto {
             log_format: self.log_format.trim().to_string(),
             log_level: LevelFilter::from_str(self.log_level.to_ascii_lowercase().trim())
                 .map_err(|_| ConfigError::UnknownLogLevel)?,
+            parsed_frames_limit: usize::from_str(&self.parsed_frames_limit).ok(),
             plot_display_window_seconds: self.plot_display_window_seconds,
             plot_speed_units: SpeedUnitPerSecond::try_from(
                 self.plot_speed_units.as_str(),

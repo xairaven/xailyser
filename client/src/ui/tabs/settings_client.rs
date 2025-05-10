@@ -18,6 +18,8 @@ pub struct SettingsClientTab {
     log_level_choice: LevelFilter,
 
     // Fields that applied by button
+    parsed_frames_limit_enabled: bool,
+    parsed_frames_limit: usize,
     ping_delay_seconds: i64,
     theme: themes::Preference,
     unparsed_frames_drop: bool,
@@ -34,6 +36,11 @@ impl SettingsClientTab {
             log_format_choice: ctx.config.log_format.clone(),
             log_level_choice: ctx.config.log_level,
 
+            parsed_frames_limit_enabled: ctx
+                .client_settings
+                .parsed_frames_limit
+                .is_some(),
+            parsed_frames_limit: ctx.client_settings.parsed_frames_limit.unwrap_or(0),
             ping_delay_seconds: ctx.client_settings.sync_delay_seconds,
             theme: ctx.client_settings.theme,
 
@@ -83,6 +90,9 @@ impl SettingsClientTab {
                                     self.logs_level_view(ui, ctx);
                                     ui.end_row();
 
+                                    self.parsed_limit_view(ui, ctx);
+                                    ui.end_row();
+
                                     self.ping_delay_view(ui, ctx);
                                     ui.end_row();
 
@@ -123,6 +133,7 @@ impl SettingsClientTab {
             ctx.config.compression = ctx.client_settings.compression;
 
             // Fields that applied by button
+            ctx.config.parsed_frames_limit = ctx.client_settings.parsed_frames_limit;
             ctx.config.theme = ctx.client_settings.theme;
             ctx.config.sync_delay_seconds = ctx.client_settings.sync_delay_seconds;
             ctx.config.unparsed_frames_drop = ctx.client_settings.unparsed_frames_drop;
@@ -328,8 +339,49 @@ impl SettingsClientTab {
         }
     }
 
+    fn parsed_limit_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let setting = Self::option_to_setting(
+            self.parsed_frames_limit_enabled,
+            self.parsed_frames_limit,
+        );
+        let label =
+            styles::heading::normal(&t!("Tab.SettingsClient.Label.ParsedFramesLimit"));
+        let not_applied = setting != ctx.client_settings.parsed_frames_limit;
+        styles::text::field_not_applied(ui, label, not_applied)
+            .on_hover_text(t!("Tab.SettingsClient.Label.ParsedFramesLimit.Note"))
+            .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+
+        ui.horizontal_centered(|ui| {
+            ui.add(Checkbox::without_text(
+                &mut self.parsed_frames_limit_enabled,
+            ));
+            ui.add_enabled(
+                self.parsed_frames_limit_enabled,
+                DragValue::new(&mut self.parsed_frames_limit)
+                    .speed(1)
+                    .range(1..=i64::MAX)
+                    .suffix(format!(" {}", t!("Tab.SettingsClient.Suffix.Frames"))),
+            );
+        });
+
+        if ui.button(t!("Button.Apply")).clicked() {
+            log::info!(
+                "Client Settings: `Parsed Frames Limit` changed to {}:{}",
+                self.parsed_frames_limit_enabled,
+                self.parsed_frames_limit,
+            );
+            ctx.client_settings.parsed_frames_limit = setting;
+        }
+        if ui.button("🔙").clicked() {
+            self.parsed_frames_limit_enabled =
+                ctx.client_settings.parsed_frames_limit.is_some();
+            self.parsed_frames_limit =
+                ctx.client_settings.parsed_frames_limit.unwrap_or(0);
+        }
+    }
+
     fn unparsed_threshold_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        let setting = into_setting(
+        let setting = Self::option_to_setting(
             self.unparsed_frames_threshold_enabled,
             self.unparsed_frames_threshold,
         );
@@ -369,9 +421,9 @@ impl SettingsClientTab {
             self.unparsed_frames_threshold =
                 ctx.client_settings.unparsed_frames_threshold.unwrap_or(0);
         }
+    }
 
-        fn into_setting(is_enabled: bool, amount: usize) -> Option<usize> {
-            if is_enabled { Some(amount) } else { None }
-        }
+    fn option_to_setting(is_enabled: bool, amount: usize) -> Option<usize> {
+        if is_enabled { Some(amount) } else { None }
     }
 }

@@ -30,19 +30,37 @@ pub fn metadata(
         ipv6: None,
     };
 
+    let limit = &ctx.client_settings.parsed_frames_limit;
+    let frames_len = &ctx.net_storage.inspector.ethernet.len();
+
     let mut device_builder: Option<LocalDeviceBuilder> = None;
     for layer in metadata.layers.into_iter().skip(1) {
         match layer {
             ProtocolDto::Ethernet(_) => return Err(ProcessingError::DatalinkNotFirst),
-            ProtocolDto::Arp(value) => ctx.net_storage.inspector.arp.push(value),
-            ProtocolDto::DHCPv4(value) => ctx.net_storage.inspector.dhcpv4.push(value),
-            ProtocolDto::DHCPv6(value) => ctx.net_storage.inspector.dhcpv6.push(value),
-            ProtocolDto::DNS(value) => ctx.net_storage.inspector.dns.push(value),
-            ProtocolDto::HTTP(value) => ctx
-                .net_storage
-                .inspector
-                .http
-                .push((value, locator.clone())),
+            ProtocolDto::Arp(value) => {
+                push_value(&mut ctx.net_storage.inspector.arp, value, limit, frames_len)
+            },
+            ProtocolDto::DHCPv4(value) => push_value(
+                &mut ctx.net_storage.inspector.dhcpv4,
+                value,
+                limit,
+                frames_len,
+            ),
+            ProtocolDto::DHCPv6(value) => push_value(
+                &mut ctx.net_storage.inspector.dhcpv6,
+                value,
+                limit,
+                frames_len,
+            ),
+            ProtocolDto::DNS(value) => {
+                push_value(&mut ctx.net_storage.inspector.dns, value, limit, frames_len)
+            },
+            ProtocolDto::HTTP(value) => push_value(
+                &mut ctx.net_storage.inspector.http,
+                (value, locator.clone()),
+                limit,
+                frames_len,
+            ),
             ProtocolDto::IPv4(ipv4) => {
                 if ipv4.address_source.is_private() {
                     if let Some(sample) = sample.take() {
@@ -67,7 +85,12 @@ pub fn metadata(
                     device_builder = Some(builder);
                 }
                 locator.ipv4 = Some((ipv4.address_source, ipv4.address_destination));
-                ctx.net_storage.inspector.ipv4.push((ipv4, locator.clone()));
+                push_value(
+                    &mut ctx.net_storage.inspector.ipv4,
+                    (ipv4, locator.clone()),
+                    limit,
+                    frames_len,
+                );
             },
             ProtocolDto::IPv6(ipv6) => {
                 if ipv6.address_source.is_unique_local() {
@@ -93,32 +116,47 @@ pub fn metadata(
                     device_builder = Some(builder);
                 }
                 locator.ipv6 = Some((ipv6.address_source, ipv6.address_destination));
-                ctx.net_storage.inspector.ipv6.push((ipv6, locator.clone()));
+                push_value(
+                    &mut ctx.net_storage.inspector.ipv6,
+                    (ipv6, locator.clone()),
+                    limit,
+                    frames_len,
+                );
             },
-            ProtocolDto::ICMPv4(value) => ctx
-                .net_storage
-                .inspector
-                .icmpv4
-                .push((value, locator.clone())),
-            ProtocolDto::ICMPv6(value) => ctx
-                .net_storage
-                .inspector
-                .icmpv6
-                .push((value, locator.clone())),
-            ProtocolDto::TCP(value) => {
-                ctx.net_storage.inspector.tcp.push((value, locator.clone()))
-            },
-            ProtocolDto::UDP(value) => {
-                ctx.net_storage.inspector.udp.push((value, locator.clone()))
-            },
+            ProtocolDto::ICMPv4(value) => push_value(
+                &mut ctx.net_storage.inspector.icmpv4,
+                (value, locator.clone()),
+                limit,
+                frames_len,
+            ),
+            ProtocolDto::ICMPv6(value) => push_value(
+                &mut ctx.net_storage.inspector.icmpv6,
+                (value, locator.clone()),
+                limit,
+                frames_len,
+            ),
+            ProtocolDto::TCP(value) => push_value(
+                &mut ctx.net_storage.inspector.tcp,
+                (value, locator.clone()),
+                limit,
+                frames_len,
+            ),
+            ProtocolDto::UDP(value) => push_value(
+                &mut ctx.net_storage.inspector.udp,
+                (value, locator.clone()),
+                limit,
+                frames_len,
+            ),
         }
     }
 
     // Pushing ethernet
-    ctx.net_storage
-        .inspector
-        .ethernet
-        .push((datalink_info, locator));
+    push_value(
+        &mut ctx.net_storage.inspector.ethernet,
+        (datalink_info, locator),
+        limit,
+        frames_len,
+    );
 
     // Pushing sample to speed plot (not pushed as sent or received yet)
     if let Some(sample) = sample {
@@ -165,6 +203,16 @@ pub struct Locator {
     pub mac: (MacAddress, MacAddress),
     pub ipv4: Option<(Ipv4Addr, Ipv4Addr)>,
     pub ipv6: Option<(Ipv6Addr, Ipv6Addr)>,
+}
+
+fn push_value<T>(vec: &mut Vec<T>, value: T, limit: &Option<usize>, frames_len: &usize) {
+    if let Some(limit) = limit {
+        if frames_len < limit {
+            vec.push(value);
+        }
+    } else {
+        vec.push(value);
+    }
 }
 
 #[derive(Debug, Error)]

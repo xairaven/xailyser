@@ -61,6 +61,7 @@ impl Context {
         Self {
             client_settings: ClientSettings {
                 compression: config.compression,
+                parsed_frames_limit: config.parsed_frames_limit,
                 plot: PlotSettings {
                     display_window_seconds: config.plot_display_window_seconds,
                     units: config.plot_speed_units.clone(),
@@ -156,6 +157,7 @@ pub struct ServerSettings {
 pub struct ClientSettings {
     pub compression: bool,
     pub sync_delay_seconds: i64,
+    pub parsed_frames_limit: Option<usize>,
     pub plot: PlotSettings,
     pub theme: themes::Preference,
     pub unparsed_frames_drop: bool,

@@ -164,6 +164,8 @@
   "Tab.SettingsClient.Label.Language": "Language",
   "Tab.SettingsClient.Label.LogFormat": "Log Format",
   "Tab.SettingsClient.Label.LogLevel": "Log Level",
+  "Tab.SettingsClient.Label.ParsedFramesLimit": "Parsed Frames Limit",
+  "Tab.SettingsClient.Label.ParsedFramesLimit.Note": "If this option is enabled, only the N frames (set here) will be held in runtime.",
   "Tab.SettingsClient.Label.SyncDelay": "Sync Delay",
   "Tab.SettingsClient.Label.Theme": "Theme",
   "Tab.SettingsClient.Label.UnparsedFramesDrop": "Unparsed Frames Drop",
