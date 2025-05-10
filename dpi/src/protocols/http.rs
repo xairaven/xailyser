@@ -6,6 +6,7 @@ use nom::bytes::complete::take;
 use nom::bytes::{tag, take_until};
 use nom::sequence::terminated;
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
 
 // HTTP Protocol
 // RFC 2616: https://datatracker.ietf.org/doc/html/rfc2616
@@ -207,7 +208,7 @@ pub struct HTTPResponse {
     pub body: Vec<u8>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, PartialEq)]
 pub enum Methods {
     GET,
     POST,

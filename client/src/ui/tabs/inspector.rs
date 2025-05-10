@@ -2,6 +2,7 @@ use crate::context::Context;
 use crate::ui::styles;
 use crate::ui::tabs::Tab;
 use dpi::protocols::ProtocolId;
+use dpi::protocols::http::HttpDto;
 use egui::{Grid, RichText, ScrollArea};
 use strum::IntoEnumIterator;
 
@@ -29,7 +30,7 @@ impl InspectorTab {
             ProtocolId::DHCPv6 => self.dhcpv6_view(ui, ctx),
             ProtocolId::DNS => self.dns_view(ui, ctx),
             ProtocolId::Ethernet => self.ethernet_view(ui, ctx),
-            ProtocolId::HTTP => {},
+            ProtocolId::HTTP => self.http_view(ui, ctx),
             ProtocolId::ICMPv4 => {},
             ProtocolId::ICMPv6 => {},
             ProtocolId::IPv4 => {},
@@ -329,15 +330,7 @@ impl InspectorTab {
             |ui, id, package| {
                 let packet = &package.0;
                 let locator = &package.1;
-                let (source_ip, target_ip) = match locator.ipv4 {
-                    Some(addresses) => (addresses.0.to_string(), addresses.1.to_string()),
-                    None => match locator.ipv6 {
-                        Some(addresses) => {
-                            (addresses.0.to_string(), addresses.1.to_string())
-                        },
-                        None => ("-".to_string(), "-".to_string()),
-                    },
-                };
+                let (source_ip, target_ip) = locator.ip_to_string();
 
                 ui.label(id.to_string());
                 ui.label(packet.destination_mac.to_string());
@@ -346,6 +339,103 @@ impl InspectorTab {
                 ui.label(target_ip);
             },
         );
+    }
+
+    pub fn http_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.http;
+        if self.clear_pages_buttons(ui, storage) {
+            return;
+        }
+
+        // Table
+        ScrollArea::both()
+            .auto_shrink([false, true])
+            .show(ui, |ui| {
+                // Data rows
+                for (index, (packet, locator)) in
+                    Self::page_slice(storage, self.page).iter().enumerate()
+                {
+                    let record_number = (self.page - 1)
+                        .saturating_mul(Self::PAGE_SIZE)
+                        .saturating_add(index + 1);
+
+                    ui.collapsing(format!("HTTP Packet #{}", record_number), |ui| {
+                        Grid::new(format!("HTTP-Packet-{}", record_number))
+                            .striped(false)
+                            .num_columns(4)
+                            .show(ui, |ui| {
+                                match packet {
+                                    HttpDto::Request(_) => {
+                                        ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.HTTP.Request.Method"
+                                        )));
+                                        ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.HTTP.Request.Target"
+                                        )));
+                                    },
+                                    HttpDto::Response(_) => {
+                                        ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.HTTP.Response.StatusCode"
+                                        )));
+                                        ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.HTTP.Response.Reason"
+                                        )));
+                                    },
+                                }
+                                ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.IpSender"
+                                        )));
+                                ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.IpTarget"
+                                        )));
+                                ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.MacSender"
+                                        )));
+                                ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.MacTarget"
+                                        )));
+                                ui.end_row();
+
+                                let (source_ip, target_ip) = locator.ip_to_string();
+                                match packet {
+                                    HttpDto::Request(request) => {
+                                        ui.label(request.method.to_string());
+                                        ui.label(request.target.to_string());
+                                    },
+                                    HttpDto::Response(response) => {
+                                        ui.label(response.status_code.to_string());
+                                        ui.label(response.reason.to_string());
+                                    },
+                                }
+                                ui.label(source_ip);
+                                ui.label(target_ip);
+                                ui.label(locator.mac.0.to_string());
+                                ui.label(locator.mac.1.to_string());
+                                ui.end_row();
+                            });
+
+                        let headers = match packet {
+                            HttpDto::Request(value) => &value.headers,
+                            HttpDto::Response(value) => &value.headers,
+                        };
+                        if !headers.is_empty() {
+                            ui.label(styles::heading::grid(&t!(
+                                            "Tab.Inspector.Protocol.HTTP.Headers"
+                                        )));
+                            Grid::new(format!("HTTP-Headers-{}", record_number))
+                                .striped(false)
+                                .num_columns(2)
+                                .show(ui, |ui| {
+                                    for header in headers {
+                                        ui.label(&header.0);
+                                        ui.label(&header.1);
+                                        ui.end_row();
+                                    }
+                                });
+                        }
+                    });
+                }
+            });
     }
 
     fn tab_heading(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
@@ -394,22 +484,23 @@ impl InspectorTab {
             }
 
             ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-                if egui::ComboBox::from_id_salt("Combobox.Inspector.Protocols")
+                egui::ComboBox::from_id_salt("Combobox.Inspector.Protocols")
                     .selected_text(self.protocol_chosen.to_string())
                     .show_ui(ui, |ui| {
                         for protocol in ProtocolId::iter() {
-                            ui.selectable_value(
-                                &mut self.protocol_chosen,
-                                protocol,
-                                protocol.to_string(),
-                            );
+                            if ui
+                                .selectable_value(
+                                    &mut self.protocol_chosen,
+                                    protocol,
+                                    protocol.to_string(),
+                                )
+                                .clicked()
+                            {
+                                self.page = 1;
+                                to_restart = true;
+                            };
                         }
-                    })
-                    .response
-                    .changed()
-                {
-                    self.page = 1;
-                };
+                    });
             });
 
             // Clear button or empty label

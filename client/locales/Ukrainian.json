@@ -139,6 +139,11 @@
   "Tab.Inspector.Protocol.DNS.Record.Data": "Дані",
   "Tab.Inspector.Protocol.Ethernet.MacSender": "MAC Відправника",
   "Tab.Inspector.Protocol.Ethernet.MacTarget": "MAC Цілі",
+  "Tab.Inspector.Protocol.HTTP.Headers": "Заголовки",
+  "Tab.Inspector.Protocol.HTTP.Request.Method": "Метод",
+  "Tab.Inspector.Protocol.HTTP.Request.Target": "Ціль",
+  "Tab.Inspector.Protocol.HTTP.Response.StatusCode": "Код стану",
+  "Tab.Inspector.Protocol.HTTP.Response.Reason": "Причина",
 
   "Tab.Status.NetworkData.Label.Peak": "Пік",
   "Tab.Status.NetworkData.Label.Throughput": "Загалом",

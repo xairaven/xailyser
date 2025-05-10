@@ -139,6 +139,11 @@
   "Tab.Inspector.Protocol.DNS.Record.Data": "Data",
   "Tab.Inspector.Protocol.Ethernet.MacSender": "Sender's MAC",
   "Tab.Inspector.Protocol.Ethernet.MacTarget": "Target's Mac",
+  "Tab.Inspector.Protocol.HTTP.Headers": "Headers",
+  "Tab.Inspector.Protocol.HTTP.Request.Method": "Method",
+  "Tab.Inspector.Protocol.HTTP.Request.Target": "Target",
+  "Tab.Inspector.Protocol.HTTP.Response.StatusCode": "Status Code",
+  "Tab.Inspector.Protocol.HTTP.Response.Reason": "Reason",
 
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",

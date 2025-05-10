@@ -205,6 +205,19 @@ pub struct Locator {
     pub ipv6: Option<(Ipv6Addr, Ipv6Addr)>,
 }
 
+impl Locator {
+    pub fn ip_to_string(&self) -> (String, String) {
+        let (source_ip, target_ip) = match self.ipv4 {
+            Some(addresses) => (addresses.0.to_string(), addresses.1.to_string()),
+            None => match self.ipv6 {
+                Some(addresses) => (addresses.0.to_string(), addresses.1.to_string()),
+                None => ("-".to_string(), "-".to_string()),
+            },
+        };
+        (source_ip, target_ip)
+    }
+}
+
 fn push_value<T>(vec: &mut Vec<T>, value: T, limit: &Option<usize>, frames_len: &usize) {
     if let Some(limit) = limit {
         if frames_len < limit {
