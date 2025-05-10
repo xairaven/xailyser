@@ -144,6 +144,8 @@
   "Tab.Inspector.Protocol.HTTP.Request.Target": "Ціль",
   "Tab.Inspector.Protocol.HTTP.Response.StatusCode": "Код стану",
   "Tab.Inspector.Protocol.HTTP.Response.Reason": "Причина",
+  "Tab.Inspector.Protocol.ICMPv4.MessageType": "Тип повідомлення",
+  "Tab.Inspector.Protocol.ICMPv4.Code": "Код",
 
   "Tab.Status.NetworkData.Label.Peak": "Пік",
   "Tab.Status.NetworkData.Label.Throughput": "Загалом",

@@ -31,7 +31,7 @@ impl InspectorTab {
             ProtocolId::DNS => self.dns_view(ui, ctx),
             ProtocolId::Ethernet => self.ethernet_view(ui, ctx),
             ProtocolId::HTTP => self.http_view(ui, ctx),
-            ProtocolId::ICMPv4 => {},
+            ProtocolId::ICMPv4 => self.icmpv4_view(ui, ctx),
             ProtocolId::ICMPv6 => {},
             ProtocolId::IPv4 => {},
             ProtocolId::IPv6 => {},
@@ -436,6 +436,38 @@ impl InspectorTab {
                     });
                 }
             });
+    }
+
+    pub fn icmpv4_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        let storage = &mut ctx.net_storage.inspector.icmpv4;
+        self.protocol_view(
+            ui,
+            storage,
+            "Inspector.ICMPv4.Packets",
+            7,
+            &[
+                "Tab.Inspector.Label.Number",
+                "Tab.Inspector.Protocol.ICMPv4.MessageType",
+                "Tab.Inspector.Protocol.ICMPv4.Code",
+                "Tab.Inspector.Protocol.IpSender",
+                "Tab.Inspector.Protocol.IpTarget",
+                "Tab.Inspector.Protocol.MacSender",
+                "Tab.Inspector.Protocol.MacTarget",
+            ],
+            |ui, id, package| {
+                let packet = &package.0;
+                let locator = &package.1;
+                let (source_ip, target_ip) = locator.ip_to_string();
+
+                ui.label(id.to_string());
+                ui.label(packet.message_type.to_string());
+                ui.label(packet.code.to_string());
+                ui.label(source_ip);
+                ui.label(target_ip);
+                ui.label(locator.mac.0.to_string());
+                ui.label(locator.mac.1.to_string());
+            },
+        );
     }
 
     fn tab_heading(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
