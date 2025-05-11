@@ -48,6 +48,8 @@ impl InspectorStorage {
         self.http.clear();
         self.icmpv4.clear();
         self.icmpv6.clear();
+        self.ipv4.clear();
+        self.ipv6.clear();
         self.tcp.clear();
         self.udp.clear();
     }
