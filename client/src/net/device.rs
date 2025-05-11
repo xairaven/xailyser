@@ -6,7 +6,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 const ALIASES_FILENAME: &str = "device_aliases.toml";
 const ALIASES_FILETYPE: FileKind = FileKind::Data;
-type DeviceAliases = HashMap<MacAddress, String>;
+pub type DeviceAliases = HashMap<MacAddress, String>;
 
 #[derive(Default)]
 pub struct DeviceStorage {

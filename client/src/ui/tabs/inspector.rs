@@ -327,14 +327,14 @@ impl InspectorTab {
                 "Tab.Inspector.Protocol.IpSender",
                 "Tab.Inspector.Protocol.IpTarget",
             ],
-            |ui, id, package| {
-                let packet = &package.0;
-                let locator = &package.1;
+            |ui, id, locator| {
                 let (source_ip, target_ip) = locator.ip_to_string();
+                let (source_mac, target_mac) =
+                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
 
                 ui.label(id.to_string());
-                ui.label(packet.destination_mac.to_string());
-                ui.label(packet.source_mac.to_string());
+                ui.label(source_mac);
+                ui.label(target_mac);
                 ui.label(source_ip);
                 ui.label(target_ip);
             },
@@ -397,6 +397,8 @@ impl InspectorTab {
                                 ui.end_row();
 
                                 let (source_ip, target_ip) = locator.ip_to_string();
+                                let (source_mac, target_mac) =
+                                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
                                 match packet {
                                     HttpDto::Request(request) => {
                                         ui.label(request.method.to_string());
@@ -409,8 +411,8 @@ impl InspectorTab {
                                 }
                                 ui.label(source_ip);
                                 ui.label(target_ip);
-                                ui.label(locator.mac.0.to_string());
-                                ui.label(locator.mac.1.to_string());
+                                ui.label(source_mac);
+                                ui.label(target_mac);
                                 ui.end_row();
                             });
 
@@ -458,14 +460,16 @@ impl InspectorTab {
                 let packet = &package.0;
                 let locator = &package.1;
                 let (source_ip, target_ip) = locator.ip_to_string();
+                let (source_mac, target_mac) =
+                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
 
                 ui.label(id.to_string());
                 ui.label(packet.message_type.to_string());
                 ui.label(packet.code.to_string());
                 ui.label(source_ip);
                 ui.label(target_ip);
-                ui.label(locator.mac.0.to_string());
-                ui.label(locator.mac.1.to_string());
+                ui.label(source_mac);
+                ui.label(target_mac);
             },
         );
     }
@@ -490,14 +494,16 @@ impl InspectorTab {
                 let packet = &package.0;
                 let locator = &package.1;
                 let (source_ip, target_ip) = locator.ip_to_string();
+                let (source_mac, target_mac) =
+                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
 
                 ui.label(id.to_string());
                 ui.label(packet.message_type.to_string());
                 ui.label(packet.code.to_string());
                 ui.label(source_ip);
                 ui.label(target_ip);
-                ui.label(locator.mac.0.to_string());
-                ui.label(locator.mac.1.to_string());
+                ui.label(source_mac);
+                ui.label(target_mac);
             },
         );
     }
@@ -521,7 +527,7 @@ impl InspectorTab {
                 let packet = &package.0;
                 let locator = &package.1;
                 let (source_mac, target_mac) =
-                    (locator.mac.0.to_string(), locator.mac.1.to_string());
+                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
 
                 ui.label(id.to_string());
                 ui.label(packet.address_source.to_string());
@@ -552,7 +558,7 @@ impl InspectorTab {
                 let packet = &package.0;
                 let locator = &package.1;
                 let (source_mac, target_mac) =
-                    (locator.mac.0.to_string(), locator.mac.1.to_string());
+                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
 
                 ui.label(id.to_string());
                 ui.label(packet.address_source.to_string());
@@ -586,7 +592,7 @@ impl InspectorTab {
                 let locator = &package.1;
                 let (source_ip, target_ip) = locator.ip_to_string();
                 let (source_mac, target_mac) =
-                    (locator.mac.0.to_string(), locator.mac.1.to_string());
+                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
 
                 ui.label(id.to_string());
                 ui.label(packet.port_source.to_string());
@@ -622,7 +628,7 @@ impl InspectorTab {
                 let locator = &package.1;
                 let (source_ip, target_ip) = locator.ip_to_string();
                 let (source_mac, target_mac) =
-                    (locator.mac.0.to_string(), locator.mac.1.to_string());
+                    locator.mac_to_string(&ctx.net_storage.devices.aliases);
 
                 ui.label(id.to_string());
                 ui.label(packet.port_source.to_string());

@@ -3,7 +3,6 @@ use dpi::protocols::arp::ArpDto;
 use dpi::protocols::dhcpv4::DHCPv4Dto;
 use dpi::protocols::dhcpv6::DHCPv6Dto;
 use dpi::protocols::dns::DnsDto;
-use dpi::protocols::ethernet::EthernetDto;
 use dpi::protocols::http::HttpDto;
 use dpi::protocols::icmpv4::ICMPv4Dto;
 use dpi::protocols::icmpv6::ICMPv6Dto;
@@ -16,7 +15,7 @@ pub struct InspectorStorage {
     pub dhcpv4: Vec<DHCPv4Dto>,
     pub dhcpv6: Vec<DHCPv6Dto>,
     pub dns: Vec<DnsDto>,
-    pub ethernet: Vec<(EthernetDto, Locator)>,
+    pub ethernet: Vec<Locator>,
     pub http: Vec<(HttpDto, Locator)>,
     pub icmpv4: Vec<(ICMPv4Dto, Locator)>,
     pub icmpv6: Vec<(ICMPv6Dto, Locator)>,
