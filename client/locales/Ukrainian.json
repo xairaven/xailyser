@@ -102,8 +102,6 @@
   "Tab.About.CheckGithub": "Перегляньте код на GitHub!",
   "Tab.About.LatestRelease": "Останній реліз",
 
-  "Tab.Inspector.Label.Captured": "Захоплено фреймів",
-  "Tab.Inspector.Label.Records": "всього записів",
   "Tab.Inspector.Label.Empty": "Порожньо.",
   "Tab.Inspector.Label.Protocol": "Протокол",
   "Tab.Inspector.Label.Number": "№",
@@ -163,6 +161,14 @@
   "Tab.Inspector.Protocol.UDP.PortSource": "Порт відправника",
   "Tab.Inspector.Protocol.UDP.PortDestination": "Порт отримувача",
   "Tab.Inspector.Protocol.UDP.PossibleApplication": "Можливий застосунок",
+
+  "Tab.Status.Main.Captured": "Захоплено фреймів",
+  "Tab.Status.Main.Records": "Всього записів",
+  "Tab.Status.Main.DeviceAliases": "Псевдонімів пристроїв",
+  "Tab.Status.Main.DevicesFound": "Знайдено пристроїв",
+  "Tab.Status.Main.ConnectionProfiles": "Профілів підключення",
+  "Tab.Status.Main.Ports": "Портів в базі",
+  "Tab.Status.Main.Vendors": "Вендорів OUI в базі",
 
   "Tab.Status.Devices.Button.SaveAliases": "Зберегти псевдоніми",
   "Tab.Status.Devices.Heading": "Пристрої",
@@ -228,6 +234,7 @@
   
   "Tabs.Status": "Статус",
   "Tabs.Inspector": "Інспектор",
+  "Tabs.Stats": "Статистика",
   "Tabs.ClientSettings": "Клієнт",
   "Tabs.ServerSettings": "Сервер",
   "Tabs.About": "Про програму",

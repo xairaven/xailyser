@@ -6,6 +6,7 @@ pub enum Tab {
     #[default]
     Status,
     Inspector,
+    Stats,
     ClientSettings,
     ServerSettings,
     About,
@@ -18,6 +19,7 @@ impl std::fmt::Display for Tab {
         let text = match self {
             Tab::Status => format!("🏠 {}", t!("Tabs.Status")),
             Tab::Inspector => format!("🔍 {}", t!("Tabs.Inspector")),
+            Tab::Stats => format!("🗠 {}", t!("Tabs.Stats")),
             Tab::ClientSettings => format!("⚙ {}", t!("Tabs.ClientSettings")),
             Tab::ServerSettings => format!("⚙ {}", t!("Tabs.ServerSettings")),
             Tab::About => format!("ℹ {}", t!("Tabs.About")),
@@ -33,4 +35,5 @@ pub mod about;
 pub mod inspector;
 pub mod settings_client;
 pub mod settings_server;
+pub mod stats;
 pub mod status;

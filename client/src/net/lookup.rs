@@ -7,6 +7,7 @@ use std::path::PathBuf;
 pub struct Lookup {
     pub port_service: PortServiceTable,
     pub vendors: OuiRadixTree,
+    pub vendors_amount: usize,
 }
 
 const PORTS_DATABASE_PATH: &str = "dpi/resources/iana-port-service-database.csv";
@@ -16,12 +17,13 @@ impl Lookup {
     pub fn load() -> std::io::Result<Lookup> {
         let port_service =
             dpi::analysis::ports::read_database(PathBuf::from(PORTS_DATABASE_PATH))?;
-        let vendors =
+        let (vendors, vendors_amount) =
             dpi::analysis::vendor::read_database(PathBuf::from(OUI_DATABASE_PATH))?;
 
         Ok(Self {
             port_service,
             vendors,
+            vendors_amount,
         })
     }
 

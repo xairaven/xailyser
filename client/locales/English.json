@@ -101,9 +101,7 @@
   "Tab.About.Developer": "Developer: Alex Kovalov",
   "Tab.About.CheckGithub": "Check out the code on GitHub!",
   "Tab.About.LatestRelease": "Latest release",
-  
-  "Tab.Inspector.Label.Captured": "Captured frames",
-  "Tab.Inspector.Label.Records": "total records",
+
   "Tab.Inspector.Label.Empty": "Empty.",
   "Tab.Inspector.Label.Protocol": "Protocol",
   "Tab.Inspector.Label.Number": "#",
@@ -163,6 +161,14 @@
   "Tab.Inspector.Protocol.UDP.PortSource": "Source Port",
   "Tab.Inspector.Protocol.UDP.PortDestination": "Destination Port",
   "Tab.Inspector.Protocol.UDP.PossibleApplication": "Possible Application",
+
+  "Tab.Status.Main.Captured": "Captured frames",
+  "Tab.Status.Main.Records": "Total records",
+  "Tab.Status.Main.DeviceAliases": "Device Aliases",
+  "Tab.Status.Main.DevicesFound": "Devices Found",
+  "Tab.Status.Main.ConnectionProfiles": "Connection Profiles",
+  "Tab.Status.Main.Ports": "Ports in Database",
+  "Tab.Status.Main.Vendors": "Vendors (OUI) in Database",
 
   "Tab.Status.Devices.Button.SaveAliases": "Save Aliases",
   "Tab.Status.Devices.Heading": "Devices",
@@ -228,6 +234,7 @@
 
   "Tabs.Status": "Status",
   "Tabs.Inspector": "Inspector",
+  "Tabs.Stats": "Stats",
   "Tabs.ClientSettings": "Client Settings",
   "Tabs.ServerSettings": "Server Settings",
   "Tabs.About": "About",

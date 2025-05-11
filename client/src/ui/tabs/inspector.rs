@@ -653,16 +653,6 @@ impl InspectorTab {
                     RichText::new(Tab::Inspector.to_string().as_str())
                         .size(styles::heading::HUGE),
                 );
-                ui.label(
-                    RichText::new(format!(
-                        "\t{}: {}, {}: {}",
-                        t!("Tab.Inspector.Label.Captured"),
-                        ctx.net_storage.inspector.ethernet.len(),
-                        t!("Tab.Inspector.Label.Records"),
-                        ctx.net_storage.inspector.len(),
-                    ))
-                    .italics(),
-                );
             });
 
             columns[RIGHT_COLUMN].with_layout(

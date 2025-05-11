@@ -6,6 +6,7 @@ use crate::ui::tabs::about::AboutTab;
 use crate::ui::tabs::inspector::InspectorTab;
 use crate::ui::tabs::settings_client::SettingsClientTab;
 use crate::ui::tabs::settings_server::SettingsServerTab;
+use crate::ui::tabs::stats::StatsTab;
 use crate::ui::tabs::status::StatusTab;
 use crate::ws::request::UiClientRequest;
 use egui::{CentralPanel, RichText, SidePanel};
@@ -21,6 +22,7 @@ pub struct RootComponent {
 
     pub status_tab: StatusTab,
     pub inspector_tab: InspectorTab,
+    pub stats_tab: StatsTab,
     pub settings_client_tab: SettingsClientTab,
     pub settings_server_tab: SettingsServerTab,
     pub about_tab: AboutTab,
@@ -34,6 +36,7 @@ impl RootComponent {
             tabs: [
                 (Tab::Status, Tab::Status.to_string()),
                 (Tab::Inspector, Tab::Inspector.to_string()),
+                (Tab::Stats, Tab::Stats.to_string()),
                 (Tab::ClientSettings, Tab::ClientSettings.to_string()),
                 (Tab::ServerSettings, Tab::ServerSettings.to_string()),
                 (Tab::About, Tab::About.to_string()),
@@ -47,6 +50,7 @@ impl RootComponent {
 
             status_tab: StatusTab::new(ctx),
             inspector_tab: Default::default(),
+            stats_tab: Default::default(),
             settings_client_tab: SettingsClientTab::new(ctx),
             settings_server_tab: Default::default(),
             about_tab: Default::default(),
@@ -147,6 +151,9 @@ impl RootComponent {
                 },
                 Tab::Inspector => {
                     self.inspector_tab.show(ui, ctx);
+                },
+                Tab::Stats => {
+                    self.stats_tab.show(ui, ctx);
                 },
                 Tab::ClientSettings => {
                     self.settings_client_tab.show(ui, ctx);
