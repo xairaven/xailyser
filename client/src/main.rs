@@ -51,6 +51,7 @@ fn main() {
 
 mod config;
 mod context;
+mod errors;
 mod logging;
 mod net;
 mod profiles;

@@ -49,7 +49,6 @@ impl Context {
         let (ui_client_requests_tx, ui_client_requests_rx) =
             unbounded::<UiClientRequest>();
 
-        let profiles_storage = ProfilesStorage::from_file().unwrap_or_default();
         let lookup = match Lookup::load() {
             Ok(lookup) => lookup,
             Err(err) => {
@@ -74,7 +73,7 @@ impl Context {
             settings_server: Default::default(),
             heartbeat: Default::default(),
             net_storage: NetStorage {
-                devices: Default::default(),
+                devices: DeviceStorage::from_file().unwrap_or_default(),
                 inspector: Default::default(),
                 lookup,
                 raw: RawStorage::new(config.unparsed_frames_threshold),
@@ -82,7 +81,7 @@ impl Context {
             },
 
             config,
-            profiles_storage,
+            profiles_storage: ProfilesStorage::from_file().unwrap_or_default(),
 
             shutdown_flag: Arc::new(Default::default()),
 
@@ -98,7 +97,7 @@ impl Context {
     }
 
     pub fn logout(&mut self) {
-        // Cloning client settings, config, lookup, profiles storage.
+        // Cloning client settings, config, devices, lookup, profiles storage.
 
         let (modals_tx, modals_rx) = unbounded::<Box<dyn Modal>>();
         let (server_response_tx, server_response_rx) = unbounded::<Response>();
@@ -113,7 +112,10 @@ impl Context {
             settings_server: Default::default(),
             heartbeat: Default::default(),
             net_storage: NetStorage {
-                devices: DeviceStorage::default(),
+                devices: DeviceStorage {
+                    list: Default::default(),
+                    aliases: self.net_storage.devices.aliases.clone(),
+                },
                 inspector: Default::default(),
                 lookup: self.net_storage.lookup.clone(),
                 raw: RawStorage::new(self.config.unparsed_frames_threshold),

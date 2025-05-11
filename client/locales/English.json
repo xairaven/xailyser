@@ -164,6 +164,7 @@
   "Tab.Inspector.Protocol.UDP.PortDestination": "Destination Port",
   "Tab.Inspector.Protocol.UDP.PossibleApplication": "Possible Application",
 
+  "Tab.Status.Devices.Button.SaveAliases": "Save Aliases",
   "Tab.Status.Devices.Heading": "Devices",
   "Tab.Status.Devices.Empty": "Empty",
   "Tab.Status.Devices.DeviceGeneric": "Device",
@@ -173,6 +174,8 @@
   "Tab.Status.Devices.Device.IPv6": "IPv6",
   "Tab.Status.Devices.Device.Vendor": "Vendor",
   "Tab.Status.Devices.Device.Vendor.Unknown": "Unknown",
+  "Tab.Status.Devices.Modal.ErrorSave": "Failed to save device aliases.",
+  "Tab.Status.Devices.Modal.Success": "Successfully saved device aliases!",
   "Tab.Status.NetworkData.Label.Peak": "Peak",
   "Tab.Status.NetworkData.Label.Throughput": "Throughput",
   "Tab.Status.NetworkData.Label.Received": "Received",

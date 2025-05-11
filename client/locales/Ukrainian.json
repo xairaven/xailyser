@@ -164,6 +164,7 @@
   "Tab.Inspector.Protocol.UDP.PortDestination": "Порт отримувача",
   "Tab.Inspector.Protocol.UDP.PossibleApplication": "Можливий застосунок",
 
+  "Tab.Status.Devices.Button.SaveAliases": "Зберегти псевдоніми",
   "Tab.Status.Devices.Heading": "Пристрої",
   "Tab.Status.Devices.Empty": "Немає",
   "Tab.Status.Devices.DeviceGeneric": "Пристрій",
@@ -173,6 +174,8 @@
   "Tab.Status.Devices.Device.IPv6": "IPv6",
   "Tab.Status.Devices.Device.Vendor": "Виробник",
   "Tab.Status.Devices.Device.Vendor.Unknown": "Невідомий",
+  "Tab.Status.Devices.Modal.ErrorSave": "Не вдалося зберегти псевдоніми пристроїв.",
+  "Tab.Status.Devices.Modal.Success": "Псевдоніми пристроїв успішно збережено!",
   "Tab.Status.NetworkData.Label.Peak": "Пік",
   "Tab.Status.NetworkData.Label.Throughput": "Загалом",
   "Tab.Status.NetworkData.Label.Received": "Отримано",

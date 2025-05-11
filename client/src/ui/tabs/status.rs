@@ -190,11 +190,38 @@ impl StatusTab {
     }
 
     fn devices_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
-        ui.horizontal(|ui| {
-            ui.heading(format!("{}:", t!("Tab.Status.Devices.Heading")));
-            if ctx.net_storage.devices.list.is_empty() {
-                ui.label(t!("Tab.Status.Devices.Empty"));
-            }
+        ui.columns(2, |columns| {
+            columns[0].horizontal(|ui| {
+                ui.heading(format!("{}:", t!("Tab.Status.Devices.Heading")));
+                if ctx.net_storage.devices.list.is_empty() {
+                    ui.label(t!("Tab.Status.Devices.Empty"));
+                }
+            });
+
+            columns[1].with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                if ui
+                    .button(t!("Tab.Status.Devices.Button.SaveAliases"))
+                    .clicked()
+                {
+                    let modal = if let Err(err) =
+                        ctx.net_storage.devices.save_aliases_to_file()
+                    {
+                        let mut text = format!(
+                            "{}\n{}: {}.",
+                            t!("Tab.Status.Devices.Modal.ErrorSave"),
+                            t!("Error.AdditionalInfo"),
+                            err
+                        );
+                        if let Some(additional_info) = err.additional_info() {
+                            text.push_str(&format!("\n{}", additional_info));
+                        }
+                        MessageModal::error(&text)
+                    } else {
+                        MessageModal::info(&t!("Tab.Status.Devices.Modal.Success"))
+                    };
+                    let _ = ctx.modals_tx.try_send(Box::new(modal));
+                }
+            });
         });
 
         if ctx.net_storage.devices.list.is_empty() {
