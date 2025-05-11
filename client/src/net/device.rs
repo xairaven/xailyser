@@ -16,6 +16,18 @@ impl DeviceStorage {
     pub fn find_by_mac(&mut self, mac: &MacAddress) -> Option<&mut LocalDevice> {
         self.vec.iter_mut().find(|dev| dev.mac.eq(mac))
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.vec.is_empty()
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, LocalDevice> {
+        self.vec.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, LocalDevice> {
+        self.vec.iter_mut()
+    }
 }
 
 pub struct LocalDevice {
@@ -30,6 +42,10 @@ pub struct LocalDevice {
 impl LocalDevice {
     pub fn id(&self) -> u16 {
         self.id
+    }
+
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
     }
 
     pub fn mac(&self) -> &MacAddress {

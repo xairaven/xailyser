@@ -1,5 +1,6 @@
 use crate::context::Context;
 use crate::net;
+use crate::net::device::LocalDevice;
 use crate::ui::components::throughput_settings::ThroughputSettings;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::styles;
@@ -35,6 +36,7 @@ impl StatusTab {
                 });
                 self.current_peak_stats_view(ui, ctx);
                 self.pcap_save_view(ui, ctx);
+                self.devices_view(ui, ctx);
             });
     }
 
@@ -184,5 +186,111 @@ impl StatusTab {
                     }
                 });
         }
+    }
+
+    fn devices_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+        ui.horizontal(|ui| {
+            ui.heading(format!("{}:", t!("Tab.Status.Devices.Heading")));
+            if ctx.net_storage.devices.is_empty() {
+                ui.label(t!("Tab.Status.Devices.Empty"));
+            }
+        });
+
+        if ctx.net_storage.devices.is_empty() {
+            return;
+        }
+
+        ui.vertical_centered_justified(|ui| {
+            for (index, device) in ctx.net_storage.devices.iter().enumerate() {
+                self.device_view(ui, ctx, device, index + 1);
+            }
+        });
+    }
+
+    fn device_view(
+        &mut self, ui: &mut egui::Ui, ctx: &Context, device: &LocalDevice, index: usize,
+    ) {
+        let theme = ctx.client_settings.theme.into_aesthetix_theme();
+        egui::Frame::group(&egui::Style::default())
+            .fill(ui.visuals().extreme_bg_color)
+            .inner_margin(theme.margin_style())
+            .corner_radius(5.0)
+            .show(ui, |ui| {
+                ui.columns(2, |columns| {
+                    columns[0].vertical(|ui| {
+                        if let Some(name) = device.name() {
+                            ui.heading(name);
+                        } else {
+                            ui.heading(format!(
+                                "{} #{}",
+                                t!("Tab.Status.Devices.DeviceGeneric"),
+                                index
+                            ));
+                        }
+                    });
+
+                    columns[1].with_layout(
+                        egui::Layout::right_to_left(egui::Align::Min),
+                        |ui| {
+                            // Buttons
+                        },
+                    );
+                });
+
+                ui.vertical(|ui| {
+                    let ip_str = if device.ip().is_empty() {
+                        "-".to_string()
+                    } else {
+                        device
+                            .ip()
+                            .iter()
+                            .map(|ip| ip.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    };
+
+                    let ipv6_str = if device.ipv6().is_empty() {
+                        "-".to_string()
+                    } else {
+                        device
+                            .ipv6()
+                            .iter()
+                            .map(|ip| ip.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    };
+
+                    let vendor = device
+                        .vendor()
+                        .as_ref()
+                        .map(|vendor| vendor.full.clone())
+                        .unwrap_or(
+                            t!("Tab.Status.Devices.Device.Vendor.Unknown").to_string(),
+                        );
+
+                    ui.label(format!(
+                        "{}: {}",
+                        t!("Tab.Status.Devices.Device.MAC"),
+                        device.mac()
+                    ));
+                    ui.label(format!(
+                        "{}: {}",
+                        t!("Tab.Status.Devices.Device.IPv4"),
+                        ip_str
+                    ));
+                    ui.label(format!(
+                        "{}: {}",
+                        t!("Tab.Status.Devices.Device.IPv6"),
+                        ipv6_str
+                    ));
+                    ui.label(format!(
+                        "{}: {}",
+                        t!("Tab.Status.Devices.Device.Vendor"),
+                        vendor
+                    ));
+                });
+            });
+
+        ui.add_space(4.0);
     }
 }
