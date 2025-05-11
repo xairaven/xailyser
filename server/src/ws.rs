@@ -263,7 +263,7 @@ impl WsHandler {
                 Err(Io(io_err))
             },
             _ => {
-                log::error!("WS-{}. {}", self.id, err);
+                log::error!("WS-{}. {}. {:#?}", self.id, err, err);
                 Ok(())
             },
         }

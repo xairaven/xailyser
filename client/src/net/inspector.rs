@@ -8,6 +8,8 @@ use dpi::protocols::icmpv4::ICMPv4Dto;
 use dpi::protocols::icmpv6::ICMPv6Dto;
 use dpi::protocols::ipv4::IPv4Dto;
 use dpi::protocols::ipv6::IPv6Dto;
+use strum::IntoEnumIterator;
+use strum_macros::{Display, EnumIter};
 
 #[derive(Default)]
 pub struct InspectorStorage {
@@ -27,30 +29,77 @@ pub struct InspectorStorage {
 
 impl InspectorStorage {
     pub fn len(&self) -> usize {
-        self.arp.len()
-            + self.dhcpv4.len()
-            + self.dhcpv6.len()
-            + self.dns.len()
-            + self.ethernet.len()
-            + self.http.len()
-            + self.icmpv4.len()
-            + self.icmpv6.len()
-            + self.tcp.len()
-            + self.udp.len()
+        let mut sum: usize = 0;
+        for protocol in ProtocolsRegistered::iter() {
+            sum += self.records_captured(&protocol);
+        }
+        sum
     }
 
     pub fn clear(&mut self) {
-        self.arp.clear();
-        self.dhcpv4.clear();
-        self.dhcpv6.clear();
-        self.dns.clear();
-        self.ethernet.clear();
-        self.http.clear();
-        self.icmpv4.clear();
-        self.icmpv6.clear();
-        self.ipv4.clear();
-        self.ipv6.clear();
-        self.tcp.clear();
-        self.udp.clear();
+        for protocol in ProtocolsRegistered::iter() {
+            self.clear_by_protocol(&protocol);
+        }
     }
+
+    pub fn records_captured(&self, protocol: &ProtocolsRegistered) -> usize {
+        match protocol {
+            ProtocolsRegistered::Arp => self.arp.len(),
+            ProtocolsRegistered::DHCPv4 => self.dhcpv4.len(),
+            ProtocolsRegistered::DHCPv6 => self.dhcpv6.len(),
+            ProtocolsRegistered::Dns => self.dns.len(),
+            ProtocolsRegistered::Ethernet => self.ethernet.len(),
+            ProtocolsRegistered::Http => self.http.len(),
+            ProtocolsRegistered::ICMPv4 => self.icmpv4.len(),
+            ProtocolsRegistered::ICMPv6 => self.icmpv6.len(),
+            ProtocolsRegistered::IPv4 => self.ipv4.len(),
+            ProtocolsRegistered::IPv6 => self.ipv6.len(),
+            ProtocolsRegistered::Tcp => self.tcp.len(),
+            ProtocolsRegistered::Udp => self.udp.len(),
+        }
+    }
+
+    fn clear_by_protocol(&mut self, protocol: &ProtocolsRegistered) {
+        match protocol {
+            ProtocolsRegistered::Arp => self.arp.clear(),
+            ProtocolsRegistered::DHCPv4 => self.dhcpv4.clear(),
+            ProtocolsRegistered::DHCPv6 => self.dhcpv6.clear(),
+            ProtocolsRegistered::Dns => self.dns.clear(),
+            ProtocolsRegistered::Ethernet => self.ethernet.clear(),
+            ProtocolsRegistered::Http => self.http.clear(),
+            ProtocolsRegistered::ICMPv4 => self.icmpv4.clear(),
+            ProtocolsRegistered::ICMPv6 => self.icmpv6.clear(),
+            ProtocolsRegistered::IPv4 => self.ipv4.clear(),
+            ProtocolsRegistered::IPv6 => self.ipv6.clear(),
+            ProtocolsRegistered::Tcp => self.tcp.clear(),
+            ProtocolsRegistered::Udp => self.udp.clear(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Display, EnumIter)]
+pub enum ProtocolsRegistered {
+    #[strum(to_string = "ARP")]
+    Arp,
+
+    DHCPv4,
+    DHCPv6,
+
+    #[strum(to_string = "DNS")]
+    Dns,
+
+    Ethernet,
+
+    #[strum(to_string = "HTTP")]
+    Http,
+
+    ICMPv4,
+    ICMPv6,
+    IPv4,
+    IPv6,
+
+    #[strum(to_string = "TCP")]
+    Tcp,
+    #[strum(to_string = "UDP")]
+    Udp,
 }
