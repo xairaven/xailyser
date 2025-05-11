@@ -179,9 +179,17 @@ pub fn metadata(
     // Adding info if device exists, adding device if not
     if let Some(mut builder) = device_builder {
         if let Some(device) = ctx.net_storage.devices.find_by_mac(&builder.mac) {
-            device.ip_mut().append(&mut builder.ip);
-            device.ipv6_mut().append(&mut builder.ipv6);
-        } else {
+            for ip in builder.ip.iter() {
+                if !device.ip().contains(ip) {
+                    device.ip_mut().push(*ip);
+                }
+            }
+            for ip in builder.ipv6.iter() {
+                if !device.ipv6().contains(ip) {
+                    device.ipv6_mut().push(*ip);
+                }
+            }
+        } else if !builder.mac.is_multicast() && !builder.mac.is_broadcast() {
             builder.vendor = ctx.net_storage.lookup.find_vendor(&builder.mac);
             ctx.net_storage.devices.add_device(builder);
         }
