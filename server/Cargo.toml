@@ -20,7 +20,7 @@ dpi = { path = "../dpi" }
 
 bytes = "1.10.1"
 crossbeam = "0.8.4"
-ctrlc = "3.4.6"
+ctrlc = "3.4.7"
 fern = "0.7.1"
 log = "0.4.27"
 pcap = "2.2.0"
