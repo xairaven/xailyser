@@ -8,7 +8,7 @@ use std::fmt::Formatter;
 pub const LENGTH_BYTES: usize = 6;
 pub const BROADCAST_MAC: [u8; LENGTH_BYTES] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, Serialize, Deserialize, PartialEq)]
 pub struct MacAddress(pub [u8; LENGTH_BYTES]);
 
 impl MacAddress {

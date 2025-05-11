@@ -62,4 +62,5 @@ pub trait Modal: Send + Sync {
 }
 
 pub mod connection_profiles;
+pub mod device;
 pub mod message;

@@ -75,6 +75,9 @@
   "Modal.Title.Info": "Info",
   "Modal.Title.AddProfile": "Add Profile",
   "Modal.Title.EditProfile": "Edit Profile",
+  "Modal.DeviceAlias.Title": "Assigning a device alias",
+  "Modal.DeviceAlias.Label.Alias": "Alias",
+  "Modal.DeviceAlias.Label.MAC": "MAC",
   "Modal.Error.FailedSaveProfile": "Failed to save profile",
   "Modal.Error.FailedEditProfile": "Failed to edit profile.",
 
@@ -164,6 +167,7 @@
   "Tab.Status.Devices.Heading": "Devices",
   "Tab.Status.Devices.Empty": "Empty",
   "Tab.Status.Devices.DeviceGeneric": "Device",
+  "Tab.Status.Devices.Device.Edit": "Edit Alias",
   "Tab.Status.Devices.Device.MAC": "MAC",
   "Tab.Status.Devices.Device.IPv4": "IPv4",
   "Tab.Status.Devices.Device.IPv6": "IPv6",

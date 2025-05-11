@@ -75,6 +75,9 @@
   "Modal.Title.Info": "Інформація",
   "Modal.Title.AddProfile": "Додати профіль",
   "Modal.Title.EditProfile": "Редагувати профіль",
+  "Modal.DeviceAlias.Title": "Призначення псевдоніму для пристрою",
+  "Modal.DeviceAlias.Label.Alias": "Псевдонім",
+  "Modal.DeviceAlias.Label.MAC": "MAC",
   "Modal.Error.FailedSaveProfile": "Не вдалося зберегти профіль.",
   "Modal.Error.FailedEditProfile": "Не вдалося відредагувати профіль.",
 
@@ -164,6 +167,7 @@
   "Tab.Status.Devices.Heading": "Пристрої",
   "Tab.Status.Devices.Empty": "Немає",
   "Tab.Status.Devices.DeviceGeneric": "Пристрій",
+  "Tab.Status.Devices.Device.Edit": "Редагувати псевдонім пристрою",
   "Tab.Status.Devices.Device.MAC": "MAC",
   "Tab.Status.Devices.Device.IPv4": "IPv4",
   "Tab.Status.Devices.Device.IPv6": "IPv6",

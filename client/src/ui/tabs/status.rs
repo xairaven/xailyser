@@ -2,6 +2,7 @@ use crate::context::Context;
 use crate::net;
 use crate::net::device::LocalDevice;
 use crate::ui::components::throughput_settings::ThroughputSettings;
+use crate::ui::modals::device::DeviceModal;
 use crate::ui::modals::message::MessageModal;
 use crate::ui::styles;
 use crate::ui::tabs::Tab;
@@ -191,17 +192,17 @@ impl StatusTab {
     fn devices_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.horizontal(|ui| {
             ui.heading(format!("{}:", t!("Tab.Status.Devices.Heading")));
-            if ctx.net_storage.devices.is_empty() {
+            if ctx.net_storage.devices.list.is_empty() {
                 ui.label(t!("Tab.Status.Devices.Empty"));
             }
         });
 
-        if ctx.net_storage.devices.is_empty() {
+        if ctx.net_storage.devices.list.is_empty() {
             return;
         }
 
         ui.vertical_centered_justified(|ui| {
-            for (index, device) in ctx.net_storage.devices.iter().enumerate() {
+            for (index, device) in ctx.net_storage.devices.list.iter().enumerate() {
                 self.device_view(ui, ctx, device, index + 1);
             }
         });
@@ -218,7 +219,9 @@ impl StatusTab {
             .show(ui, |ui| {
                 ui.columns(2, |columns| {
                     columns[0].vertical(|ui| {
-                        if let Some(name) = device.name() {
+                        if let Some(name) =
+                            ctx.net_storage.devices.aliases.get(&device.mac)
+                        {
                             ui.heading(name);
                         } else {
                             ui.heading(format!(
@@ -232,62 +235,78 @@ impl StatusTab {
                     columns[1].with_layout(
                         egui::Layout::right_to_left(egui::Align::Min),
                         |ui| {
-                            // Buttons
+                            if ui
+                                .button("✏")
+                                .on_hover_text(t!("Tab.Status.Devices.Device.Edit"))
+                                .clicked()
+                            {
+                                let _ = ctx.modals_tx.try_send(Box::new(
+                                    DeviceModal::with_id(device.mac.clone(), ctx),
+                                ));
+                            }
                         },
                     );
                 });
 
                 ui.vertical(|ui| {
-                    let ip_str = if device.ip().is_empty() {
-                        "-".to_string()
-                    } else {
-                        device
-                            .ip()
-                            .iter()
-                            .map(|ip| ip.to_string())
-                            .collect::<Vec<_>>()
-                            .join(", ")
-                    };
+                    Grid::new(format!("DeviceCard{}", index))
+                        .num_columns(2)
+                        .striped(false)
+                        .show(ui, |ui| {
+                            ui.label(
+                                format!("{}:", t!("Tab.Status.Devices.Device.MAC"),),
+                            );
+                            ui.label(device.mac.to_string());
+                            ui.end_row();
 
-                    let ipv6_str = if device.ipv6().is_empty() {
-                        "-".to_string()
-                    } else {
-                        device
-                            .ipv6()
-                            .iter()
-                            .map(|ip| ip.to_string())
-                            .collect::<Vec<_>>()
-                            .join(", ")
-                    };
+                            ui.label(format!(
+                                "{}:",
+                                t!("Tab.Status.Devices.Device.IPv4")
+                            ));
+                            ui.label(if device.ip.is_empty() {
+                                "-".to_string()
+                            } else {
+                                device
+                                    .ip
+                                    .iter()
+                                    .map(|ip| ip.to_string())
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            });
+                            ui.end_row();
 
-                    let vendor = device
-                        .vendor()
-                        .as_ref()
-                        .map(|vendor| vendor.full.clone())
-                        .unwrap_or(
-                            t!("Tab.Status.Devices.Device.Vendor.Unknown").to_string(),
-                        );
+                            ui.label(format!(
+                                "{}:",
+                                t!("Tab.Status.Devices.Device.IPv6")
+                            ));
+                            ui.label(if device.ipv6.is_empty() {
+                                "-".to_string()
+                            } else {
+                                device
+                                    .ipv6
+                                    .iter()
+                                    .map(|ip| ip.to_string())
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            });
+                            ui.end_row();
 
-                    ui.label(format!(
-                        "{}: {}",
-                        t!("Tab.Status.Devices.Device.MAC"),
-                        device.mac()
-                    ));
-                    ui.label(format!(
-                        "{}: {}",
-                        t!("Tab.Status.Devices.Device.IPv4"),
-                        ip_str
-                    ));
-                    ui.label(format!(
-                        "{}: {}",
-                        t!("Tab.Status.Devices.Device.IPv6"),
-                        ipv6_str
-                    ));
-                    ui.label(format!(
-                        "{}: {}",
-                        t!("Tab.Status.Devices.Device.Vendor"),
-                        vendor
-                    ));
+                            ui.label(format!(
+                                "{}:",
+                                t!("Tab.Status.Devices.Device.Vendor")
+                            ));
+                            ui.label(
+                                device
+                                    .vendor
+                                    .as_ref()
+                                    .map(|vendor| vendor.full.clone())
+                                    .unwrap_or(
+                                        t!("Tab.Status.Devices.Device.Vendor.Unknown")
+                                            .to_string(),
+                                    ),
+                            );
+                            ui.end_row();
+                        });
                 });
             });
 

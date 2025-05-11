@@ -1,5 +1,5 @@
 use crate::context::Context;
-use crate::net::device::LocalDeviceBuilder;
+use crate::net::device::LocalDevice;
 use crate::net::lookup::Lookup;
 use crate::net::speed::{Sample, SampleDirection, SpeedError};
 use dpi::analysis::ports::PortInfo;
@@ -38,7 +38,7 @@ pub fn metadata(
     let limit = &ctx.client_settings.parsed_frames_limit;
     let frames_len = &ctx.net_storage.inspector.ethernet.len();
 
-    let mut device_builder: Option<LocalDeviceBuilder> = None;
+    let mut device: Option<LocalDevice> = None;
     for layer in metadata.layers.into_iter().skip(1) {
         match layer {
             ProtocolDto::Ethernet(_) => return Err(ProcessingError::DatalinkNotFirst),
@@ -73,10 +73,12 @@ pub fn metadata(
                             .speed
                             .load_complete_sample(SampleDirection::Send(sample));
                     }
-                    let mut builder =
-                        LocalDeviceBuilder::new(datalink_info.source_mac.clone());
-                    builder.ip.push(ipv4.address_source);
-                    device_builder = Some(builder);
+                    device = Some(LocalDevice {
+                        mac: datalink_info.source_mac.clone(),
+                        ip: vec![ipv4.address_source],
+                        ipv6: vec![],
+                        vendor: None,
+                    });
                 }
                 if ipv4.address_destination.is_private() {
                     if let Some(sample) = sample.take() {
@@ -84,10 +86,12 @@ pub fn metadata(
                             .speed
                             .load_complete_sample(SampleDirection::Receive(sample));
                     }
-                    let mut builder =
-                        LocalDeviceBuilder::new(datalink_info.destination_mac.clone());
-                    builder.ip.push(ipv4.address_destination);
-                    device_builder = Some(builder);
+                    device = Some(LocalDevice {
+                        mac: datalink_info.destination_mac.clone(),
+                        ip: vec![ipv4.address_destination],
+                        ipv6: vec![],
+                        vendor: None,
+                    });
                 }
                 locator.ipv4 = Some((ipv4.address_source, ipv4.address_destination));
                 push_value(
@@ -104,10 +108,12 @@ pub fn metadata(
                             .speed
                             .load_complete_sample(SampleDirection::Send(sample));
                     }
-                    let mut builder =
-                        LocalDeviceBuilder::new(datalink_info.source_mac.clone());
-                    builder.ipv6.push(ipv6.address_source);
-                    device_builder = Some(builder);
+                    device = Some(LocalDevice {
+                        mac: datalink_info.source_mac.clone(),
+                        ip: vec![],
+                        ipv6: vec![ipv6.address_source],
+                        vendor: None,
+                    });
                 }
                 if ipv6.address_destination.is_unique_local() {
                     if let Some(sample) = sample.take() {
@@ -115,10 +121,12 @@ pub fn metadata(
                             .speed
                             .load_complete_sample(SampleDirection::Receive(sample));
                     }
-                    let mut builder =
-                        LocalDeviceBuilder::new(datalink_info.destination_mac.clone());
-                    builder.ipv6.push(ipv6.address_destination);
-                    device_builder = Some(builder);
+                    device = Some(LocalDevice {
+                        mac: datalink_info.destination_mac.clone(),
+                        ip: vec![],
+                        ipv6: vec![ipv6.address_destination],
+                        vendor: None,
+                    });
                 }
                 locator.ipv6 = Some((ipv6.address_source, ipv6.address_destination));
                 push_value(
@@ -177,21 +185,21 @@ pub fn metadata(
     }
 
     // Adding info if device exists, adding device if not
-    if let Some(mut builder) = device_builder {
-        if let Some(device) = ctx.net_storage.devices.find_by_mac(&builder.mac) {
-            for ip in builder.ip.iter() {
-                if !device.ip().contains(ip) {
-                    device.ip_mut().push(*ip);
+    if let Some(mut template) = device {
+        if let Some(device) = ctx.net_storage.devices.find_by_mac(&template.mac) {
+            for ip in template.ip.iter() {
+                if !device.ip.contains(ip) {
+                    device.ip.push(*ip);
                 }
             }
-            for ip in builder.ipv6.iter() {
-                if !device.ipv6().contains(ip) {
-                    device.ipv6_mut().push(*ip);
+            for ip in template.ipv6.iter() {
+                if !device.ipv6.contains(ip) {
+                    device.ipv6.push(*ip);
                 }
             }
-        } else if !builder.mac.is_multicast() && !builder.mac.is_broadcast() {
-            builder.vendor = ctx.net_storage.lookup.find_vendor(&builder.mac);
-            ctx.net_storage.devices.add_device(builder);
+        } else if !template.mac.is_multicast() && !template.mac.is_broadcast() {
+            template.vendor = ctx.net_storage.lookup.find_vendor(&template.mac);
+            ctx.net_storage.devices.list.push(template);
         }
     }
 
