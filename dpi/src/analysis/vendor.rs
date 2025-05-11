@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 pub type OuiRadixTree = Node<char, Vendor>;
 
-pub fn read_database(path: PathBuf) -> io::Result<OuiRadixTree> {
+pub fn read_database(path: PathBuf) -> io::Result<(OuiRadixTree, usize)> {
     let file = std::fs::File::open(path)?;
     let reader = io::BufReader::new(file);
 
@@ -16,6 +16,7 @@ pub fn read_database(path: PathBuf) -> io::Result<OuiRadixTree> {
         indices: vec![],
         nodes: vec![],
     };
+    let mut records: usize = 0;
     for line_raw in reader.lines().map_while(Result::ok) {
         let line = line_raw.trim();
         if line.starts_with('#') || line.is_empty() {
@@ -53,6 +54,7 @@ pub fn read_database(path: PathBuf) -> io::Result<OuiRadixTree> {
             .ok_or(io::ErrorKind::InvalidData)?
             .to_string();
 
+        records = records.checked_add(1).ok_or(io::ErrorKind::InvalidData)?;
         tree.insert(
             binary,
             Vendor {
@@ -62,7 +64,7 @@ pub fn read_database(path: PathBuf) -> io::Result<OuiRadixTree> {
         );
     }
 
-    Ok(tree)
+    Ok((tree, records))
 }
 
 pub fn lookup_vendor(tree: &OuiRadixTree, mac: &MacAddress) -> Option<Vendor> {
@@ -87,7 +89,7 @@ mod tests {
 
     const PATH: &str = "./resources/oui-database.txt";
     static TREE: LazyLock<OuiRadixTree> =
-        LazyLock::new(|| read_database(PathBuf::from(PATH)).unwrap());
+        LazyLock::new(|| read_database(PathBuf::from(PATH)).unwrap().0);
 
     #[test]
     fn test_mac_24() {
