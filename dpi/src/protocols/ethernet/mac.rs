@@ -6,11 +6,24 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 
 pub const LENGTH_BYTES: usize = 6;
+pub const BROADCAST_MAC: [u8; LENGTH_BYTES] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MacAddress(pub [u8; LENGTH_BYTES]);
 
 impl MacAddress {
+    pub fn is_broadcast(&self) -> bool {
+        self.0.eq(&BROADCAST_MAC)
+    }
+
+    pub fn is_multicast(&self) -> bool {
+        if self.is_broadcast() {
+            return false;
+        }
+
+        self.0[0] & 0b00000001 == 1
+    }
+
     pub fn to_bit_string(&self) -> String {
         self.0.map(|num| format!("{:08b}", num)).join("")
     }
@@ -71,4 +84,39 @@ pub fn parse(input: &[u8]) -> IResult<&[u8], MacAddress> {
     };
 
     Ok((input, mac))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_broadcast() {
+        let mac = MacAddress([0xFF; LENGTH_BYTES]);
+        assert_eq!(mac.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_is_not_broadcast() {
+        let mac = MacAddress::try_from("00:1A:2B:3C:4D:5E").unwrap();
+        assert_eq!(mac.is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_is_multicast() {
+        let mac = MacAddress::try_from("01:00:5e:02:02:04").unwrap();
+        assert_eq!(mac.is_multicast(), true);
+    }
+
+    #[test]
+    fn test_is_multicast_ipv6() {
+        let mac = MacAddress::try_from("33:33:00:00:00:02").unwrap();
+        assert_eq!(mac.is_multicast(), true);
+    }
+
+    #[test]
+    fn test_is_not_multicast() {
+        let mac = MacAddress::try_from("00:1A:2B:3C:4D:5E").unwrap();
+        assert_eq!(mac.is_multicast(), false);
+    }
 }
