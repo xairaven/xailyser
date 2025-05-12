@@ -216,7 +216,10 @@ fn compression_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Co
         );
         ctx.client_settings.compression = tab.compression;
     }
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.compression = ctx.client_settings.compression;
     }
 }
@@ -249,7 +252,10 @@ fn language_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Conte
         ctx.config.language = tab.language.clone();
     }
 
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.language = ctx.config.language.clone();
     }
 }
@@ -277,7 +283,10 @@ fn logs_format_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Co
         ctx.config.log_format = tab.log_format_choice.clone();
     }
 
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.log_format_choice = ctx.config.log_format.clone();
     }
 }
@@ -312,7 +321,10 @@ fn logs_level_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Con
         ctx.config.log_level = tab.log_level_choice;
     }
 
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.log_level_choice = ctx.config.log_level;
     }
 }
@@ -343,7 +355,10 @@ fn ping_delay_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Con
         ctx.client_settings.sync_delay_seconds = tab.ping_delay_seconds;
     }
 
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.ping_delay_seconds = ctx.client_settings.sync_delay_seconds;
     }
 }
@@ -377,7 +392,10 @@ fn theme_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Context)
             .set_style(tab.theme.into_aesthetix_theme().custom_style());
     }
 
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.theme = ctx.client_settings.theme;
     }
 }
@@ -405,7 +423,10 @@ fn unparsed_drop_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut 
         );
         ctx.client_settings.unparsed_frames_drop = tab.unparsed_frames_drop;
     }
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.unparsed_frames_drop = ctx.client_settings.unparsed_frames_drop;
     }
 }
@@ -442,7 +463,10 @@ fn parsed_limit_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut C
         );
         ctx.client_settings.parsed_frames_limit = setting;
     }
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.parsed_frames_limit_enabled =
             ctx.client_settings.parsed_frames_limit.is_some();
         tab.parsed_frames_limit = ctx.client_settings.parsed_frames_limit.unwrap_or(0);
@@ -486,7 +510,10 @@ fn unparsed_threshold_view(
         ctx.client_settings.unparsed_frames_threshold = setting;
         ctx.net_storage.raw.set_threshold(setting);
     }
-    if ui.button("🔙").clicked() {
+    if ui
+        .add_enabled(not_applied, egui::Button::new("🔙"))
+        .clicked()
+    {
         tab.unparsed_frames_threshold_enabled =
             ctx.client_settings.unparsed_frames_threshold.is_some();
         tab.unparsed_frames_threshold =
