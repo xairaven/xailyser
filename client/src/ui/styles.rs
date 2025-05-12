@@ -201,3 +201,7 @@ pub mod themes {
         }
     }
 }
+
+pub fn invisible(ui: &mut egui::Ui) {
+    ui.label("");
+}

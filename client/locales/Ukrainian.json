@@ -214,7 +214,7 @@
   "Tab.SettingsClient.Label.Theme": "Тема",
   "Tab.SettingsClient.Label.UnparsedFramesDrop": "Відкинути нерозібрані пакети",
   "Tab.SettingsClient.Label.UnparsedFramesDrop.Note": "Якщо цей параметр увімкнено, клієнт відкидає всі необроблені кадри. Це знижує навантаження на клієнт. Однак найкраще також вимкнути відповідну опцію («Надсилання необроблених кадрів») у налаштуваннях сервера.",
-  "Tab.SettingsClient.Label.UnparsedFramesThreshold": "Зберігати кількість нерозібраних пакетів",
+  "Tab.SettingsClient.Label.UnparsedFramesThreshold": "Зберігати нерозібрані пакети",
   "Tab.SettingsClient.Label.UnparsedFramesThreshold.Note": "Якщо цей параметр увімкнено, лише останні N (встановлене тут значення) фреймів зберігатимуться під час виконання. Це працює, якщо вимкнено параметр \"Відкинути нерозібрані пакети\".",
   "Tab.SettingsClient.Suffix.Frames": "фреймів",
   "Tab.SettingsClient.Suffix.SyncDelay": "секунд",
