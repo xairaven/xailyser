@@ -109,10 +109,10 @@ impl SettingsClientTab {
 impl SettingsClientTab {
     pub fn show_with_header(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         self.tab_heading(ui);
-        
+
         self.show_content(ui, ctx);
     }
-    
+
     pub fn show_content(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         const GRID_COLUMNS: usize = 6;
 
@@ -157,13 +157,16 @@ fn save_client_config_view(
 ) {
     ui.add(egui::Label::new(styles::heading::normal(&t!(
         "Tab.SettingsClient.Label.SaveConfig"
-    ))))
-    .on_hover_text(t!("Tab.SettingsClient.Hover.SettingSavesConfig"));
+    ))));
 
     styles::invisible(ui);
     styles::invisible(ui);
 
-    if ui.button(t!("Button.Save")).clicked() {
+    if ui
+        .button(t!("Button.Save"))
+        .on_hover_text(t!("Tab.SettingsClient.Hover.SettingSavesConfig"))
+        .clicked()
+    {
         // Fields that taking effect after logout
         ctx.config.compression = ctx.client_settings.compression;
 
@@ -197,13 +200,16 @@ fn save_client_config_view(
 fn compression_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Context) {
     let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Compression"));
     let not_applied = tab.compression != ctx.client_settings.compression;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterLogout"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     ui.add(Checkbox::without_text(&mut tab.compression));
     styles::invisible(ui);
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterLogout"))
+        .clicked()
+    {
         log::info!(
             "Client Settings: Compression changed to {}",
             tab.compression
@@ -218,8 +224,7 @@ fn compression_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Co
 fn language_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Context) {
     let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Language"));
     let not_applied = tab.language != ctx.config.language;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     styles::invisible(ui);
 
@@ -235,7 +240,11 @@ fn language_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Conte
         }
     );
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"))
+        .clicked()
+    {
         log::info!("Client Settings: Language changed to {}", tab.language);
         ctx.config.language = tab.language.clone();
     }
@@ -250,14 +259,17 @@ fn logs_format_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Co
     let not_applied = !tab
         .log_format_choice
         .eq_ignore_ascii_case(&ctx.config.log_format);
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     styles::invisible(ui);
 
     ui.add(TextEdit::multiline(&mut tab.log_format_choice));
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"))
+        .clicked()
+    {
         log::info!(
             "Client Settings: Log Format changed to {}",
             tab.log_format_choice
@@ -273,8 +285,7 @@ fn logs_format_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Co
 fn logs_level_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Context) {
     let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.LogLevel"));
     let not_applied = tab.log_level_choice != ctx.config.log_level;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     styles::invisible(ui);
 
@@ -292,7 +303,11 @@ fn logs_level_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Con
             });
     });
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedAfterRestart"))
+        .clicked()
+    {
         log::info!("Client Settings: Log Level changed to {}", tab.language);
         ctx.config.log_level = tab.log_level_choice;
     }
@@ -305,8 +320,7 @@ fn logs_level_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Con
 fn ping_delay_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Context) {
     let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.SyncDelay"));
     let not_applied = tab.ping_delay_seconds != ctx.client_settings.sync_delay_seconds;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     styles::invisible(ui);
 
@@ -317,7 +331,11 @@ fn ping_delay_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Con
             .suffix(format!(" {}", t!("Tab.SettingsClient.Suffix.SyncDelay"))),
     );
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"))
+        .clicked()
+    {
         log::info!(
             "Client Settings: Sync Delay seconds changed to {}",
             tab.ping_delay_seconds
@@ -333,8 +351,7 @@ fn ping_delay_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Con
 fn theme_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Context) {
     let label = styles::heading::normal(&t!("Tab.SettingsClient.Label.Theme"));
     let not_applied = tab.theme != ctx.client_settings.theme;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     styles::invisible(ui);
 
@@ -349,7 +366,11 @@ fn theme_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut Context)
             });
     });
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"))
+        .clicked()
+    {
         ctx.client_settings.theme = tab.theme;
         log::info!("Client Settings: Theme changed to {}", tab.theme.title());
         ui.ctx()
@@ -366,15 +387,18 @@ fn unparsed_drop_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut 
         styles::heading::normal(&t!("Tab.SettingsClient.Label.UnparsedFramesDrop"));
     let not_applied =
         tab.unparsed_frames_drop != ctx.client_settings.unparsed_frames_drop;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesDrop.Note"))
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     ui.add(Checkbox::without_text(&mut tab.unparsed_frames_drop));
 
     styles::invisible(ui);
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesDrop.Note"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"))
+        .clicked()
+    {
         log::info!(
             "Client Settings: `Drop Unparsed Frames` changed to {}",
             tab.unparsed_frames_drop
@@ -394,9 +418,7 @@ fn parsed_limit_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut C
     let label =
         styles::heading::normal(&t!("Tab.SettingsClient.Label.ParsedFramesLimit"));
     let not_applied = setting != ctx.client_settings.parsed_frames_limit;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Label.ParsedFramesLimit.Note"))
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     ui.add(Checkbox::without_text(&mut tab.parsed_frames_limit_enabled));
     ui.add_enabled(
@@ -407,7 +429,12 @@ fn parsed_limit_view(tab: &mut SettingsClientTab, ui: &mut egui::Ui, ctx: &mut C
             .suffix(format!(" {}", t!("Tab.SettingsClient.Suffix.Frames"))),
     );
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Label.ParsedFramesLimit.Note"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"))
+        .clicked()
+    {
         log::info!(
             "Client Settings: `Parsed Frames Limit` changed to {}:{}",
             tab.parsed_frames_limit_enabled,
@@ -432,9 +459,7 @@ fn unparsed_threshold_view(
     let label =
         styles::heading::normal(&t!("Tab.SettingsClient.Label.UnparsedFramesThreshold"));
     let not_applied = setting != ctx.client_settings.unparsed_frames_threshold;
-    styles::text::field_not_applied(ui, label, not_applied)
-        .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesThreshold.Note"))
-        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"));
+    styles::text::field_not_applied(ui, label, not_applied);
 
     ui.add(Checkbox::without_text(
         &mut tab.unparsed_frames_threshold_enabled,
@@ -447,7 +472,12 @@ fn unparsed_threshold_view(
             .suffix(format!(" {}", t!("Tab.SettingsClient.Suffix.Frames"))),
     );
 
-    if ui.button(t!("Button.Apply")).clicked() {
+    if ui
+        .button(t!("Button.Apply"))
+        .on_hover_text(t!("Tab.SettingsClient.Label.UnparsedFramesThreshold.Note"))
+        .on_hover_text(t!("Tab.SettingsClient.Note.FieldAppliedImmediately"))
+        .clicked()
+    {
         log::info!(
             "Client Settings: `Unparsed Frames Threshold` changed to {}:{}",
             tab.unparsed_frames_threshold_enabled,
