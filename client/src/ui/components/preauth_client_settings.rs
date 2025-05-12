@@ -53,7 +53,7 @@ impl PreAuthClientSettingsComponent {
                     .fill(theme.bg_primary_color_visuals()),
             )
             .show(ui.ctx(), |ui| {
-                self.tab.show(ui, ctx);
+                self.tab.show_content(ui, ctx);
             });
     }
 

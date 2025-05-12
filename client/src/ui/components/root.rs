@@ -156,7 +156,7 @@ impl RootComponent {
                     self.stats_tab.show(ui, ctx);
                 },
                 Tab::ClientSettings => {
-                    self.settings_client_tab.show(ui, ctx);
+                    self.settings_client_tab.show_with_header(ui, ctx);
                 },
                 Tab::ServerSettings => {
                     self.settings_server_tab.show(ui, ctx);

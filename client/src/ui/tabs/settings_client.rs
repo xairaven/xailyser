@@ -107,9 +107,13 @@ impl SettingsClientTab {
 }
 
 impl SettingsClientTab {
-    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    pub fn show_with_header(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         self.tab_heading(ui);
-
+        
+        self.show_content(ui, ctx);
+    }
+    
+    pub fn show_content(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
         const GRID_COLUMNS: usize = 6;
 
         egui::ScrollArea::vertical()
