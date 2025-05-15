@@ -38,7 +38,7 @@ pub fn connect(
 
     let mut stream = match tungstenite::connect(request) {
         Ok((stream, _)) => stream,
-        Err(err) => return Err(WsError::ConnectionFailed(err)),
+        Err(err) => return Err(WsError::ConnectionFailed(Box::new(err))),
     };
     match stream.get_mut() {
         MaybeTlsStream::Plain(stream) => stream
@@ -80,20 +80,20 @@ impl WsHandler {
         }
     }
 
-    fn receive_messages(&mut self) -> Result<(), tungstenite::Error> {
+    fn receive_messages(&mut self) -> Result<(), Box<tungstenite::Error>> {
         let msg = match self.stream.read() {
             Ok(value) => value,
             Err(err) => {
                 return match err {
                     tungstenite::Error::ConnectionClosed => {
                         log::info!("WS-Stream: Connection closed.");
-                        Err(err)
+                        Err(Box::new(err))
                     },
                     tungstenite::Error::AlreadyClosed => {
                         log::error!(
                             "WS-Stream: Connection closed without alerting about it."
                         );
-                        Err(err)
+                        Err(Box::new(err))
                     },
                     tungstenite::Error::Io(err)
                         if err.kind() == std::io::ErrorKind::WouldBlock
@@ -104,7 +104,7 @@ impl WsHandler {
                     },
                     tungstenite::Error::Io(err) => {
                         log::warn!("WS-Stream: {}. Kind: {}", err, err.kind());
-                        Err(tungstenite::Error::Io(err))
+                        Err(Box::new(tungstenite::Error::Io(err)))
                     },
                     _ => {
                         log::error!("WS-Stream: {}", err);
@@ -116,7 +116,7 @@ impl WsHandler {
 
         if msg.is_close() {
             log::info!("WS-Stream: Server closed connection.");
-            return Err(tungstenite::Error::ConnectionClosed);
+            return Err(Box::new(tungstenite::Error::ConnectionClosed));
         }
 
         // Heartbeat
@@ -215,7 +215,7 @@ impl WsHandler {
 #[derive(Debug, Error)]
 pub enum WsError {
     #[error("Failed to connect")]
-    ConnectionFailed(tungstenite::Error),
+    ConnectionFailed(Box<tungstenite::Error>),
 
     #[error("Failed to parse Uri. Verify IP address & port")]
     FailedParseUri,
@@ -245,7 +245,7 @@ impl WsError {
 
     pub fn additional_info_localized(&self) -> Option<String> {
         match self {
-            WsError::ConnectionFailed(err) => match err {
+            WsError::ConnectionFailed(err) => match err.as_ref() {
                 tungstenite::Error::ConnectionClosed
                 | tungstenite::Error::AlreadyClosed
                 | tungstenite::Error::Io(_)

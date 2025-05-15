@@ -179,7 +179,7 @@ impl WsHandler {
 
     fn receive_messages(
         &mut self, stream: &mut WSStream,
-    ) -> Result<(), tungstenite::Error> {
+    ) -> Result<(), Box<tungstenite::Error>> {
         log::debug!("WS-{}. Reading next message...", self.id);
         let msg = match stream.read() {
             Ok(msg) => msg,
@@ -189,7 +189,7 @@ impl WsHandler {
 
         if msg.is_close() {
             log::info!("WS-{}. Client closed connection.", self.id);
-            return Err(tungstenite::Error::ConnectionClosed);
+            return Err(Box::new(tungstenite::Error::ConnectionClosed));
         }
 
         // Heartbeat system
@@ -242,16 +242,16 @@ impl WsHandler {
 
     fn handle_read_error(
         &self, err: tungstenite::Error,
-    ) -> Result<(), tungstenite::Error> {
+    ) -> Result<(), Box<tungstenite::Error>> {
         use tungstenite::Error::*;
         match err {
             ConnectionClosed => {
                 log::info!("WS-{}. Connection closed.", self.id);
-                Err(err)
+                Err(Box::new(err))
             },
             AlreadyClosed => {
                 log::warn!("WS-{}. Connection closed without alerting.", self.id);
-                Err(err)
+                Err(Box::new(err))
             },
             Io(io_err) if io_err.kind() == std::io::ErrorKind::WouldBlock => {
                 thread::sleep(CONNECTION_TIMEOUT);
@@ -260,7 +260,7 @@ impl WsHandler {
             },
             Io(io_err) => {
                 log::warn!("WS-{}. {}", self.id, io_err);
-                Err(Io(io_err))
+                Err(Box::new(Io(io_err)))
             },
             _ => {
                 log::error!("WS-{}. {}. {:#?}", self.id, err, err);
@@ -271,7 +271,7 @@ impl WsHandler {
 
     fn handle_binary_compressed(
         &mut self, msg: Message, stream: &mut WSStream,
-    ) -> Result<(), tungstenite::Error> {
+    ) -> Result<(), Box<tungstenite::Error>> {
         if msg.is_empty() || msg.is_text() {
             log::warn!("WS-{}. Received empty or non-compressed message.", self.id);
             self.send_error_response(stream)?;
@@ -279,7 +279,8 @@ impl WsHandler {
         }
 
         if msg.is_binary() {
-            let decompressed = decompress(&msg.into_data())?;
+            let decompressed = decompress(&msg.into_data())
+                .map_err(|err| Box::new(tungstenite::Error::from(err)))?;
             self.process_message(&decompressed, stream)?;
         }
 
@@ -288,7 +289,7 @@ impl WsHandler {
 
     fn handle_text_uncompressed(
         &mut self, msg: Message, stream: &mut WSStream,
-    ) -> Result<(), tungstenite::Error> {
+    ) -> Result<(), Box<tungstenite::Error>> {
         if msg.is_empty() || msg.is_binary() {
             log::warn!("WS-{}. Received empty or binary message.", self.id);
             self.send_error_response(stream)?;
@@ -304,14 +305,17 @@ impl WsHandler {
 
     fn process_message(
         &mut self, text: &str, stream: &mut WSStream,
-    ) -> Result<(), tungstenite::Error> {
+    ) -> Result<(), Box<tungstenite::Error>> {
         match serde_json::from_str::<Request>(text) {
             Ok(message) => {
                 log::info!(
                     "WS-{}. Received message from client: {:#?}. IP: {}",
                     self.id,
                     message,
-                    stream.get_ref().peer_addr()?
+                    stream
+                        .get_ref()
+                        .peer_addr()
+                        .map_err(|err| Box::new(tungstenite::Error::from(err)))?
                 );
 
                 if let Some(response) =
@@ -334,11 +338,12 @@ impl WsHandler {
 
     fn send_error_response(
         &self, stream: &mut WSStream,
-    ) -> Result<(), tungstenite::Error> {
+    ) -> Result<(), Box<tungstenite::Error>> {
         let message = Response::Error(ServerError::InvalidMessageFormat);
         if let Ok(text) = serde_json::to_string(&message) {
             if self.compression {
-                let compressed = compress(&text)?;
+                let compressed = compress(&text)
+                    .map_err(|err| Box::new(tungstenite::Error::from(err)))?;
                 log::debug!("WS-{}. Trying to send error response.. (bytes)", self.id);
                 let _ = stream.send(Message::Binary(Bytes::from(compressed)));
                 log::debug!("WS-{}. Error response successfully sent! (bytes)", self.id);
