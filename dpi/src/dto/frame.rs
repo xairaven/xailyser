@@ -43,33 +43,57 @@ impl<'a> From<pcap::Packet<'a>> for OwnedFrame {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FrameHeader {
-    pub tv_sec: i32,
-    pub tv_usec: i32,
+    pub tv_sec: i64,
+    pub tv_usec: i64,
     pub caplen: u32,
     pub len: u32,
 }
 
 impl From<&pcap::PacketHeader> for FrameHeader {
     fn from(header: &pcap::PacketHeader) -> Self {
-        Self {
+        #[cfg(target_os = "linux")]
+        let result = Self {
             tv_sec: header.ts.tv_sec,
             tv_usec: header.ts.tv_usec,
             caplen: header.caplen,
             len: header.len,
-        }
+        };
+
+        #[cfg(target_os = "windows")]
+        let result = Self {
+            tv_sec: header.ts.tv_sec as i64,
+            tv_usec: header.ts.tv_usec as i64,
+            caplen: header.caplen,
+            len: header.len,
+        };
+
+        result
     }
 }
 
 impl From<&FrameHeader> for pcap::PacketHeader {
     fn from(header: &FrameHeader) -> Self {
-        Self {
+        #[cfg(target_os = "linux")]
+        let result = Self {
             ts: libc::timeval {
                 tv_sec: header.tv_sec,
                 tv_usec: header.tv_usec,
             },
             caplen: header.caplen,
             len: header.len,
-        }
+        };
+
+        #[cfg(target_os = "windows")]
+        let result = Self {
+            ts: libc::timeval {
+                tv_sec: header.tv_sec as i32,
+                tv_usec: header.tv_usec as i32,
+            },
+            caplen: header.caplen,
+            len: header.len,
+        };
+
+        result
     }
 }
 

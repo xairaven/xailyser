@@ -225,7 +225,7 @@ impl TryFrom<&FrameHeader> for Sample {
         Ok(Self {
             captured_bytes: header.caplen,
             time_captured: Local
-                .timestamp_opt(header.tv_sec as i64, header.tv_usec as u32)
+                .timestamp_opt(header.tv_sec, header.tv_usec as u32)
                 .single()
                 .ok_or(Self::Error::FailedToConvertCapturedTime)?,
         })

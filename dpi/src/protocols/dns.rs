@@ -571,7 +571,6 @@ mod tests {
     use crate::protocols::ipv4::IPv4;
     use crate::protocols::ipv6::IPv6;
     use crate::protocols::udp::UDP;
-    use libc::timeval;
     use std::str::FromStr;
 
     #[test]
@@ -995,17 +994,11 @@ mod tests {
             caplen: 1506,
             len: 1506,
         };
+        let packet_header: pcap::PacketHeader = (&header).into();
 
         let parser = parser::ProtocolParser::new(&pcap::Linktype(1), false);
         let frame_type = parser.process(pcap::Packet {
-            header: &pcap::PacketHeader {
-                ts: timeval {
-                    tv_sec: header.tv_sec,
-                    tv_usec: header.tv_usec,
-                },
-                caplen: header.caplen,
-                len: header.len,
-            },
+            header: &packet_header,
             data: &frame,
         });
 
