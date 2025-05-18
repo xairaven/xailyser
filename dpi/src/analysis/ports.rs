@@ -67,7 +67,7 @@ mod tests {
     use super::*;
     use std::sync::LazyLock;
 
-    const PATH: &str = "./resources/iana-port-service-database.csv";
+    const PATH: &str = "../resources/iana-port-service-database.csv";
     static TABLE: LazyLock<PortServiceTable> =
         LazyLock::new(|| read_database(PathBuf::from(PATH)).unwrap());
 

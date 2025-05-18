@@ -87,7 +87,7 @@ mod tests {
     use super::*;
     use std::sync::LazyLock;
 
-    const PATH: &str = "./resources/oui-database.txt";
+    const PATH: &str = "../resources/oui-database.txt";
     static TREE: LazyLock<OuiRadixTree> =
         LazyLock::new(|| read_database(PathBuf::from(PATH)).unwrap().0);
 

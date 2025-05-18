@@ -10,8 +10,8 @@ pub struct Lookup {
     pub vendors_amount: usize,
 }
 
-const PORTS_DATABASE_PATH: &str = "dpi/resources/iana-port-service-database.csv";
-const OUI_DATABASE_PATH: &str = "dpi/resources/oui-database.txt";
+const PORTS_DATABASE_PATH: &str = "resources/iana-port-service-database.csv";
+const OUI_DATABASE_PATH: &str = "resources/oui-database.txt";
 
 impl Lookup {
     pub fn load() -> std::io::Result<Lookup> {
