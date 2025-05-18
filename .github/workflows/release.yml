@@ -122,9 +122,9 @@ jobs:
           title: ${{ github.ref_name }}
           prerelease: false
           files: |
-            Client-windows-v${{ github.ref_name }}
-            Server-windows-v${{ github.ref_name }}
-            Client-ubuntu-v${{ github.ref_name }}
-            Server-ubuntu-v${{ github.ref_name }}
-            Client-macos-v${{ github.ref_name }}
-            Server-macos-v${{ github.ref_name }}
+            Client-windows-latest-v${{ github.ref_name }}
+            Server-windows-latest-v${{ github.ref_name }}
+            Client-ubuntu-latest-v${{ github.ref_name }}
+            Server-ubuntu-latest-v${{ github.ref_name }}
+            Client-macos-latest-v${{ github.ref_name }}
+            Server-macos-latest-v${{ github.ref_name }}
