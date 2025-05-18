@@ -26,6 +26,9 @@ pub fn get_network_interface_name(network_interface: &pcap::Device) -> String {
     #[cfg(target_os = "linux")]
     let name = network_interface.name.clone();
 
+    #[cfg(target_os = "macos")]
+    let name = network_interface.name.clone();
+
     name
 }
 
