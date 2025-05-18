@@ -53,7 +53,10 @@ jobs:
         run: |
           mkdir lib
           cd lib
-          curl https://doggo.ninja/DRoba9.lib --output Packet.lib
+          curl -L https://npcap.com/dist/npcap-sdk-1.15.zip -o npcap-sdk.zip
+          powershell -Command "Expand-Archive -Path npcap-sdk.zip -DestinationPath sdk -Force"
+          copy sdk\Lib\x64\Packet.lib lib\Packet.lib
+          copy sdk\Lib\x64\wpcap.lib lib\wpcap.lib
           cd ..
 
       - name: Build Client
