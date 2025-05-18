@@ -51,7 +51,7 @@ pub struct FrameHeader {
 
 impl From<&pcap::PacketHeader> for FrameHeader {
     fn from(header: &pcap::PacketHeader) -> Self {
-        #[cfg(target_os = "linux")]
+        #[cfg(target_family = "unix")]
         let result = Self {
             tv_sec: header.ts.tv_sec,
             tv_usec: header.ts.tv_usec,
@@ -73,7 +73,7 @@ impl From<&pcap::PacketHeader> for FrameHeader {
 
 impl From<&FrameHeader> for pcap::PacketHeader {
     fn from(header: &FrameHeader) -> Self {
-        #[cfg(target_os = "linux")]
+        #[cfg(target_family = "unix")]
         let result = Self {
             ts: libc::timeval {
                 tv_sec: header.tv_sec,
