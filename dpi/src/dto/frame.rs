@@ -51,10 +51,18 @@ pub struct FrameHeader {
 
 impl From<&pcap::PacketHeader> for FrameHeader {
     fn from(header: &pcap::PacketHeader) -> Self {
-        #[cfg(target_family = "unix")]
+        #[cfg(target_os = "linux")]
         let result = Self {
             tv_sec: header.ts.tv_sec,
             tv_usec: header.ts.tv_usec,
+            caplen: header.caplen,
+            len: header.len,
+        };
+
+        #[cfg(target_os = "macos")]
+        let result = Self {
+            tv_sec: header.ts.tv_sec,
+            tv_usec: header.ts.tv_usec as i64,
             caplen: header.caplen,
             len: header.len,
         };
@@ -73,11 +81,21 @@ impl From<&pcap::PacketHeader> for FrameHeader {
 
 impl From<&FrameHeader> for pcap::PacketHeader {
     fn from(header: &FrameHeader) -> Self {
-        #[cfg(target_family = "unix")]
+        #[cfg(target_os = "linux")]
         let result = Self {
             ts: libc::timeval {
                 tv_sec: header.tv_sec,
                 tv_usec: header.tv_usec,
+            },
+            caplen: header.caplen,
+            len: header.len,
+        };
+
+        #[cfg(target_os = "macos")]
+        let result = Self {
+            ts: libc::timeval {
+                tv_sec: header.tv_sec,
+                tv_usec: header.tv_usec as i32,
             },
             caplen: header.caplen,
             len: header.len,
