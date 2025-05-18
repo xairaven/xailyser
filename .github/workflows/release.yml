@@ -83,7 +83,7 @@ jobs:
             -C client assets locales `
             -C .. resources `
             -C target/release client.exe
-          tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.tar.gz `
+          tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.zip `
             -C scripts start.ps1 `
             -C ../target/release server.exe
 
