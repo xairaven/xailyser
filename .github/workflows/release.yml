@@ -16,6 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install libpcap
+        run: |
+          sudo apt update && sudo apt install -y libpcap-dev
+
       - name: Download necessary packages
         run: |
           sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
@@ -42,7 +46,7 @@ jobs:
       - name: Download necessary packages
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+          sudo apt update && sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev libpcap-dev
 
       - name: WinPcap Developer Pack download
         if: matrix.os == 'windows-latest'
