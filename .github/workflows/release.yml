@@ -62,7 +62,9 @@ jobs:
             -C client locales \
             -C . resources \
             -C target/release client
-          tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-ubuntu.tar.gz -C target/release/ server
+          tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-ubuntu.tar.gz \
+            -C target/release server \
+            -C scripts start.sh
 
       - name: Archive files on macOS
         if: matrix.os == 'macos-latest'
@@ -72,7 +74,9 @@ jobs:
             -C client locales \
             -C . resources \
             -C target/release client
-          tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-macos.tar.gz -C target/release/ server
+          tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-macos.tar.gz \
+            -C target/release server \
+            -C scripts start.sh
 
       - name: Archive files on Windows
         if: matrix.os == 'windows-latest'
@@ -82,7 +86,9 @@ jobs:
             -C client locales \
             -C . resources \
             -C target/release client.exe
-          tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.tar.gz -C target/release/ server.exe
+          tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.tar.gz \
+            -C target/release server.exe \
+            -C scripts start.ps1
 
       - name: Upload client artifact
         uses: actions/upload-artifact@v4
