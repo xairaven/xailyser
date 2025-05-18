@@ -57,7 +57,7 @@ jobs:
       - name: Archive files on Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: |
-          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-ubuntu.tar.gz \ 
+          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-ubuntu.tar.gz \
             -C client assets locales \
             -C .. resources \
             -C target/release client
@@ -68,7 +68,7 @@ jobs:
       - name: Archive files on macOS
         if: matrix.os == 'macos-latest'
         run: |
-          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-macos.tar.gz \ 
+          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-macos.tar.gz \
             -C client assets locales \
             -C .. resources \
             -C target/release client
@@ -79,7 +79,7 @@ jobs:
       - name: Archive files on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          tar acvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-windows.zip \ 
+          tar acvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-windows.zip \
             -C client assets locales \
             -C .. resources \
             -C target/release client.exe
