@@ -57,38 +57,35 @@ jobs:
       - name: Archive files on Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: |
-          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-ubuntu.tar.gz \
-            -C client assets \
-            -C client locales \
-            -C . resources \
+          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-ubuntu.tar.gz \ 
+            -C client assets locales \
+            -C .. resources \
             -C target/release client
           tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-ubuntu.tar.gz \
-            -C target/release server \
-            -C scripts start.sh
+            -C scripts start.sh \
+            -C ../target/release server
 
       - name: Archive files on macOS
         if: matrix.os == 'macos-latest'
         run: |
-          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-macos.tar.gz  \
-            -C client assets \
-            -C client locales \
-            -C . resources \
+          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-macos.tar.gz \ 
+            -C client assets locales \
+            -C .. resources \
             -C target/release client
           tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-macos.tar.gz \
-            -C target/release server \
-            -C scripts start.sh
+            -C scripts start.sh \
+            -C ../target/release server
 
       - name: Archive files on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          tar acvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-windows.tar.gz  \
-            -C client assets \
-            -C client locales \
-            -C . resources \
+          tar acvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-windows.zip \ 
+            -C client assets locales \
+            -C .. resources \
             -C target/release client.exe
           tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.tar.gz \
-            -C target/release server.exe \
-            -C scripts start.ps1
+            -C scripts start.ps1 \
+            -C ../target/release server.exe
 
       - name: Upload client artifact
         uses: actions/upload-artifact@v4
