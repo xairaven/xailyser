@@ -79,12 +79,12 @@ jobs:
       - name: Archive files on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          tar acvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-windows.zip \
-            -C client assets locales \
-            -C .. resources \
+          tar acvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-windows.zip `
+            -C client assets locales `
+            -C .. resources `
             -C target/release client.exe
-          tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.tar.gz \
-            -C scripts start.ps1 \
+          tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.tar.gz `
+            -C scripts start.ps1 `
             -C ../target/release server.exe
 
       - name: Upload client artifact
