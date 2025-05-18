@@ -55,8 +55,9 @@ jobs:
           cd lib
           curl -L https://npcap.com/dist/npcap-sdk-1.15.zip -o npcap-sdk.zip
           powershell -Command "Expand-Archive -Path npcap-sdk.zip -DestinationPath sdk -Force"
-          copy sdk\Lib\x64\Packet.lib lib\Packet.lib
-          copy sdk\Lib\x64\wpcap.lib lib\wpcap.lib
+          copy sdk\Lib\x64\Packet.lib Packet.lib
+          copy sdk\Lib\x64\wpcap.lib wpcap.lib
+          rm sdk -r
           cd ..
 
       - name: Build Client
