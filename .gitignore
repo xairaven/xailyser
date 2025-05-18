@@ -7,9 +7,6 @@ config.toml
 # Any logs
 *.log
 
-# Possible libs folder
-lib/
-
 # Remove folder, that contains RustRover’s project specific settings files.
 .idea/
 

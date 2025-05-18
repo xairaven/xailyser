@@ -48,18 +48,6 @@ jobs:
         run: |
           sudo apt update && sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev libpcap-dev
 
-      - name: WinPcap Developer Pack download
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir lib
-          cd lib
-          curl -L https://npcap.com/dist/npcap-sdk-1.15.zip -o npcap-sdk.zip
-          powershell -Command "Expand-Archive -Path npcap-sdk.zip -DestinationPath sdk -Force"
-          copy sdk\Lib\x64\Packet.lib Packet.lib
-          copy sdk\Lib\x64\wpcap.lib wpcap.lib
-          rm sdk -r
-          cd ..
-
       - name: Build Client
         run: cargo build --package client --release
 
