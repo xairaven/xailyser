@@ -1,0 +1,114 @@
+name: Build, Test, Create release
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  tests:
+    name: "Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download necessary packages
+        run: |
+          sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+
+      - name: Run Tests
+        run: cargo test --verbose
+
+  build:
+    name: "Build"
+    runs-on: ${{ matrix.os }}
+    needs: [ tests ]
+
+    env:
+      PROJECT_NAME: 'xailyser'
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download necessary packages
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+
+      - name: WinPcap Developer Pack download
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir lib
+          cd lib
+          curl https://doggo.ninja/DRoba9.lib --output Packet.lib
+          cd ..
+
+      - name: Build Client
+        run: cargo build --package client --release
+
+      - name: Build Server
+        run: cargo build --package server --release
+
+      - name: Archive files on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-ubuntu.tar.gz client/assets client/locales resources -C target/release/ client
+          tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-ubuntu.tar.gz -C target/release/ server
+
+      - name: Archive files on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          tar -czvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-macos.tar.gz client/assets client/locales resources -C target/release/ client
+          tar -czvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-macos.tar.gz -C target/release/ server
+
+      - name: Archive files on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          tar acvf ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}-windows.tar.gz client/assets client/locales resources -C target/release/ client.exe
+          tar acvf ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}-windows.tar.gz -C target/release/ server.exe
+
+      - name: Upload client artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Client-${{ matrix.os }}-v${{ github.ref_name }}
+          path: |
+            ${{env.PROJECT_NAME}}-client-v${{ github.ref_name }}*
+          retention-days: 1
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Server-${{ matrix.os }}-v${{ github.ref_name }}
+          path: |
+            ${{env.PROJECT_NAME}}-server-v${{ github.ref_name }}*
+          retention-days: 1
+
+  create-release:
+    name: "Create Release"
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    steps:
+      - name: Download artifacts to release
+        uses: actions/download-artifact@v4
+        with:
+          path: .
+
+      - name: Create release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: ${{ github.ref_name }}
+          title: ${{ github.ref_name }}
+          prerelease: false
+          files: |
+            Client-*
+            Server-*
