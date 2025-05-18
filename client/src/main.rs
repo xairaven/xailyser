@@ -3,6 +3,8 @@
 #![deny(clippy::expect_used)]
 #![deny(clippy::panic)]
 #![deny(unsafe_code)]
+// Hide console window on Windows in release mode
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 #[macro_use]
 extern crate rust_i18n;
