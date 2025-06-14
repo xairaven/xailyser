@@ -19,7 +19,7 @@ dpi = { path = "../dpi" }
 chrono = "0.4.41"
 crossbeam = "0.8.4"
 directories = "6.0.0"
-flate2 = { version = "1.1.1", features = ["zlib-rs"], default-features = false }
+flate2 = { version = "1.1.2", features = ["zlib-rs"], default-features = false }
 hex = "0.4.3"
 log = "0.4.27"
 serde = { version = "1.0.219", features = ["derive"] }
