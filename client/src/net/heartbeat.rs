@@ -23,7 +23,7 @@ impl Heartbeat {
 
     pub fn try_ping(&mut self, tx: &Sender<UiClientRequest>) {
         if let Err(err) = tx.try_send(UiClientRequest::Ping) {
-            log::error!("Failed to send command (Ping): {}", err);
+            log::error!("Failed to send command (Ping): {err}");
         } else {
             self.ping_sent = true;
         }

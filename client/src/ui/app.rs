@@ -101,7 +101,7 @@ impl eframe::App for App {
             .ui_client_requests_tx
             .try_send(UiClientRequest::CloseConnection)
         {
-            log::error!("Failed to send command (Close connection): {}", err);
+            log::error!("Failed to send command (Close connection): {err}");
         }
         log::info!("Shutdown started...");
         self.context.shutdown_flag.store(true, Ordering::Release);

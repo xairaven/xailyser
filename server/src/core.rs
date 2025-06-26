@@ -13,7 +13,7 @@ pub fn start(config: Config) {
     let context = Arc::new(Mutex::new(match Context::new(config) {
         Ok(ctx) => ctx,
         Err(err) => {
-            log::error!("{}", err);
+            log::error!("{err}");
             std::process::exit(1);
         },
     }));
@@ -28,7 +28,7 @@ pub fn start(config: Config) {
             shutdown_flag.store(true, Ordering::Release);
         }
     }) {
-        log::error!("Error setting Ctrl-C handler: {}", err);
+        log::error!("Error setting Ctrl-C handler: {err}");
         std::process::exit(1);
     }
 
@@ -58,18 +58,18 @@ pub fn start(config: Config) {
                         let mut sniffer = match result {
                             Ok(value) => value,
                             Err(err) => {
-                                log::error!("Network Error: {}", err);
+                                log::error!("Network Error: {err}");
                                 shutdown_flag.store(true, Ordering::Release);
                                 return;
                             },
                         };
                         if let Err(err) = sniffer.listen() {
-                            log::error!("Network Error: {}", err);
+                            log::error!("Network Error: {err}");
                             shutdown_flag.store(true, Ordering::Release);
                         }
                     })
                     .unwrap_or_else(|err| {
-                        log::error!("Failed to spawn sniffing thread: {}", err);
+                        log::error!("Failed to spawn sniffing thread: {err}");
                         std::process::exit(1);
                     }),
             )
@@ -93,13 +93,13 @@ pub fn start(config: Config) {
                 .build();
 
                 if let Err(err) = tcp_handler.start() {
-                    log::error!("TCP Error: {}", err);
+                    log::error!("TCP Error: {err}");
                     shutdown_flag.store(true, Ordering::Release);
                 }
             }
         })
         .unwrap_or_else(|err| {
-            log::error!("Failed to spawn TCP thread: {}", err);
+            log::error!("Failed to spawn TCP thread: {err}");
             std::process::exit(1);
         });
 

@@ -34,7 +34,7 @@ impl TcpHandler {
             .set_nonblocking(true)
             .map_err(TcpError::FailedSetNonBlocking)?;
 
-        log::info!("Listening on {}", address);
+        log::info!("Listening on {address}");
         self.listen(server);
 
         Ok(())
@@ -54,7 +54,7 @@ impl TcpHandler {
                 Ok((tcp_stream, _)) => {
                     let thread_counter = self.ws_threads_counter;
                     let handle = thread::Builder::new()
-                        .name(format!("WS-Connection-{}", thread_counter))
+                        .name(format!("WS-Connection-{thread_counter}"))
                         .spawn({
                             let context = Arc::clone(&self.context);
                             let shutdown_flag = Arc::clone(&self.shutdown_flag);
@@ -69,7 +69,7 @@ impl TcpHandler {
                                     }
                                 }
                                 Err(err) => {
-                                    log::error!("Broadcast pool lock failed: {}", err);
+                                    log::error!("Broadcast pool lock failed: {err}");
                                     std::process::exit(1);
                                 }
                             };
@@ -92,16 +92,11 @@ impl TcpHandler {
                                     match &err {
                                         WsError::AuthFailed(error_detailed) => {
                                             log::error!(
-                                                "WS-{}. {}. {}",
-                                                thread_counter,
-                                                err,
-                                                error_detailed
+                                                "WS-{thread_counter}. {err}. {error_detailed}"
                                             )
                                         },
                                         _ => log::error!(
-                                            "WS-{}. {}. Terminated connection.",
-                                            thread_counter,
-                                            err
+                                            "WS-{thread_counter}. {err}. Terminated connection."
                                         ),
                                     }
                                 }
@@ -126,14 +121,14 @@ impl TcpHandler {
                     continue;
                 },
                 Err(err) => {
-                    log::error!("Connection failed! {}", err);
+                    log::error!("Connection failed! {err}");
                 },
             }
         }
 
         for handle in ws_handles {
             if let Err(err) = handle.join() {
-                log::error!("Failed to join WS connection thread handle: {:?}", err);
+                log::error!("Failed to join WS connection thread handle: {err:?}");
             }
         }
     }

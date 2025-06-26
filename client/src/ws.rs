@@ -46,7 +46,7 @@ pub fn connect(
             .map_err(WsError::BadReadTimeoutDuration),
         _ => return Err(WsError::UnknownStreamType),
     }?;
-    log::info!("WS-Stream: Connected to {}.", address);
+    log::info!("WS-Stream: Connected to {address}.");
 
     // Requesting server settings after connection
     let request = UiClientRequest::Request(Request::ServerSettings);
@@ -107,7 +107,7 @@ impl WsHandler {
                         Err(Box::new(tungstenite::Error::Io(err)))
                     },
                     _ => {
-                        log::error!("WS-Stream: {}", err);
+                        log::error!("WS-Stream: {err}");
                         Ok(())
                     },
                 };
@@ -123,7 +123,7 @@ impl WsHandler {
         if msg.is_pong() {
             log::debug!("WS-Stream: Received a Pong message.");
             if let Err(err) = self.server_response_tx.try_send(Response::SuccessSync) {
-                log::error!("WS Channel: Can't send message. Error: {}", err);
+                log::error!("WS Channel: Can't send message. Error: {err}");
             }
             return Ok(());
         }
@@ -131,7 +131,7 @@ impl WsHandler {
         // Server don't send ping messages
         if msg.is_ping() {
             if let Err(err) = self.stream.send(Message::Pong(Bytes::new())) {
-                log::error!("WS-Stream: Can't send message. Error: {}", err);
+                log::error!("WS-Stream: Can't send message. Error: {err}");
             }
         }
 
@@ -180,14 +180,12 @@ impl WsHandler {
                     _ => self.server_response_tx.try_send(message),
                 };
                 if let Err(err) = result {
-                    log::error!("WS Channel: Can't send message. Error: {}", err);
+                    log::error!("WS Channel: Can't send message. Error: {err}");
                 }
             },
             Err(err) => {
                 log::warn!(
-                    "Serde: can't deserialize message! Error: {}. Text: {:#?}",
-                    err,
-                    text
+                    "Serde: can't deserialize message! Error: {err}. Text: {text:#?}",
                 );
             },
         }
@@ -204,7 +202,7 @@ impl WsHandler {
             };
 
             if let Err(err) = self.stream.send(message) {
-                log::error!("WS-Stream: Can't send message. Error: {}", err);
+                log::error!("WS-Stream: Can't send message. Error: {err}");
             } else {
                 log::debug!("WS-Stream (Client -> Server): Sent command.");
             }

@@ -185,11 +185,10 @@ fn save_client_config_view(
                     .try_send_by(&ctx.modals_tx);
             },
             Err(err) => {
-                log::error!("Client Settings: Failed to save client config: {}", err);
+                log::error!("Client Settings: Failed to save client config: {err}");
                 MessageModal::error(&format!(
-                    "{} {}",
+                    "{} {err}",
                     t!("Error.FailedSaveClientConfigIntoFile"),
-                    err
                 ))
                 .try_send_by(&ctx.modals_tx);
             },

@@ -14,7 +14,7 @@ pub fn setup(config: &Config) -> Result<(), LogError> {
             let formatted =
                 common::logging::parse_format(log_format.clone(), message, record);
 
-            out.finish(format_args!("{}", formatted))
+            out.finish(format_args!("{formatted}"))
         })
         .chain(std::io::stdout())
         .apply()

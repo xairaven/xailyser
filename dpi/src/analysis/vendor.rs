@@ -46,7 +46,7 @@ pub fn read_database(path: PathBuf) -> io::Result<(OuiRadixTree, usize)> {
 
         let binary = address_str
             .split(':')
-            .map(|hex| u8::from_str_radix(hex, 16).map(|byte| format!("{:08b}", byte)))
+            .map(|hex| u8::from_str_radix(hex, 16).map(|byte| format!("{byte:08b}")))
             .collect::<Result<Vec<String>, _>>()
             .map_err(|_| io::ErrorKind::InvalidData)?
             .join("")

@@ -23,7 +23,7 @@ pub mod heading {
     }
 
     pub fn normal(title: &str) -> egui::RichText {
-        egui::RichText::new(format!("{}:", title))
+        egui::RichText::new(format!("{title}:"))
             .size(NORMAL)
             .strong()
     }
@@ -180,7 +180,7 @@ pub mod themes {
                 Preference::TokyoNight => "tokyo_night",
                 Preference::TokyoNightStorm => "tokyo_night_storm",
             };
-            write!(f, "{}", string)
+            write!(f, "{string}")
         }
     }
 

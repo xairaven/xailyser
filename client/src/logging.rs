@@ -15,7 +15,7 @@ pub fn setup(log_level: &LevelFilter, format: String) -> Result<(), LogError> {
             let formatted =
                 common::logging::parse_format(format.clone(), message, record);
 
-            out.finish(format_args!("{}", formatted))
+            out.finish(format_args!("{formatted}"))
         })
         .chain(file)
         .apply()

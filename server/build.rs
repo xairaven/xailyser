@@ -6,16 +6,21 @@ fn main() {
     // (the package containing the build script).
     // Also note that this is the value of the
     // current working directory of the build script when it starts.
-    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|err| {
-        panic!(
-            "The CARGO_MANIFEST_DIR environment variable is not set: {}",
-            err
-        );
-    });
+    let manifest_dir = match env::var("CARGO_MANIFEST_DIR") {
+        Ok(value) => value,
+        Err(err) => {
+            eprintln!("The CARGO_MANIFEST_DIR environment variable is not set: {err}");
+            std::process::exit(1);
+        },
+    };
 
-    let workspace_root = Path::new(&manifest_dir)
-        .parent()
-        .expect("Failed to get parent directory");
+    let workspace_root = match Path::new(&manifest_dir).parent() {
+        Some(value) => value,
+        None => {
+            eprintln!("Failed to get parent directory");
+            std::process::exit(1);
+        },
+    };
 
     // Lib Folder
     let lib_path = workspace_root.join("lib");

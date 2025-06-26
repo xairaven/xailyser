@@ -58,7 +58,7 @@ pub fn lock<T>(context: &Arc<Mutex<Context>>, f: impl FnOnce(&mut Context) -> T)
     match context.lock() {
         Ok(mut guard) => f(&mut guard),
         Err(err) => {
-            log::error!("Context lock failed: {}", err);
+            log::error!("Context lock failed: {err}");
             std::process::exit(1);
         },
     }

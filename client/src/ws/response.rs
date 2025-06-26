@@ -20,9 +20,9 @@ pub fn data(ctx: &mut Context, response: Response) {
     };
     if let Err(err) = process_result {
         if let ProcessingError::Speed(err) = err {
-            log::error!("Response: {}", err);
+            log::error!("Response: {err}");
         } else {
-            log::error!("Response: {}", err);
+            log::error!("Response: {err}");
         }
     }
 }

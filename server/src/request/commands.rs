@@ -5,7 +5,7 @@ pub fn interfaces() -> Result<Vec<String>, ServerError> {
     let list = match net::interface::usable_sorted() {
         Ok(list) => list,
         Err(err) => {
-            log::error!("Error listing interfaces: {}", err);
+            log::error!("Error listing interfaces: {err}");
             return Err(ServerError::FailedToGetInterfaces);
         },
     };

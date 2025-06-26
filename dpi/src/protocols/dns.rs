@@ -442,11 +442,11 @@ impl std::fmt::Display for DnsTypeData {
                 primary_name_server,
                 mailbox,
                 ..
-            } => format!("{} <{}>", primary_name_server, mailbox),
+            } => format!("{primary_name_server} <{mailbox}>"),
             DnsTypeData::Unknown => "Unknown".to_string(),
         };
 
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }
 

@@ -112,7 +112,7 @@ impl SettingsServerTab {
                 .ui_client_requests_tx
                 .try_send(UiClientRequest::Request(Request::SaveConfig))
             {
-                log::error!("Failed to send command (Save Config): {}", err);
+                log::error!("Failed to send command (Save Config): {err}");
             } else {
                 log::info!("UI -> WS: Sent 'Save Config' command.");
             }
@@ -139,7 +139,7 @@ impl SettingsServerTab {
                     .ui_client_requests_tx
                     .try_send(UiClientRequest::Request(Request::Reboot))
                 {
-                    log::error!("Failed to send command (Reboot): {}", err);
+                    log::error!("Failed to send command (Reboot): {err}");
                 } else {
                     log::info!("UI -> WS: Sent reboot command.");
                 }
@@ -239,8 +239,7 @@ impl SettingsServerTab {
                                         )),
                                     ) {
                                         log::error!(
-                                            "Failed to send request (SetInterface): {}",
-                                            err
+                                            "Failed to send request (SetInterface): {err}"
                                         );
                                     }
                                     self.request_server_settings(ctx);
@@ -325,7 +324,7 @@ impl SettingsServerTab {
             .ui_client_requests_tx
             .try_send(UiClientRequest::Request(Request::ServerSettings));
         if let Err(err) = result {
-            log::error!("Server Settings: {}", err);
+            log::error!("Server Settings: {err}");
         }
     }
 }

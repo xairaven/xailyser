@@ -52,7 +52,7 @@ impl Context {
         let lookup = match Lookup::load() {
             Ok(lookup) => lookup,
             Err(err) => {
-                log::error!("Failed to load lookup database: {}", err);
+                log::error!("Failed to load lookup database: {err}");
                 std::process::exit(1);
             },
         };

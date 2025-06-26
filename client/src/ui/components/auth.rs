@@ -158,7 +158,7 @@ impl AuthComponent {
                         ws_handler.send_receive_messages();
                     })
                     .unwrap_or_else(|err| {
-                        log::error!("Failed to spawn WS thread: {}", err);
+                        log::error!("Failed to spawn WS thread: {err}");
                         std::process::exit(1);
                     });
 

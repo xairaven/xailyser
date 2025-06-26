@@ -180,7 +180,7 @@ impl std::fmt::Display for SpeedUnitPerSecond {
             Self::Megabytes => MEGABYTES_PER_SECOND,
             Self::Gigabytes => GIGABYTES_PER_SECOND,
         };
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }
 

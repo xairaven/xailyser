@@ -173,8 +173,8 @@ impl InspectorTab {
                         .saturating_mul(Self::PAGE_SIZE)
                         .saturating_add(index + 1);
 
-                    ui.collapsing(format!("DNS Packet #{}", record_number), |ui| {
-                        Grid::new(format!("DNS-Headers-{}", record_number))
+                    ui.collapsing(format!("DNS Packet #{record_number}"), |ui| {
+                        Grid::new(format!("DNS-Headers-{record_number}"))
                             .striped(false)
                             .num_columns(4)
                             .show(ui, |ui| {
@@ -210,7 +210,7 @@ impl InspectorTab {
                                 t!("Tab.Inspector.Protocol.DNS.Records"),
                                 question_section_len
                             ));
-                            Grid::new(format!("DNS-Headers-Question-{}", record_number))
+                            Grid::new(format!("DNS-Headers-Question-{record_number}"))
                                 .striped(false)
                                 .num_columns(4)
                                 .show(ui, |ui| {
@@ -278,7 +278,7 @@ impl InspectorTab {
                 t!("Tab.Inspector.Protocol.DNS.Records"),
                 len
             ));
-            Grid::new(format!("DNS-Records-{}-{}", section_id, packet_id))
+            Grid::new(format!("DNS-Records-{section_id}-{packet_id}"))
                 .striped(false)
                 .num_columns(6)
                 .show(ui, |ui| {
@@ -359,8 +359,8 @@ impl InspectorTab {
                         .saturating_mul(Self::PAGE_SIZE)
                         .saturating_add(index + 1);
 
-                    ui.collapsing(format!("HTTP Packet #{}", record_number), |ui| {
-                        Grid::new(format!("HTTP-Packet-{}", record_number))
+                    ui.collapsing(format!("HTTP Packet #{record_number}"), |ui| {
+                        Grid::new(format!("HTTP-Packet-{record_number}"))
                             .striped(false)
                             .num_columns(4)
                             .show(ui, |ui| {
@@ -424,7 +424,7 @@ impl InspectorTab {
                             ui.label(styles::heading::grid(&t!(
                                             "Tab.Inspector.Protocol.HTTP.Headers"
                                         )));
-                            Grid::new(format!("HTTP-Headers-{}", record_number))
+                            Grid::new(format!("HTTP-Headers-{record_number}"))
                                 .striped(false)
                                 .num_columns(2)
                                 .show(ui, |ui| {

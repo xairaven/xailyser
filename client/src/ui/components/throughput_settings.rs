@@ -93,11 +93,10 @@ impl ThroughputSettings {
                         .try_send_by(&ctx.modals_tx);
                 },
                 Err(err) => {
-                    log::error!("Plot Settings: Failed to save client config: {}", err);
+                    log::error!("Plot Settings: Failed to save client config: {err}");
                     MessageModal::error(&format!(
-                        "{} {}",
-                        t!("Error.FailedSaveClientConfigIntoFile"),
-                        err
+                        "{} {err}",
+                        t!("Error.FailedSaveClientConfigIntoFile")
                     ))
                     .try_send_by(&ctx.modals_tx);
                 },

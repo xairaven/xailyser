@@ -1,8 +1,3 @@
-// Project lints
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
-#![deny(clippy::panic)]
-#![deny(unsafe_code)]
 // Hide console window on Windows in release mode
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -23,7 +18,7 @@ fn main() {
             if let Some(additional_info) = err.additional_info() {
                 message.push_str(&format!(" Additional_info: {additional_info}"));
             }
-            eprintln!("{}", message);
+            eprintln!("{message}");
             std::process::exit(1);
         },
     };
@@ -37,16 +32,16 @@ fn main() {
         if let Some(additional_info) = err.additional_info() {
             message.push_str(&format!(" Additional_info: {additional_info}"));
         }
-        println!("{}", message);
+        println!("{message}");
         std::process::exit(1);
     });
 
     log::info!("Starting...");
-    log::info!("Config loaded: {:#?}", config);
+    log::info!("Config loaded: {config:#?}");
     log::info!("Logger initialized.");
 
     ui::start(config).unwrap_or_else(|err| {
-        log::error!("{}", err);
+        log::error!("{err}");
         std::process::exit(1);
     });
 }

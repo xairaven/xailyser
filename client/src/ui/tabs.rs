@@ -27,7 +27,7 @@ impl std::fmt::Display for Tab {
             Tab::Exit => format!("🗙 {}", t!("Tabs.Exit")),
         };
 
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }
 

@@ -25,7 +25,7 @@ impl MacAddress {
     }
 
     pub fn to_bit_string(&self) -> String {
-        self.0.map(|num| format!("{:08b}", num)).join("")
+        self.0.map(|num| format!("{num:08b}")).join("")
     }
 }
 
@@ -66,7 +66,7 @@ impl std::fmt::Display for MacAddress {
             self.0[0], self.0[1], self.0[2], self.0[3], self.0[4], self.0[5]
         );
 
-        write!(f, "{}", string)
+        write!(f, "{string}")
     }
 }
 

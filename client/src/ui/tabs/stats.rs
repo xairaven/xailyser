@@ -70,7 +70,7 @@ impl StatsTab {
             .num_columns(2)
             .show(ui, |ui| {
                 for protocol in ProtocolsRegistered::iter() {
-                    ui.label(format!("{}:", protocol));
+                    ui.label(format!("{protocol}:"));
                     ui.label(format!(
                         "{}",
                         ctx.net_storage.inspector.records_captured(&protocol)

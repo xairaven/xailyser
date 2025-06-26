@@ -4,7 +4,7 @@ version = "1.0.1"
 authors = ["Alex Kovalov <alexkovalevkpi@gmail.com>"]
 
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.88"
 
 categories = ["network-programming"]
 keywords = ["networking", "routers", "monitoring"]
@@ -12,6 +12,9 @@ keywords = ["networking", "routers", "monitoring"]
 readme = "../README.md"
 license = "GPL-3"
 repository = "https://github.com/xairaven/xailyser"
+
+[lints]
+workspace = true
 
 [dependencies]
 dpi = { path = "../dpi" }

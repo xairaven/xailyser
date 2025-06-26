@@ -184,7 +184,7 @@ impl ConnectionProfilesComponent {
                         );
                     });
 
-                    Grid::new(format!("ConnectionProfile{}", index))
+                    Grid::new(format!("ConnectionProfile{index}"))
                         .striped(false)
                         .num_columns(2)
                         .show(ui, |ui| {
@@ -235,7 +235,7 @@ impl ConnectionProfilesComponent {
                 err
             );
             if let Some(additional_info) = err.additional_info() {
-                text.push_str(&format!("\n{}", additional_info));
+                text.push_str(&format!("\n{additional_info}"));
             }
             MessageModal::error(&text)
         } else {

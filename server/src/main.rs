@@ -1,9 +1,3 @@
-// Project lints
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
-#![deny(clippy::panic)]
-#![deny(unsafe_code)]
-
 use crate::config::Config;
 
 fn main() {
@@ -14,7 +8,7 @@ fn main() {
             if let Some(additional_info) = err.additional_info() {
                 message.push_str(&format!(" Additional_info: {additional_info}"));
             }
-            eprintln!("{}", message);
+            eprintln!("{message}");
             std::process::exit(1);
         },
     };
@@ -24,12 +18,12 @@ fn main() {
         if let Some(additional_info) = err.additional_info() {
             message.push_str(&format!(" Additional_info: {additional_info}"));
         }
-        eprintln!("Error: {}", message);
+        eprintln!("Error: {message}");
         std::process::exit(1);
     });
 
     log::info!("Starting...");
-    log::info!("Config loaded: {:#?}", config);
+    log::info!("Config loaded: {config:#?}");
     log::info!("Logger initialized.");
 
     core::start(config);

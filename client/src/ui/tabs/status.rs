@@ -213,7 +213,7 @@ impl StatusTab {
                             err
                         );
                         if let Some(additional_info) = err.additional_info() {
-                            text.push_str(&format!("\n{}", additional_info));
+                            text.push_str(&format!("\n{additional_info}"));
                         }
                         MessageModal::error(&text)
                     } else {
@@ -276,7 +276,7 @@ impl StatusTab {
                 });
 
                 ui.vertical(|ui| {
-                    Grid::new(format!("DeviceCard{}", index))
+                    Grid::new(format!("DeviceCard{index}"))
                         .num_columns(2)
                         .striped(false)
                         .show(ui, |ui| {
