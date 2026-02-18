@@ -112,7 +112,7 @@ On Linux systems, you may need to install the following dependencies:
 On Fedora systems, you may need to install:
 
    ```bash
-   dnf install libpcap-dev clang clang-devel clang-tools-extra libxkbcommon-devel pkg-config openssl-devel libxcb-devel gtk3-devel atk fontconfig-devel
+   dnf install libpcap-devel clang clang-devel clang-tools-extra libxkbcommon-devel pkg-config openssl-devel libxcb-devel gtk3-devel atk fontconfig-devel
    ```
 
 ### 📰 License
