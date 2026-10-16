@@ -18,14 +18,14 @@ repository = "https://github.com/xairaven/xailyser"
 workspace = true
 
 [dependencies]
-csv = "1.3.1"
-libc = "0.2.173"
-pcap = "2.2.0"
+csv = "1.4.0"
+libc = "0.2.190"
+pcap = "2.5.0"
 hex = "0.4.3"
-num_enum = { version = "0.7.3", features = ["complex-expressions"] }
+num_enum = { version = "0.7.6", features = ["complex-expressions"] }
 nom = "8.0.0"
 radix-tree = "0.2.0"
-serde = { version = "1.0.219", features = ["derive"] }
-strum = "0.27.1"
-strum_macros = "0.27.1"
-thiserror = "2.0.12"
+serde = { version = "1.0.229", features = ["derive"] }
+strum = "0.28.0"
+strum_macros = "0.28.0"
+thiserror = "2.0.21"

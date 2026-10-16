@@ -21,8 +21,8 @@ workspace = true
 common = { path = "../common" }
 dpi = { path = "../dpi" }
 
-chrono = "0.4.41"
-crossbeam = "0.8.4"
+chrono = "0.4.45"
+crossbeam = "0.8.5"
 egui = "0.31.1"
 egui-aesthetix = { git="https://github.com/thebashpotato/egui-aesthetix.git", rev="c26c1dd543819fc46bfebe4cb1f42ee84ed14416", features = ["all_themes"]}
 egui_plot = "0.32.1"
@@ -32,17 +32,17 @@ eframe = { version = "0.31.1", default-features = false, features = [
     "wayland",
 ] }
 fern = "0.7.1"
-http = "1.3.1"
-log = "0.4.27"
-pcap = "2.2.0"
-rand = "0.9.1"
-rfd = "0.15.3"
-rust-i18n = "3.1.5"
-semver = "1.0.26"
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-strum = "0.27.1"
-strum_macros = "0.27.1"
-thiserror = "2.0.12"
-toml = "0.8.23"
-tungstenite = "0.27.0"
+http = "1.5.0"
+log = "0.4.34"
+pcap = "2.5.0"
+rand = "0.10.3"
+rfd = "0.17.2"
+rust-i18n = "4.2.4"
+semver = "1.0.28"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+strum = "0.28.0"
+strum_macros = "0.28.0"
+thiserror = "2.0.21"
+toml = "1.1.8"
+tungstenite = "0.30.0"

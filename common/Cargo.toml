@@ -19,12 +19,12 @@ workspace = true
 [dependencies]
 dpi = { path = "../dpi" }
 
-chrono = "0.4.41"
-crossbeam = "0.8.4"
+chrono = "0.4.45"
+crossbeam = "0.8.5"
 directories = "6.0.0"
-flate2 = { version = "1.1.2", features = ["zlib-rs"], default-features = false }
+flate2 = { version = "1.1.10", features = ["zlib-rs"], default-features = false }
 hex = "0.4.3"
-log = "0.4.27"
-serde = { version = "1.0.219", features = ["derive"] }
-sha2 = "0.10.9"
-thiserror = "2.0.12"
+log = "0.4.34"
+serde = { version = "1.0.229", features = ["derive"] }
+sha2 = "0.11.1"
+thiserror = "2.0.21"

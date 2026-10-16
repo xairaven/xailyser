@@ -68,7 +68,7 @@ impl RootComponent {
                 egui::Frame::new()
                     .fill(theme.bg_secondary_color_visuals())
                     .inner_margin(theme.margin_style())
-                    .stroke(egui::Stroke::new(1.0, theme.bg_secondary_color_visuals())),
+                    .stroke(egui::Stroke::new(1.0_f32, theme.bg_secondary_color_visuals())),
             )
             .min_width(MENU_PANEL_MIN_WIDTH)
             .show_separator_line(true)
