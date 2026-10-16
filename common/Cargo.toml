@@ -4,7 +4,7 @@ version = "1.0.1"
 authors = ["Alex Kovalov <alexkovalevkpi@gmail.com>"]
 
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.99.1"
 
 categories = ["network-programming"]
 keywords = ["networking", "routers", "monitoring"]
