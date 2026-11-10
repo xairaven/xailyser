@@ -21,7 +21,7 @@ impl Default for ModalFields {
 
 impl ModalFields {
     pub fn with_title(mut self, title: String) -> Self {
-        self.title = title.to_string();
+        self.title = title;
         self
     }
 

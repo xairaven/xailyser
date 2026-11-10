@@ -88,7 +88,7 @@ pub fn process(
             }
 
             let response = lock_with_response(context, |ctx| {
-                ctx.change_config_network_interface(network_interface);
+                ctx.change_config_network_interface(&network_interface);
                 Response::SuccessSetInterface(interface_name)
             });
             Some(response)

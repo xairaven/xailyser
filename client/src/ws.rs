@@ -137,7 +137,7 @@ impl WsHandler {
 
         match self.compression {
             true => self.handle_binary_compressed(msg),
-            false => self.handle_text_uncompressed(msg),
+            false => self.handle_text_uncompressed(&msg),
         }
 
         Ok(())
@@ -160,7 +160,7 @@ impl WsHandler {
         }
     }
 
-    fn handle_text_uncompressed(&self, msg: Message) {
+    fn handle_text_uncompressed(&self, msg: &Message) {
         if msg.is_empty() || msg.is_binary() {
             log::warn!("WS-Stream: Received empty or binary message.");
         }

@@ -18,7 +18,7 @@ pub fn metadata(
     let mut sample = Some(Sample::try_from(&metadata.header)?);
 
     if metadata.layers.is_empty() {
-        return header(ctx, metadata.header);
+        return header(ctx, &metadata.header);
     }
 
     let datalink_info = match metadata.layers.first() {
@@ -151,7 +151,7 @@ pub fn metadata(
             ProtocolDto::TCP(value) => push_value(
                 &mut ctx.net_storage.inspector.tcp,
                 (
-                    PortDto::from_tcp(value, &ctx.net_storage.lookup),
+                    PortDto::from_tcp(&value, &ctx.net_storage.lookup),
                     locator.clone(),
                 ),
                 limit,
@@ -160,7 +160,7 @@ pub fn metadata(
             ProtocolDto::UDP(value) => push_value(
                 &mut ctx.net_storage.inspector.udp,
                 (
-                    PortDto::from_udp(value, &ctx.net_storage.lookup),
+                    PortDto::from_udp(&value, &ctx.net_storage.lookup),
                     locator.clone(),
                 ),
                 limit,
@@ -206,8 +206,8 @@ pub fn metadata(
     Ok(())
 }
 
-pub fn header(ctx: &mut Context, header: FrameHeader) -> Result<(), ProcessingError> {
-    let sample = Sample::try_from(&header)?;
+pub fn header(ctx: &mut Context, header: &FrameHeader) -> Result<(), ProcessingError> {
+    let sample = Sample::try_from(header)?;
     ctx.net_storage.speed.load_raw_sample(sample);
 
     Ok(())
@@ -292,7 +292,7 @@ impl PortDto {
             .map(|info| info.service_name.clone())
     }
 
-    fn from_tcp(value: TcpDto, lookup: &Lookup) -> Self {
+    fn from_tcp(value: &TcpDto, lookup: &Lookup) -> Self {
         Self {
             port_source: value.port_source,
             port_destination: value.port_destination,
@@ -304,7 +304,7 @@ impl PortDto {
         }
     }
 
-    fn from_udp(value: UdpDto, lookup: &Lookup) -> Self {
+    fn from_udp(value: &UdpDto, lookup: &Lookup) -> Self {
         Self {
             port_source: value.port_source,
             port_destination: value.port_destination,

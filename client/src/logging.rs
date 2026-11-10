@@ -12,8 +12,7 @@ pub fn setup(log_level: &LevelFilter, format: String) -> Result<(), LogError> {
     fern::Dispatch::new()
         .level(*log_level)
         .format(move |out, message, record| {
-            let formatted =
-                common::logging::parse_format(format.clone(), message, record);
+            let formatted = common::logging::parse_format(&format, message, record);
 
             out.finish(format_args!("{formatted}"))
         })

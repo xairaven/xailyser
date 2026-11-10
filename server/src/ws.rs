@@ -201,7 +201,7 @@ impl WsHandler {
 
         match self.compression {
             true => self.handle_binary_compressed(msg, stream)?,
-            false => self.handle_text_uncompressed(msg, stream)?,
+            false => self.handle_text_uncompressed(&msg, stream)?,
         }
 
         Ok(())
@@ -288,7 +288,7 @@ impl WsHandler {
     }
 
     fn handle_text_uncompressed(
-        &mut self, msg: Message, stream: &mut WSStream,
+        &mut self, msg: &Message, stream: &mut WSStream,
     ) -> Result<(), Box<tungstenite::Error>> {
         if msg.is_empty() || msg.is_binary() {
             log::warn!("WS-{}. Received empty or binary message.", self.id);

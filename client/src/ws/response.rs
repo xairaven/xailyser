@@ -15,7 +15,7 @@ pub fn data(ctx: &mut Context, response: Response) {
 
     let process_result = match frame {
         FrameType::Metadata(metadata) => data::metadata(ctx, metadata),
-        FrameType::Header(header) => data::header(ctx, header),
+        FrameType::Header(header) => data::header(ctx, &header),
         FrameType::Raw(frame) => data::raw(ctx, frame),
     };
     if let Err(err) = process_result {
@@ -38,13 +38,13 @@ pub fn process(ctx: &mut Context, response: Response) {
             modals::success::compression_set(&ctx.modals_tx, is_enabled)
         },
         Response::SuccessSetInterface(new) => {
-            modals::success::interface_set(&ctx.modals_tx, new)
+            modals::success::interface_set(&ctx.modals_tx, &new)
         },
         Response::SuccessSetSendUnparsedFrames(is_enabled) => {
             modals::success::send_unparsed_frames_set(&ctx.modals_tx, is_enabled)
         },
         Response::SuccessSync => process::pong(ctx),
-        Response::Error(error) => modals::error::try_send(&ctx.modals_tx, error),
+        Response::Error(error) => modals::error::try_send(&ctx.modals_tx, &error),
 
         Response::Data(_) => {
             log::error!("Response: Wrong flow for this type of data chosen");
@@ -62,7 +62,7 @@ mod modals {
         use crate::ws::response::modals::Sender;
         use common::messages::ServerError;
 
-        pub fn try_send(tx: &Sender, error: ServerError) {
+        pub fn try_send(tx: &Sender, error: &ServerError) {
             MessageModal::error(&localize(&error)).try_send_by(tx);
         }
 
@@ -107,7 +107,7 @@ mod modals {
             MessageModal::info(&t!("Response.SaveConfig.Success")).try_send_by(tx);
         }
 
-        pub fn interface_set(tx: &Sender, new: String) {
+        pub fn interface_set(tx: &Sender, new: &str) {
             MessageModal::info(&t!("Response.SetInterface.Success", "interface" = new))
                 .try_send_by(tx);
         }

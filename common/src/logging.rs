@@ -36,7 +36,7 @@ pub fn generate_file_name(title: &str) -> String {
     format!("{title_formatted}_{date}.log")
 }
 
-pub fn parse_format(format: String, message: &Arguments, record: &Record) -> String {
+pub fn parse_format(format: &str, message: &Arguments, record: &Record) -> String {
     let mut log = format.trim().to_string();
 
     // Time

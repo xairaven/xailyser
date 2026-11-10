@@ -35,12 +35,12 @@ impl TcpHandler {
             .map_err(TcpError::FailedSetNonBlocking)?;
 
         log::info!("Listening on {address}");
-        self.listen(server);
+        self.listen(&server);
 
         Ok(())
     }
 
-    pub fn listen(&mut self, listener: TcpListener) {
+    pub fn listen(&mut self, listener: &TcpListener) {
         const APPROXIMATE_MAX_CONNECTIONS: usize = 5;
         let mut ws_handles: Vec<JoinHandle<()>> =
             Vec::with_capacity(APPROXIMATE_MAX_CONNECTIONS);
