@@ -27,7 +27,7 @@ pub fn read_database(path: PathBuf) -> io::Result<PortServiceTable> {
     const INDEX_DESCRIPTION: usize = 3;
     for result in reader.records() {
         let record = result?;
-        debug_assert!(record.len() == CSV_FIELDS);
+        debug_assert_eq!(record.len(), CSV_FIELDS);
 
         let port = match record.get(INDEX_PORT) {
             Some(value) => match value.parse::<u16>() {
@@ -39,15 +39,15 @@ pub fn read_database(path: PathBuf) -> io::Result<PortServiceTable> {
 
         let service_name = match record.get(INDEX_SERVICE) {
             Some(value) => value.to_string(),
-            None => "".to_string(),
+            None => String::new(),
         };
         let transport_protocol = match record.get(INDEX_TRANSPORT_PROTOCOL) {
             Some(value) => value.to_string(),
-            None => "".to_string(),
+            None => String::new(),
         };
         let description = match record.get(INDEX_DESCRIPTION) {
             Some(value) => value.to_string(),
-            None => "".to_string(),
+            None => String::new(),
         };
 
         let port_info = PortInfo {

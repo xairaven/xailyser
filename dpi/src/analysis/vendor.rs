@@ -23,7 +23,7 @@ pub fn read_database(path: PathBuf) -> io::Result<(OuiRadixTree, usize)> {
             continue;
         }
         let parts: Vec<&str> = line.splitn(3, "\t").map(|part| part.trim()).collect();
-        debug_assert!(parts.len() == 3);
+        debug_assert_eq!(parts.len(), 3);
         let prefix_raw = match parts.first() {
             Some(value) => *value,
             None => return Err(io::ErrorKind::InvalidData.into()),
