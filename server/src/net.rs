@@ -34,9 +34,8 @@ impl PacketSniffer {
                 self.synchronize_frame_senders();
                 match self.capture.next_packet() {
                     Ok(packet) => {
-                        let frame = match self.parser.process(packet) {
-                            Some(frame) => frame,
-                            None => continue,
+                        let Some(frame) = self.parser.process(packet) else {
+                            continue;
                         };
                         self.frame_channel.send(frame);
                     },

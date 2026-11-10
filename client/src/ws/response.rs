@@ -5,12 +5,9 @@ use common::messages::Response;
 use dpi::dto::frame::FrameType;
 
 pub fn data(ctx: &mut Context, response: Response) {
-    let frame = match response {
-        Response::Data(frame) => frame,
-        _ => {
-            log::error!("Response: Wrong flow for this type of data chosen");
-            return;
-        },
+    let Response::Data(frame) = response else {
+        log::error!("Response: Wrong flow for this type of data chosen");
+        return;
     };
 
     let process_result = match frame {

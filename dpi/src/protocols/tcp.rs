@@ -99,9 +99,8 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
 pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     // Checking ports
-    let layer = match metadata.layers.last() {
-        Some(ProtocolData::TCP(value)) => value,
-        _ => return None,
+    let Some(ProtocolData::TCP(layer)) = metadata.layers.last() else {
+        return None;
     };
 
     for children in ProtocolId::TCP.children()? {

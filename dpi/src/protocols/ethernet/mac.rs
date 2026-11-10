@@ -78,9 +78,8 @@ pub struct Vendor {
 
 pub fn parse(input: &[u8]) -> IResult<&[u8], MacAddress> {
     let (input, mac_bytes) = take(LENGTH_BYTES)(input)?;
-    let mac = match MacAddress::try_from(mac_bytes) {
-        Ok(mac) => mac,
-        Err(_) => return Err(ParserError::ErrorVerify.to_nom(input)),
+    let Ok(mac) = MacAddress::try_from(mac_bytes) else {
+        return Err(ParserError::ErrorVerify.to_nom(input));
     };
 
     Ok((input, mac))

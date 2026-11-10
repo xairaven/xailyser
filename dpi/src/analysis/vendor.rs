@@ -71,9 +71,8 @@ pub fn lookup_vendor(tree: &OuiRadixTree, mac: &MacAddress) -> Option<Vendor> {
     const MASKS: [usize; 3] = [36, 28, 24];
     let bits = mac.to_bit_string();
     for mask in MASKS.iter() {
-        let bits = match bits.get(..*mask) {
-            Some(value) => value,
-            None => continue,
+        let Some(bits) = bits.get(..*mask) else {
+            continue;
         };
         if let Some(node) = tree.find(bits.to_string()) {
             return node.data.clone();

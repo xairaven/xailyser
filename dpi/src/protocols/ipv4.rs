@@ -115,9 +115,8 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
 pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     // Checking IP inner protocol type
-    let ipv4 = match metadata.layers.last() {
-        Some(ProtocolData::IPv4(value)) => value,
-        _ => return None,
+    let Some(ProtocolData::IPv4(ipv4)) = metadata.layers.last() else {
+        return None;
     };
     match ipv4.protocol_inner {
         IpNextLevelProtocol::ICMP => Some(ProtocolId::ICMPv4),

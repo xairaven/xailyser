@@ -180,9 +180,8 @@ pub enum Options {
 impl Options {
     pub fn parse(input: &[u8]) -> IResult<&[u8], OptionData> {
         let (rest, code) = be_u8().parse(input)?;
-        let option = match Options::try_from(code) {
-            Ok(value) => value,
-            Err(_) => return Err(ParserError::ErrorVerify.to_nom(input)),
+        let Ok(option) = Options::try_from(code) else {
+            return Err(ParserError::ErrorVerify.to_nom(input));
         };
 
         // Just skipping or breaking

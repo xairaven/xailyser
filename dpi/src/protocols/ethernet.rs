@@ -31,9 +31,8 @@ pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
 
 pub fn best_children(metadata: &FrameMetadata) -> Option<ProtocolId> {
     // Checking ethernet ether type
-    let ethernet = match metadata.layers.first() {
-        Some(ProtocolData::Ethernet(value)) => value,
-        _ => return None,
+    let Some(ProtocolData::Ethernet(ethernet)) = metadata.layers.first() else {
+        return None;
     };
     match ethernet.ether_type {
         EtherType::Arp => Some(ProtocolId::Arp),

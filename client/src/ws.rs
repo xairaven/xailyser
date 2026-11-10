@@ -149,12 +149,9 @@ impl WsHandler {
         }
 
         if msg.is_binary() {
-            let decompressed = match decompress(&msg.into_data()) {
-                Ok(value) => value,
-                Err(_) => {
-                    log::error!("WS-Stream: Failed to decompress message.");
-                    return;
-                },
+            let Ok(decompressed) = decompress(&msg.into_data()) else {
+                log::error!("WS-Stream: Failed to decompress message.");
+                return;
             };
             self.pass_responses(&decompressed);
         }
@@ -193,12 +190,9 @@ impl WsHandler {
 
     fn send_messages(&mut self) {
         if let Ok(command) = self.ui_client_requests_rx.try_recv() {
-            let message = match command.into_message(self.compression) {
-                Ok(value) => value,
-                Err(_) => {
-                    log::error!("Serde: Can't serialize message!");
-                    return;
-                },
+            let Ok(message) = command.into_message(self.compression) else {
+                log::error!("Serde: Can't serialize message!");
+                return;
             };
 
             if let Err(err) = self.stream.send(message) {

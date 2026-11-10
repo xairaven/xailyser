@@ -14,12 +14,9 @@ fn main() {
         },
     };
 
-    let workspace_root = match Path::new(&manifest_dir).parent() {
-        Some(value) => value,
-        None => {
-            eprintln!("Failed to get parent directory");
-            std::process::exit(1);
-        },
+    let Some(workspace_root) = Path::new(&manifest_dir).parent() else {
+        eprintln!("Failed to get parent directory");
+        std::process::exit(1);
     };
 
     // Lib Folder

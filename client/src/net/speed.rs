@@ -123,10 +123,10 @@ impl SpeedData {
 
         for sample in deque {
             let second = (now - sample.time_captured).num_seconds();
-            let second = match usize::try_from(second) {
-                Ok(value) => value,
-                Err(_) => continue,
+            let Ok(second) = usize::try_from(second) else {
+                continue;
             };
+
             if second < seconds_max {
                 bucket[second] += settings.units.value(sample.captured_bytes as f64);
             }

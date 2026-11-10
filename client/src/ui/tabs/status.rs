@@ -154,13 +154,10 @@ impl StatusTab {
                         ctx.net_storage.raw.amount()
                     ));
                     if ui.button("Save .pcap").clicked() {
-                        let link_type = match ctx.settings_server.link_type {
-                            Some(value) => value,
-                            None => {
-                                MessageModal::error(&t!("Error.FailedUnpackLinkType"))
-                                    .try_send_by(&ctx.modals_tx);
-                                return;
-                            },
+                        let Some(link_type) = ctx.settings_server.link_type else {
+                            MessageModal::error(&t!("Error.FailedUnpackLinkType"))
+                                .try_send_by(&ctx.modals_tx);
+                            return;
                         };
 
                         if let Some(path) = rfd::FileDialog::new()

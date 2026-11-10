@@ -65,11 +65,8 @@ fn traversal(
                 };
             }
 
-            let children = match id.children() {
-                Some(value) => value,
-                None => {
-                    return ProcessResult::Incomplete;
-                },
+            let Some(children) = id.children() else {
+                return ProcessResult::Incomplete;
             };
 
             for id in children {
