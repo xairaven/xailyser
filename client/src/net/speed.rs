@@ -22,11 +22,11 @@ impl SpeedData {
         match directed_sample {
             SampleDirection::Send(value) => {
                 self.throughput.push_back(value.clone());
-                self.send.push_back(value)
+                self.send.push_back(value);
             },
             SampleDirection::Receive(value) => {
                 self.throughput.push_back(value.clone());
-                self.receive.push_back(value)
+                self.receive.push_back(value);
             },
             SampleDirection::Throughput(value) => self.throughput.push_back(value),
         }

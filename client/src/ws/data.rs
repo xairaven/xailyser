@@ -43,7 +43,7 @@ pub fn metadata(
         match layer {
             ProtocolDto::Ethernet(_) => return Err(ProcessingError::DatalinkNotFirst),
             ProtocolDto::Arp(value) => {
-                push_value(&mut ctx.net_storage.inspector.arp, value, limit, frames_len)
+                push_value(&mut ctx.net_storage.inspector.arp, value, limit, frames_len);
             },
             ProtocolDto::DHCPv4(value) => push_value(
                 &mut ctx.net_storage.inspector.dhcpv4,
@@ -58,7 +58,7 @@ pub fn metadata(
                 frames_len,
             ),
             ProtocolDto::DNS(value) => {
-                push_value(&mut ctx.net_storage.inspector.dns, value, limit, frames_len)
+                push_value(&mut ctx.net_storage.inspector.dns, value, limit, frames_len);
             },
             ProtocolDto::HTTP(value) => push_value(
                 &mut ctx.net_storage.inspector.http,

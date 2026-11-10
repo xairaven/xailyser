@@ -56,7 +56,7 @@ pub fn connect(
             match result {
                 Ok(_) => log::info!("WS-Stream: Sent connection server settings request"),
                 Err(_) => {
-                    log::error!("WS-Stream: Failed to send connection settings request.")
+                    log::error!("WS-Stream: Failed to send connection settings request.");
                 },
             }
         },

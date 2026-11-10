@@ -47,7 +47,7 @@ pub trait Modal: Send + Sync {
             });
 
             if modal.should_close() {
-                self.close()
+                self.close();
             }
         }
     }

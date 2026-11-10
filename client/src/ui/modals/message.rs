@@ -16,7 +16,7 @@ impl Modal for MessageModal {
 
         ui.vertical_centered_justified(|ui| {
             if ui.button(t!("Button.Close")).clicked() {
-                self.close()
+                self.close();
             }
         });
     }

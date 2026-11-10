@@ -93,7 +93,7 @@ impl TcpHandler {
                                         WsError::AuthFailed(error_detailed) => {
                                             log::error!(
                                                 "WS-{thread_counter}. {err}. {error_detailed}"
-                                            )
+                                            );
                                         },
                                         _ => log::error!(
                                             "WS-{thread_counter}. {err}. Terminated connection."

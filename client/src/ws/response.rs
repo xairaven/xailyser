@@ -31,17 +31,17 @@ pub fn process(ctx: &mut Context, response: Response) {
     match response {
         Response::ServerSettings(dto) => process::server_settings(ctx, dto),
         Response::SuccessChangePassword => {
-            modals::success::password_changed(&ctx.modals_tx)
+            modals::success::password_changed(&ctx.modals_tx);
         },
         Response::SuccessSaveConfig => modals::success::config_saved(&ctx.modals_tx),
         Response::SuccessSetCompression(is_enabled) => {
-            modals::success::compression_set(&ctx.modals_tx, is_enabled)
+            modals::success::compression_set(&ctx.modals_tx, is_enabled);
         },
         Response::SuccessSetInterface(new) => {
-            modals::success::interface_set(&ctx.modals_tx, &new)
+            modals::success::interface_set(&ctx.modals_tx, &new);
         },
         Response::SuccessSetSendUnparsedFrames(is_enabled) => {
-            modals::success::send_unparsed_frames_set(&ctx.modals_tx, is_enabled)
+            modals::success::send_unparsed_frames_set(&ctx.modals_tx, is_enabled);
         },
         Response::SuccessSync => process::pong(ctx),
         Response::Error(error) => modals::error::try_send(&ctx.modals_tx, &error),

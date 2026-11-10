@@ -58,12 +58,12 @@ impl Modal for ProfileModal {
         ui.columns(2, |columns| {
             columns[0].vertical_centered_justified(|ui| {
                 if ui.button(t!("Button.Save")).clicked() {
-                    self.save(ctx)
+                    self.save(ctx);
                 }
             });
             columns[1].vertical_centered_justified(|ui| {
                 if ui.button(t!("Button.Close")).clicked() {
-                    self.close()
+                    self.close();
                 }
             });
         });
