@@ -192,7 +192,7 @@ fn save_client_config_view(
                 ))
                 .try_send_by(&ctx.modals_tx);
             },
-        };
+        }
     }
 }
 

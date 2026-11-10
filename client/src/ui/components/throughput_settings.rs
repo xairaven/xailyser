@@ -100,7 +100,7 @@ impl ThroughputSettings {
                     ))
                     .try_send_by(&ctx.modals_tx);
                 },
-            };
+            }
         }
     }
 

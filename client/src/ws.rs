@@ -65,7 +65,7 @@ pub fn connect(
                 "WS-Stream: Serde. Can't serialize server settings request after connection!"
             );
         },
-    };
+    }
 
     Ok(stream)
 }

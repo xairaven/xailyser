@@ -218,7 +218,7 @@ impl AuthFields {
             return Err(AuthFieldError::PasswordTooSmall);
         } else if password.len() > MAX_PASSWORD_LEN {
             return Err(AuthFieldError::PasswordTooLarge);
-        };
+        }
 
         let profile = Profile {
             title: title.to_string(),

@@ -19,7 +19,7 @@ pub const PACKET_LENGTH: usize = 28;
 pub fn parse(bytes: &[u8]) -> IResult<&[u8], ProtocolData> {
     if bytes.len() < PACKET_LENGTH {
         return Err(ParserError::ErrorVerify.to_nom(bytes));
-    };
+    }
 
     // Cutting Ethernet padding & FCS
     let bytes = if bytes.len() > PACKET_LENGTH {

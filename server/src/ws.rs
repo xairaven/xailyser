@@ -85,7 +85,7 @@ impl WsHandler {
                         .body(Some(auth::errors::PASSWORD_HEADER_NOT_FOUND.to_string()))
                         .unwrap_or_default());
                 },
-            };
+            }
 
             match compression_header {
                 Some(given_compression)

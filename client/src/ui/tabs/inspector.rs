@@ -37,7 +37,7 @@ impl InspectorTab {
             ProtocolId::IPv6 => self.ipv6_view(ui, ctx),
             ProtocolId::TCP => self.tcp_view(ui, ctx),
             ProtocolId::UDP => self.udp_view(ui, ctx),
-        };
+        }
     }
 
     fn protocol_view<T, F>(
@@ -692,7 +692,7 @@ impl InspectorTab {
                             {
                                 self.page = 1;
                                 to_restart = true;
-                            };
+                            }
                         }
                     });
             });
@@ -713,7 +713,7 @@ impl InspectorTab {
                     .clicked()
                 {
                     self.page = (self.page as isize + LEFT_FAR) as usize;
-                };
+                }
                 if ui
                     .add_enabled(
                         Self::can_go_to_page(self.page, LEFT, total_pages),
@@ -722,7 +722,7 @@ impl InspectorTab {
                     .clicked()
                 {
                     self.page = (self.page as isize + LEFT) as usize;
-                };
+                }
                 ui.label(format!("Page {} of {} total", self.page, total_pages));
                 if ui
                     .add_enabled(
@@ -732,7 +732,7 @@ impl InspectorTab {
                     .clicked()
                 {
                     self.page = (self.page as isize + RIGHT) as usize;
-                };
+                }
                 if ui
                     .add_enabled(
                         Self::can_go_to_page(self.page, RIGHT_FAR, total_pages),
@@ -741,7 +741,7 @@ impl InspectorTab {
                     .clicked()
                 {
                     self.page = (self.page as isize + RIGHT_FAR) as usize;
-                };
+                }
                 if ui.button(t!("Button.Clear")).clicked() {
                     self.page = 1;
                     storage.clear();
