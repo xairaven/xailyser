@@ -44,7 +44,7 @@ impl Context {
     }
 
     pub fn change_config_network_interface(&mut self, interface: &pcap::Device) {
-        let name = interface::get_network_interface_name(&interface);
+        let name = interface::get_network_interface_name(interface);
         self.config.interface = Some(name);
     }
 

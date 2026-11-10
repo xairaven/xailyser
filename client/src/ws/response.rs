@@ -63,7 +63,7 @@ mod modals {
         use common::messages::ServerError;
 
         pub fn try_send(tx: &Sender, error: &ServerError) {
-            MessageModal::error(&localize(&error)).try_send_by(tx);
+            MessageModal::error(&localize(error)).try_send_by(tx);
         }
 
         fn localize(err: &ServerError) -> String {
