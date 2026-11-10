@@ -267,16 +267,16 @@ pub struct PortDto {
 
 impl PortDto {
     pub fn find_app(ports: (u16, u16), lookup: &Lookup, protocol: ProtocolId) -> String {
-        if let Some(info_vec) = lookup.find_port(&ports.0) {
-            if let Some(app) = Self::find_app_by_protocol(info_vec, protocol) {
-                return app;
-            }
+        if let Some(info_vec) = lookup.find_port(&ports.0)
+            && let Some(app) = Self::find_app_by_protocol(info_vec, protocol)
+        {
+            return app;
         }
 
-        if let Some(info_vec) = lookup.find_port(&ports.1) {
-            if let Some(app) = Self::find_app_by_protocol(info_vec, protocol) {
-                return app;
-            }
+        if let Some(info_vec) = lookup.find_port(&ports.1)
+            && let Some(app) = Self::find_app_by_protocol(info_vec, protocol)
+        {
+            return app;
         }
 
         String::from("-")

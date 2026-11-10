@@ -56,16 +56,14 @@ impl PacketSniffer {
 
     fn synchronize_frame_senders(&mut self) {
         let mut sender_ready = false;
-        if let Ok(frame_pool) = self.frame_channels_pool.try_read() {
-            if frame_pool.is_sender_ready() {
-                sender_ready = true;
-            }
+        if let Ok(frame_pool) = self.frame_channels_pool.try_read()
+            && frame_pool.is_sender_ready()
+        {
+            sender_ready = true;
         }
-        if sender_ready {
-            if let Ok(mut value) = self.frame_channels_pool.try_write() {
-                while let Some(sender) = value.last_sender() {
-                    self.frame_channel.add_sender(sender);
-                }
+        if sender_ready && let Ok(mut value) = self.frame_channels_pool.try_write() {
+            while let Some(sender) = value.last_sender() {
+                self.frame_channel.add_sender(sender);
             }
         }
     }

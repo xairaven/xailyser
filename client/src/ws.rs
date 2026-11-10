@@ -129,10 +129,10 @@ impl WsHandler {
         }
 
         // Server don't send ping messages
-        if msg.is_ping() {
-            if let Err(err) = self.stream.send(Message::Pong(Bytes::new())) {
-                log::error!("WS-Stream: Can't send message. Error: {err}");
-            }
+        if msg.is_ping()
+            && let Err(err) = self.stream.send(Message::Pong(Bytes::new()))
+        {
+            log::error!("WS-Stream: Can't send message. Error: {err}");
         }
 
         match self.compression {

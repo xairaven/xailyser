@@ -160,12 +160,11 @@ fn parse_chunked(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
         rest_buffer = rest;
 
         // 2) 0 Size - End
-        if size == 0 {
-            if let Ok((rest, _)) =
+        if size == 0
+            && let Ok((rest, _)) =
                 tag::<_, _, (&[u8], nom::error::ErrorKind)>(CRLF).parse(rest_buffer)
-            {
-                return Ok((rest, body));
-            }
+        {
+            return Ok((rest, body));
         }
 
         // 3) Reading chunk + CRLF

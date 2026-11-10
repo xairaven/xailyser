@@ -104,10 +104,10 @@ pub fn start(config: Config) {
         });
 
     // Joining threads
-    if let Some(handle) = packet_sniffer_handle {
-        if handle.join().is_err() {
-            log::error!("Failed to join packet sniffing thread!");
-        }
+    if let Some(handle) = packet_sniffer_handle
+        && handle.join().is_err()
+    {
+        log::error!("Failed to join packet sniffing thread!");
     }
     if tcp_thread_handle.join().is_err() {
         log::error!("Failed to join TCP listening thread!");

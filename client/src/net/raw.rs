@@ -17,10 +17,10 @@ impl RawStorage {
 
     pub fn add(&mut self, frame: OwnedFrame) {
         self.vec.push_back(frame);
-        if let Some(threshold) = self.threshold {
-            if self.vec.len() > threshold {
-                self.vec.pop_front();
-            }
+        if let Some(threshold) = self.threshold
+            && self.vec.len() > threshold
+        {
+            self.vec.pop_front();
         }
     }
 

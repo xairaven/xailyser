@@ -106,10 +106,10 @@ impl eframe::App for App {
         log::info!("Shutdown started...");
         self.context.shutdown_flag.store(true, Ordering::Release);
 
-        if let Some(handle) = self.net_thread.take() {
-            if handle.join().is_err() {
-                log::error!("Failed to join net-thread handle.");
-            }
+        if let Some(handle) = self.net_thread.take()
+            && handle.join().is_err()
+        {
+            log::error!("Failed to join net-thread handle.");
         }
         log::info!("Shutdown complete");
     }

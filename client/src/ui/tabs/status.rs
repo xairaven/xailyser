@@ -166,17 +166,15 @@ impl StatusTab {
                                 net::PCAP_FILTER_EXTENSIONS,
                             )
                             .save_file()
-                        {
-                            if let Err(err) =
+                            && let Err(err) =
                                 ctx.net_storage.raw.save_pcap(path, link_type)
-                            {
-                                MessageModal::error(&format!(
-                                    "{}: {}",
-                                    &t!("Error.Pcap"),
-                                    err
-                                ))
-                                .try_send_by(&ctx.modals_tx);
-                            }
+                        {
+                            MessageModal::error(&format!(
+                                "{}: {}",
+                                &t!("Error.Pcap"),
+                                err
+                            ))
+                            .try_send_by(&ctx.modals_tx);
                         }
                     }
                     if ui.button("Reset").clicked() {
