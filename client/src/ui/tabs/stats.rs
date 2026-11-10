@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 pub struct StatsTab;
 
 impl StatsTab {
-    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    pub fn show(&self, ui: &mut egui::Ui, ctx: &Context) {
         self.tab_heading(ui);
 
         ScrollArea::vertical()
@@ -27,7 +27,7 @@ impl StatsTab {
             });
     }
 
-    fn main_statistics_view(&self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn main_statistics_view(&self, ui: &mut egui::Ui, ctx: &Context) {
         ui.heading(format!("{}.", t!("Tab.Stats.Main.Header")));
         Grid::new("StatsMain")
             .striped(false)
@@ -63,7 +63,7 @@ impl StatsTab {
             });
     }
 
-    fn protocols_view(&self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn protocols_view(&self, ui: &mut egui::Ui, ctx: &Context) {
         ui.heading(format!("{}:", t!("Tab.Stats.Protocols.Header")));
         Grid::new("Stats.Protocols.Grid")
             .striped(false)

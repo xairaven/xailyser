@@ -15,7 +15,7 @@ impl PreAuthClientSettingsComponent {
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    pub fn show(&mut self, ui: &egui::Ui, ctx: &mut Context) {
         let theme = ctx.client_settings.theme.into_aesthetix_theme();
         TopBottomPanel::top("TOP_PANEL_PRE_AUTH_CLIENT_SETTINGS")
             .frame(

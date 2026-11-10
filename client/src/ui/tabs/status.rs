@@ -68,7 +68,7 @@ impl StatusTab {
         });
     }
 
-    fn plot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn plot_view(&self, ui: &mut egui::Ui, ctx: &mut Context) {
         use egui_plot::Legend;
         use egui_plot::Line;
         use egui_plot::Plot;
@@ -118,7 +118,7 @@ impl StatusTab {
             });
     }
 
-    fn current_peak_stats_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn current_peak_stats_view(&self, ui: &mut egui::Ui, ctx: &Context) {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             ui.label(format!(
                 "⬆ {}: {:.2}",
@@ -143,7 +143,7 @@ impl StatusTab {
         });
     }
 
-    fn pcap_save_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn pcap_save_view(&self, ui: &mut egui::Ui, ctx: &mut Context) {
         if !ctx.net_storage.raw.is_empty() {
             Grid::new("UnparsedFramesControls")
                 .num_columns(3)
@@ -189,7 +189,7 @@ impl StatusTab {
         }
     }
 
-    fn devices_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn devices_view(&self, ui: &mut egui::Ui, ctx: &Context) {
         ui.columns(2, |columns| {
             columns[0].horizontal(|ui| {
                 ui.heading(format!("{}:", t!("Tab.Status.Devices.Heading")));
@@ -236,7 +236,7 @@ impl StatusTab {
     }
 
     fn device_view(
-        &mut self, ui: &mut egui::Ui, ctx: &Context, device: &LocalDevice, index: usize,
+        &self, ui: &mut egui::Ui, ctx: &Context, device: &LocalDevice, index: usize,
     ) {
         let theme = ctx.client_settings.theme.into_aesthetix_theme();
         egui::Frame::group(&egui::Style::default())

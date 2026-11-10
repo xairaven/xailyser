@@ -75,7 +75,7 @@ impl ThroughputSettings {
         });
     }
 
-    fn save_client_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn save_client_config_view(&self, ui: &mut egui::Ui, ctx: &mut Context) {
         ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.ThroughputSettings.Label.SaveConfig"
         ))))

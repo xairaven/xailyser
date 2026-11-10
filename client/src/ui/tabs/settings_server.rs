@@ -19,7 +19,7 @@ pub struct SettingsServerTab {
 }
 
 impl SettingsServerTab {
-    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         self.tab_heading(ui);
 
         const GRID_COLUMNS: usize = 4;
@@ -68,7 +68,7 @@ impl SettingsServerTab {
         );
     }
 
-    fn request_settings_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn request_settings_view(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         if ui
             .button(t!("Tab.SettingsServer.Label.RequestSettings"))
             .clicked()
@@ -102,7 +102,7 @@ impl SettingsServerTab {
         ui.label(req_upd_timestamp);
     }
 
-    fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn save_server_config_view(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.SettingsServer.Label.SaveConfig"
         ))));
@@ -120,7 +120,7 @@ impl SettingsServerTab {
         }
     }
 
-    fn reboot_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn reboot_view(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.SettingsServer.Label.RestartServer"
         ))))
@@ -151,7 +151,7 @@ impl SettingsServerTab {
         }
     }
 
-    fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn compression_view(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         let differ = ctx.settings_server.compression_active
             != ctx.settings_server.compression_config;
 
@@ -174,7 +174,7 @@ impl SettingsServerTab {
         }
     }
 
-    fn change_password_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn change_password_view(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         ui.add(egui::Label::new(styles::heading::normal(&t!(
             "Tab.SettingsServer.Label.ChangePassword"
         ))));
@@ -188,7 +188,7 @@ impl SettingsServerTab {
         }
     }
 
-    fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn interfaces_view(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         ui.collapsing(
             styles::heading::normal(&t!("Tab.SettingsServer.Label.Interfaces")),
             |ui| {
@@ -280,7 +280,7 @@ impl SettingsServerTab {
         );
     }
 
-    fn sending_unparsed_frames_view(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    fn sending_unparsed_frames_view(&mut self, ui: &mut egui::Ui, ctx: &Context) {
         let differ = ctx.settings_server.send_unparsed_frames_active
             != ctx.settings_server.send_unparsed_frames_config;
 
@@ -318,7 +318,7 @@ impl SettingsServerTab {
         }
     }
 
-    fn request_server_settings(&mut self, ctx: &mut Context) {
+    fn request_server_settings(&mut self, ctx: &Context) {
         self.last_request = Some(Local::now());
         let result = ctx
             .ui_client_requests_tx

@@ -15,7 +15,7 @@ pub struct ConnectionProfilesComponent {
 
 impl ConnectionProfilesComponent {
     pub fn show(
-        &mut self, ui: &mut egui::Ui, ctx: &mut Context, auth_fields: &mut AuthFields,
+        &mut self, ui: &egui::Ui, ctx: &mut Context, auth_fields: &mut AuthFields,
     ) {
         let theme = ctx.client_settings.theme.into_aesthetix_theme();
         let profiles_amount = ctx.profiles_storage.profiles.len();
@@ -226,7 +226,7 @@ impl ConnectionProfilesComponent {
         self.is_opened = false;
     }
 
-    fn save_profiles(&mut self, ctx: &mut Context) {
+    fn save_profiles(&self, ctx: &Context) {
         let modal = if let Err(err) = ctx.profiles_storage.save_to_file() {
             let mut text = format!(
                 "{}\n{}: {}.",

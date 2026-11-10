@@ -59,7 +59,7 @@ impl RootComponent {
 }
 
 impl RootComponent {
-    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    pub fn show(&mut self, ui: &egui::Ui, ctx: &mut Context) {
         let theme = ctx.client_settings.theme.into_aesthetix_theme();
 
         SidePanel::left("MENU_PANEL")
@@ -68,7 +68,10 @@ impl RootComponent {
                 egui::Frame::new()
                     .fill(theme.bg_secondary_color_visuals())
                     .inner_margin(theme.margin_style())
-                    .stroke(egui::Stroke::new(1.0_f32, theme.bg_secondary_color_visuals())),
+                    .stroke(egui::Stroke::new(
+                        1.0_f32,
+                        theme.bg_secondary_color_visuals(),
+                    )),
             )
             .min_width(MENU_PANEL_MIN_WIDTH)
             .show_separator_line(true)

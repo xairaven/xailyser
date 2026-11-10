@@ -27,7 +27,7 @@ impl Default for AboutTab {
 }
 
 impl AboutTab {
-    pub fn show(&mut self, ui: &mut egui::Ui, ctx: &mut Context) {
+    pub fn show(&self, ui: &mut egui::Ui, ctx: &Context) {
         self.tab_heading(ui);
 
         let theme = ctx.client_settings.theme.into_aesthetix_theme();
