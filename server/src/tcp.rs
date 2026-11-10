@@ -61,12 +61,10 @@ impl TcpHandler {
                             let frame_receiver = match self.frame_channels_pool.write() {
                                 Ok(mut value) => {
                                     value.create();
-                                    if let Some(receiver) = value.last_receiver() {
-                                        receiver
-                                    } else {
+                                    value.last_receiver().map_or_else(|| {
                                         log::error!("Failed to create broadcast receiver from pool.");
                                         std::process::exit(1);
-                                    }
+                                    }, |receiver| receiver)
                                 }
                                 Err(err) => {
                                     log::error!("Broadcast pool lock failed: {err}");

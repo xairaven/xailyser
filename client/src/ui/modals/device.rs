@@ -55,10 +55,12 @@ impl Modal for DeviceModal {
 impl DeviceModal {
     pub fn with_id(id: MacAddress, ctx: &Context) -> Self {
         Self {
-            alias: match ctx.net_storage.devices.aliases.get(&id) {
-                Some(alias) => alias.clone(),
-                None => Default::default(),
-            },
+            alias: ctx
+                .net_storage
+                .devices
+                .aliases
+                .get(&id)
+                .map_or_else(Default::default, Clone::clone),
             mac: id,
             modal: ModalFields::default()
                 .with_title(format!("✏ {}", t!("Modal.DeviceAlias.Title")))

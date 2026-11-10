@@ -37,18 +37,15 @@ pub fn read_database(path: PathBuf) -> io::Result<PortServiceTable> {
             None => continue,
         };
 
-        let service_name = match record.get(INDEX_SERVICE) {
-            Some(value) => value.to_string(),
-            None => String::new(),
-        };
-        let transport_protocol = match record.get(INDEX_TRANSPORT_PROTOCOL) {
-            Some(value) => value.to_string(),
-            None => String::new(),
-        };
-        let description = match record.get(INDEX_DESCRIPTION) {
-            Some(value) => value.to_string(),
-            None => String::new(),
-        };
+        let service_name = record
+            .get(INDEX_SERVICE)
+            .map_or_else(String::new, ToString::to_string);
+        let transport_protocol = record
+            .get(INDEX_TRANSPORT_PROTOCOL)
+            .map_or_else(String::new, ToString::to_string);
+        let description = record
+            .get(INDEX_DESCRIPTION)
+            .map_or_else(String::new, ToString::to_string);
 
         let port_info = PortInfo {
             port,

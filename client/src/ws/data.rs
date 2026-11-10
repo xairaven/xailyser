@@ -234,25 +234,26 @@ pub struct Locator {
 
 impl Locator {
     pub fn ip_to_string(&self) -> (String, String) {
-        let (source_ip, target_ip) = match self.ipv4 {
-            Some(addresses) => (addresses.0.to_string(), addresses.1.to_string()),
-            None => match self.ipv6 {
-                Some(addresses) => (addresses.0.to_string(), addresses.1.to_string()),
-                None => ("-".to_string(), "-".to_string()),
+        let (source_ip, target_ip) = self.ipv4.map_or_else(
+            || {
+                self.ipv6.map_or_else(
+                    || ("-".to_string(), "-".to_string()),
+                    |addresses| (addresses.0.to_string(), addresses.1.to_string()),
+                )
             },
-        };
+            |addresses| (addresses.0.to_string(), addresses.1.to_string()),
+        );
+
         (source_ip, target_ip)
     }
 
     pub fn mac_to_string(&self, aliases: &DeviceAliases) -> (String, String) {
-        let source_mac = match aliases.get(&self.mac.0) {
-            Some(value) => value.to_string(),
-            None => self.mac.0.to_string(),
-        };
-        let destination_mac = match aliases.get(&self.mac.1) {
-            Some(value) => value.to_string(),
-            None => self.mac.1.to_string(),
-        };
+        let source_mac = aliases
+            .get(&self.mac.0)
+            .map_or_else(|| self.mac.0.to_string(), ToString::to_string);
+        let destination_mac = aliases
+            .get(&self.mac.1)
+            .map_or_else(|| self.mac.1.to_string(), ToString::to_string);
 
         (source_mac, destination_mac)
     }

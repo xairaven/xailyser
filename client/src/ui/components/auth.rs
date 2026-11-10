@@ -166,10 +166,10 @@ impl AuthComponent {
                 self.authenticated = true;
             },
             Err(err) => {
-                let message = match err.additional_info_localized() {
-                    None => format!("{}.", err.localized()),
-                    Some(info) => format!("{}.\n{}", err.localized(), info),
-                };
+                let message = err.additional_info_localized().map_or_else(
+                    || format!("{}.", err.localized()),
+                    |info| format!("{}.\n{}", err.localized(), info),
+                );
 
                 let modal = MessageModal::error(&message);
                 let _ = ctx.modals_tx.try_send(Box::new(modal));

@@ -57,11 +57,11 @@ impl Serialize for Config {
         state.serialize_field("language", &self.language.to_string())?;
         state.serialize_field("log_format", &self.log_format.to_string())?;
         state.serialize_field("log_level", &self.log_level.to_string())?;
-        let limit = match &self.parsed_frames_limit {
-            Some(value) => &value.to_string(),
-            None => "none",
-        };
-        state.serialize_field("parsed_frames_limit", limit)?;
+        let limit = self
+            .parsed_frames_limit
+            .as_ref()
+            .map_or_else(|| String::from("none"), ToString::to_string);
+        state.serialize_field("parsed_frames_limit", &limit)?;
         state.serialize_field(
             "plot_display_window_seconds",
             &self.plot_display_window_seconds,
@@ -71,11 +71,12 @@ impl Serialize for Config {
         state.serialize_field("theme", &self.theme.to_string())?;
 
         state.serialize_field("unparsed_frames_drop", &self.unparsed_frames_drop)?;
-        let threshold = match &self.unparsed_frames_threshold {
-            Some(value) => &value.to_string(),
-            None => "none",
-        };
-        state.serialize_field("unparsed_frames_threshold", threshold)?;
+
+        let threshold = self
+            .unparsed_frames_threshold
+            .as_ref()
+            .map_or_else(|| String::from("none"), ToString::to_string);
+        state.serialize_field("unparsed_frames_threshold", &threshold)?;
 
         state.end()
     }

@@ -59,10 +59,11 @@ fn traversal(
             metadata.layers.push(layer);
 
             if let Some(best) = id.best_children(metadata) {
-                return match depth.checked_add(1) {
-                    Some(new_depth) => traversal(&best, rest, metadata, new_depth),
-                    None => ProcessResult::Failed,
-                };
+                return depth
+                    .checked_add(1)
+                    .map_or(ProcessResult::Failed, |new_depth| {
+                        traversal(&best, rest, metadata, new_depth)
+                    });
             }
 
             let Some(children) = id.children() else {

@@ -309,11 +309,8 @@ impl WsError {
     }
 
     fn response_body_bytes_to_str(body: &Option<Vec<u8>>) -> Option<&str> {
-        if let Some(body_bytes) = body {
-            std::str::from_utf8(body_bytes).ok()
-        } else {
-            None
-        }
+        body.as_ref()
+            .map_or(None, |body_bytes| std::str::from_utf8(body_bytes).ok())
     }
 }
 
