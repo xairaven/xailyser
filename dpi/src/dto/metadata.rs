@@ -44,18 +44,18 @@ pub enum ProtocolDto {
 impl From<ProtocolData> for ProtocolDto {
     fn from(value: ProtocolData) -> Self {
         match value {
-            ProtocolData::Ethernet(value) => ProtocolDto::Ethernet(value.into()),
-            ProtocolData::Arp(value) => ProtocolDto::Arp(value.into()),
-            ProtocolData::DHCPv4(value) => ProtocolDto::DHCPv4(value.into()),
-            ProtocolData::DHCPv6(value) => ProtocolDto::DHCPv6(value.into()),
-            ProtocolData::DNS(value) => ProtocolDto::DNS(value.into()),
-            ProtocolData::HTTP(value) => ProtocolDto::HTTP(value.into()),
-            ProtocolData::IPv4(value) => ProtocolDto::IPv4(value.into()),
-            ProtocolData::IPv6(value) => ProtocolDto::IPv6(value.into()),
-            ProtocolData::ICMPv4(value) => ProtocolDto::ICMPv4(value.into()),
-            ProtocolData::ICMPv6(value) => ProtocolDto::ICMPv6(value.into()),
-            ProtocolData::TCP(value) => ProtocolDto::TCP(value.into()),
-            ProtocolData::UDP(value) => ProtocolDto::UDP(value.into()),
+            ProtocolData::Ethernet(value) => Self::Ethernet(value.into()),
+            ProtocolData::Arp(value) => Self::Arp(value.into()),
+            ProtocolData::DHCPv4(value) => Self::DHCPv4(value.into()),
+            ProtocolData::DHCPv6(value) => Self::DHCPv6(value.into()),
+            ProtocolData::DNS(value) => Self::DNS(value.into()),
+            ProtocolData::HTTP(value) => Self::HTTP(value.into()),
+            ProtocolData::IPv4(value) => Self::IPv4(value.into()),
+            ProtocolData::IPv6(value) => Self::IPv6(value.into()),
+            ProtocolData::ICMPv4(value) => Self::ICMPv4(value.into()),
+            ProtocolData::ICMPv6(value) => Self::ICMPv6(value.into()),
+            ProtocolData::TCP(value) => Self::TCP(value.into()),
+            ProtocolData::UDP(value) => Self::UDP(value.into()),
         }
     }
 }

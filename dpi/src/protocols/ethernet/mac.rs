@@ -42,7 +42,7 @@ impl TryFrom<&[u8]> for MacAddress {
         let bytes = <[u8; LENGTH_BYTES]>::try_from(value)
             .map_err(|_| EthernetError::MacInvalidBytesLength)?;
 
-        Ok(MacAddress(bytes))
+        Ok(Self(bytes))
     }
 }
 

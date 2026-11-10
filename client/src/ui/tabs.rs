@@ -17,14 +17,14 @@ pub enum Tab {
 impl std::fmt::Display for Tab {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let text = match self {
-            Tab::Status => format!("🏠 {}", t!("Tabs.Status")),
-            Tab::Inspector => format!("🔍 {}", t!("Tabs.Inspector")),
-            Tab::Stats => format!("🗠 {}", t!("Tabs.Stats")),
-            Tab::ClientSettings => format!("⚙ {}", t!("Tabs.ClientSettings")),
-            Tab::ServerSettings => format!("⚙ {}", t!("Tabs.ServerSettings")),
-            Tab::About => format!("ℹ {}", t!("Tabs.About")),
-            Tab::Logout => format!("🔓 {}", t!("Tabs.Logout")),
-            Tab::Exit => format!("🗙 {}", t!("Tabs.Exit")),
+            Self::Status => format!("🏠 {}", t!("Tabs.Status")),
+            Self::Inspector => format!("🔍 {}", t!("Tabs.Inspector")),
+            Self::Stats => format!("🗠 {}", t!("Tabs.Stats")),
+            Self::ClientSettings => format!("⚙ {}", t!("Tabs.ClientSettings")),
+            Self::ServerSettings => format!("⚙ {}", t!("Tabs.ServerSettings")),
+            Self::About => format!("ℹ {}", t!("Tabs.About")),
+            Self::Logout => format!("🔓 {}", t!("Tabs.Logout")),
+            Self::Exit => format!("🗙 {}", t!("Tabs.Exit")),
         };
 
         write!(f, "{text}")

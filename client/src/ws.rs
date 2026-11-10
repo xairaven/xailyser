@@ -222,14 +222,14 @@ pub enum WsError {
 impl WsError {
     pub fn localized(&self) -> String {
         match self {
-            WsError::ConnectionFailed(_) => {
+            Self::ConnectionFailed(_) => {
                 t!("Error.Websockets.ConnectionFailed").to_string()
             },
-            WsError::FailedParseUri => t!("Error.Websockets.FailedParseUri").to_string(),
-            WsError::BadReadTimeoutDuration(_) => {
+            Self::FailedParseUri => t!("Error.Websockets.FailedParseUri").to_string(),
+            Self::BadReadTimeoutDuration(_) => {
                 t!("Error.Websockets.BadReadTimeoutDuration").to_string()
             },
-            WsError::UnknownStreamType => {
+            Self::UnknownStreamType => {
                 t!("Error.Websockets.UnknownStreamType").to_string()
             },
         }
@@ -237,7 +237,7 @@ impl WsError {
 
     pub fn additional_info_localized(&self) -> Option<String> {
         match self {
-            WsError::ConnectionFailed(err) => match err.as_ref() {
+            Self::ConnectionFailed(err) => match err.as_ref() {
                 tungstenite::Error::ConnectionClosed
                 | tungstenite::Error::AlreadyClosed
                 | tungstenite::Error::Io(_)
@@ -303,7 +303,7 @@ impl WsError {
                     )),
                 },
             },
-            WsError::BadReadTimeoutDuration(err) => Some(err.to_string()),
+            Self::BadReadTimeoutDuration(err) => Some(err.to_string()),
             _ => None,
         }
     }

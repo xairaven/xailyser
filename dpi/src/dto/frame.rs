@@ -34,7 +34,7 @@ pub struct OwnedFrame {
 
 impl<'a> From<pcap::Packet<'a>> for OwnedFrame {
     fn from(packet: pcap::Packet<'a>) -> Self {
-        OwnedFrame {
+        Self {
             header: FrameHeader::from(packet.header),
             data: packet.data.to_vec(),
         }

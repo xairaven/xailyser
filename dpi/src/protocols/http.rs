@@ -227,15 +227,15 @@ impl TryFrom<&str> for Methods {
         let line = method.trim().to_ascii_uppercase();
         let line = line.as_str();
         match line {
-            "GET" => Ok(Methods::GET),
-            "POST" => Ok(Methods::POST),
-            "PUT" => Ok(Methods::PUT),
-            "DELETE" => Ok(Methods::DELETE),
-            "HEAD" => Ok(Methods::HEAD),
-            "OPTIONS" => Ok(Methods::OPTIONS),
-            "TRACE" => Ok(Methods::TRACE),
-            "PATCH" => Ok(Methods::PATCH),
-            "CONNECT" => Ok(Methods::CONNECT),
+            "GET" => Ok(Self::GET),
+            "POST" => Ok(Self::POST),
+            "PUT" => Ok(Self::PUT),
+            "DELETE" => Ok(Self::DELETE),
+            "HEAD" => Ok(Self::HEAD),
+            "OPTIONS" => Ok(Self::OPTIONS),
+            "TRACE" => Ok(Self::TRACE),
+            "PATCH" => Ok(Self::PATCH),
+            "CONNECT" => Ok(Self::CONNECT),
             _ => Err(ParserError::ErrorVerify),
         }
     }

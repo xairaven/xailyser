@@ -14,7 +14,7 @@ const PORTS_DATABASE_PATH: &str = "resources/iana-port-service-database.csv";
 const OUI_DATABASE_PATH: &str = "resources/oui-database.txt";
 
 impl Lookup {
-    pub fn load() -> std::io::Result<Lookup> {
+    pub fn load() -> std::io::Result<Self> {
         let port_service =
             dpi::analysis::ports::read_database(PathBuf::from(PORTS_DATABASE_PATH))?;
         let (vendors, vendors_amount) =

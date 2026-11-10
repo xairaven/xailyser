@@ -24,7 +24,7 @@ impl DeviceStorage {
             Ok(path) => {
                 let data = std::fs::read_to_string(path);
                 if data.is_err() {
-                    let storage = DeviceStorage::default();
+                    let storage = Self::default();
                     storage.save_aliases_to_file()?;
                     return Ok(storage);
                 }
@@ -41,12 +41,12 @@ impl DeviceStorage {
                     })?;
                     aliases.insert(mac, value);
                 }
-                Ok(DeviceStorage {
+                Ok(Self {
                     list: Default::default(),
                     aliases,
                 })
             },
-            Err(_) => Ok(DeviceStorage::default()),
+            Err(_) => Ok(Self::default()),
         }
     }
 

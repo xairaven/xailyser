@@ -36,8 +36,8 @@ pub enum FileKind {
 impl FileKind {
     pub fn into_path(self, project_dirs: &ProjectDirs) -> &Path {
         match self {
-            FileKind::Config => project_dirs.config_dir(),
-            FileKind::Data => project_dirs.data_dir(),
+            Self::Config => project_dirs.config_dir(),
+            Self::Data => project_dirs.data_dir(),
         }
     }
 }

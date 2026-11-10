@@ -142,29 +142,25 @@ pub mod themes {
     impl Preference {
         pub fn title(&self) -> &'static str {
             match self {
-                Preference::StandardDark => "Standard Dark",
-                Preference::StandardLight => "Standard Light",
-                Preference::CarlDark => "Carl Dark",
-                Preference::NordDark => "Nord Dark",
-                Preference::NordLight => "Nord Light",
-                Preference::TokyoNight => "Tokyo Night",
-                Preference::TokyoNightStorm => "Tokyo Night Storm",
+                Self::StandardDark => "Standard Dark",
+                Self::StandardLight => "Standard Light",
+                Self::CarlDark => "Carl Dark",
+                Self::NordDark => "Nord Dark",
+                Self::NordLight => "Nord Light",
+                Self::TokyoNight => "Tokyo Night",
+                Self::TokyoNightStorm => "Tokyo Night Storm",
             }
         }
 
         pub fn into_aesthetix_theme(self) -> Rc<dyn Aesthetix> {
             match self {
-                Preference::StandardDark => Rc::new(egui_aesthetix::themes::StandardDark),
-                Preference::StandardLight => {
-                    Rc::new(egui_aesthetix::themes::StandardLight)
-                },
-                Preference::CarlDark => Rc::new(egui_aesthetix::themes::CarlDark),
-                Preference::NordDark => Rc::new(egui_aesthetix::themes::NordDark),
-                Preference::NordLight => Rc::new(egui_aesthetix::themes::NordLight),
-                Preference::TokyoNight => Rc::new(egui_aesthetix::themes::TokyoNight),
-                Preference::TokyoNightStorm => {
-                    Rc::new(egui_aesthetix::themes::TokyoNightStorm)
-                },
+                Self::StandardDark => Rc::new(egui_aesthetix::themes::StandardDark),
+                Self::StandardLight => Rc::new(egui_aesthetix::themes::StandardLight),
+                Self::CarlDark => Rc::new(egui_aesthetix::themes::CarlDark),
+                Self::NordDark => Rc::new(egui_aesthetix::themes::NordDark),
+                Self::NordLight => Rc::new(egui_aesthetix::themes::NordLight),
+                Self::TokyoNight => Rc::new(egui_aesthetix::themes::TokyoNight),
+                Self::TokyoNightStorm => Rc::new(egui_aesthetix::themes::TokyoNightStorm),
             }
         }
     }
@@ -172,13 +168,13 @@ pub mod themes {
     impl fmt::Display for Preference {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             let string = match self {
-                Preference::StandardDark => "standard_dark",
-                Preference::StandardLight => "standard_light",
-                Preference::CarlDark => "carl_dark",
-                Preference::NordDark => "nord_dark",
-                Preference::NordLight => "nord_light",
-                Preference::TokyoNight => "tokyo_night",
-                Preference::TokyoNightStorm => "tokyo_night_storm",
+                Self::StandardDark => "standard_dark",
+                Self::StandardLight => "standard_light",
+                Self::CarlDark => "carl_dark",
+                Self::NordDark => "nord_dark",
+                Self::NordLight => "nord_light",
+                Self::TokyoNight => "tokyo_night",
+                Self::TokyoNightStorm => "tokyo_night_storm",
             };
             write!(f, "{string}")
         }
@@ -189,13 +185,13 @@ pub mod themes {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             match s {
-                "standard_dark" => Ok(Preference::StandardDark),
-                "standard_light" => Ok(Preference::StandardLight),
-                "carl_dark" => Ok(Preference::CarlDark),
-                "nord_dark" => Ok(Preference::NordDark),
-                "nord_light" => Ok(Preference::NordLight),
-                "tokyo_night" => Ok(Preference::TokyoNight),
-                "tokyo_night_storm" => Ok(Preference::TokyoNightStorm),
+                "standard_dark" => Ok(Self::StandardDark),
+                "standard_light" => Ok(Self::StandardLight),
+                "carl_dark" => Ok(Self::CarlDark),
+                "nord_dark" => Ok(Self::NordDark),
+                "nord_light" => Ok(Self::NordLight),
+                "tokyo_night" => Ok(Self::TokyoNight),
+                "tokyo_night_storm" => Ok(Self::TokyoNightStorm),
                 _ => Err(()),
             }
         }

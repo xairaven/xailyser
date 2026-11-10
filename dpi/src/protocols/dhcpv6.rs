@@ -85,17 +85,17 @@ impl Options {
     pub fn parse(input: &[u8]) -> IResult<&[u8], OptionData> {
         let (rest, code) = be_u16().parse(input)?;
         let option_variant =
-            Options::try_from(code).map_err(|_| ParserError::ErrorVerify.to_nom(rest))?;
+            Self::try_from(code).map_err(|_| ParserError::ErrorVerify.to_nom(rest))?;
 
         let (rest, length) = be_u16().parse(rest)?;
         let (rest, content) = take(length).parse(rest)?;
 
         let data: OptionData = match option_variant {
-            Options::ClientIdentifier => OptionData::ClientIdentifier(content.to_vec()),
+            Self::ClientIdentifier => OptionData::ClientIdentifier(content.to_vec()),
 
-            Options::ServerIdentifier => OptionData::ServerIdentifier(content.to_vec()),
+            Self::ServerIdentifier => OptionData::ServerIdentifier(content.to_vec()),
 
-            Options::IANA => {
+            Self::IANA => {
                 let (rest, id) = be_u32().parse(content)?;
                 let (rest, t1) = be_u32().parse(rest)?;
                 let (rest, t2) = be_u32().parse(rest)?;
@@ -109,12 +109,12 @@ impl Options {
                 }
             },
 
-            Options::OptionRequest => {
-                let mut requested_options: Vec<Options> = Vec::new();
+            Self::OptionRequest => {
+                let mut requested_options: Vec<Self> = Vec::new();
                 let mut rest_buffer = content;
                 for _ in 0..length / 2 {
                     let (rest, option) = be_u16().parse(rest_buffer)?;
-                    let option = Options::try_from(option)
+                    let option = Self::try_from(option)
                         .map_err(|_| ParserError::ErrorVerify.to_nom(input))?;
                     requested_options.push(option);
                     rest_buffer = rest;
@@ -123,12 +123,12 @@ impl Options {
                 OptionData::OptionRequest(requested_options)
             },
 
-            Options::ElapsedTime => {
+            Self::ElapsedTime => {
                 let (_, time) = be_u16().parse(content)?;
                 OptionData::ElapsedTime(time)
             },
 
-            Options::VendorClass | Options::VendorSpecific => {
+            Self::VendorClass | Self::VendorSpecific => {
                 let (rest, enterprise_number) = be_u32().parse(content)?;
                 let vendor_class_data = rest.to_vec();
                 OptionData::VendorData {
@@ -137,7 +137,7 @@ impl Options {
                 }
             },
 
-            Options::DnsRecursiveNameServer => {
+            Self::DnsRecursiveNameServer => {
                 if length % 16 != 0 {
                     return Err(ParserError::ErrorVerify.to_nom(rest));
                 }
@@ -156,9 +156,9 @@ impl Options {
                 OptionData::DnsRecursiveServers(addresses)
             },
 
-            Options::DomainSearchList => OptionData::DomainSearchList(content.to_vec()),
+            Self::DomainSearchList => OptionData::DomainSearchList(content.to_vec()),
 
-            Options::ClientFQDN => {
+            Self::ClientFQDN => {
                 let (rest, flags) = be_u8().parse(content)?;
                 let (_, domain_name) = parser::wire_format(rest)?;
 

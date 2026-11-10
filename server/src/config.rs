@@ -60,7 +60,7 @@ impl Config {
     pub fn from_file() -> Result<Self, ConfigError> {
         let data = std::fs::read_to_string(CONFIG_FILENAME);
         if data.is_err() {
-            let config = Config::default();
+            let config = Self::default();
             config.save_to_file()?;
             return Ok(config);
         }
@@ -131,9 +131,9 @@ pub enum ConfigError {
 impl ConfigError {
     pub fn additional_info(&self) -> Option<String> {
         match self {
-            ConfigError::IOError(err) => Some(err.to_string()),
-            ConfigError::TomlSerializationError(err) => Some(err.to_string()),
-            ConfigError::TomlDeserializationError(err) => Some(err.to_string()),
+            Self::IOError(err) => Some(err.to_string()),
+            Self::TomlSerializationError(err) => Some(err.to_string()),
+            Self::TomlDeserializationError(err) => Some(err.to_string()),
             _ => None,
         }
     }

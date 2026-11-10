@@ -180,14 +180,14 @@ pub enum Options {
 impl Options {
     pub fn parse(input: &[u8]) -> IResult<&[u8], OptionData> {
         let (rest, code) = be_u8().parse(input)?;
-        let Ok(option) = Options::try_from(code) else {
+        let Ok(option) = Self::try_from(code) else {
             return Err(ParserError::ErrorVerify.to_nom(input));
         };
 
         // Just skipping or breaking
-        if let Options::Pad = option {
+        if let Self::Pad = option {
             return Ok((rest, OptionData::Pad));
-        } else if let Options::End = option {
+        } else if let Self::End = option {
             return Ok((rest, OptionData::End));
         }
 
@@ -195,7 +195,7 @@ impl Options {
         let (rest, content) = take(length).parse(rest)?;
 
         let data = match option {
-            Options::DomainName => {
+            Self::DomainName => {
                 let domain_name = String::from_utf8(content.to_vec())
                     .map_err(|_| ParserError::ErrorVerify.to_nom(rest))?
                     .trim_matches('\0')
@@ -204,7 +204,7 @@ impl Options {
                 OptionData::DomainName(domain_name)
             },
 
-            Options::DomainNameServer => {
+            Self::DomainNameServer => {
                 if length % 4 != 0 {
                     return Err(ParserError::ErrorVerify.to_nom(input));
                 }
@@ -221,14 +221,14 @@ impl Options {
                 OptionData::DomainNameServer(ips)
             },
 
-            Options::MessageType => {
+            Self::MessageType => {
                 let (_, message_type) = be_u8().parse(content)?;
                 let value = MessageType::try_from(message_type)
                     .map_err(|_| ParserError::ErrorVerify.to_nom(rest))?;
                 OptionData::MessageType(value)
             },
 
-            Options::RouterOption => {
+            Self::RouterOption => {
                 if length % 4 != 0 {
                     return Err(ParserError::ErrorVerify.to_nom(input));
                 }
@@ -245,17 +245,17 @@ impl Options {
                 OptionData::RouterOption(ips)
             },
 
-            Options::ServerIdentifier => {
+            Self::ServerIdentifier => {
                 let (_, ip) = ip::address::v4_parse(content)?;
                 OptionData::ServerIdentifier(ip)
             },
 
-            Options::SubnetMask => {
+            Self::SubnetMask => {
                 let (_, mask) = ip::address::v4_parse(content)?;
                 OptionData::SubnetMask(mask)
             },
 
-            Options::Pad | Options::End => {
+            Self::Pad | Self::End => {
                 return Err(ParserError::ErrorVerify.to_nom(input));
             },
         };

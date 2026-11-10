@@ -162,11 +162,11 @@ const GIGABYTE_DIVIDER: f64 = 1024.0 * 1024.0 * 1024.0;
 impl SpeedUnitPerSecond {
     pub fn value(&self, value: f64) -> f64 {
         match self {
-            SpeedUnitPerSecond::Bits => value * BIT_MULTIPLIER,
-            SpeedUnitPerSecond::Bytes => value,
-            SpeedUnitPerSecond::Kilobytes => value / KILOBYTE_DIVIDER,
-            SpeedUnitPerSecond::Megabytes => value / MEGABYTE_DIVIDER,
-            SpeedUnitPerSecond::Gigabytes => value / GIGABYTE_DIVIDER,
+            Self::Bits => value * BIT_MULTIPLIER,
+            Self::Bytes => value,
+            Self::Kilobytes => value / KILOBYTE_DIVIDER,
+            Self::Megabytes => value / MEGABYTE_DIVIDER,
+            Self::Gigabytes => value / GIGABYTE_DIVIDER,
         }
     }
 }

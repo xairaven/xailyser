@@ -32,14 +32,14 @@ impl Modal for MessageModal {
 
 impl MessageModal {
     pub fn error(message: &str) -> Self {
-        MessageModal::default()
+        Self::default()
             .with_message(message)
             .with_title(format!("❎ {}", t!("Modal.Title.Error")))
             .with_width(300.0)
     }
 
     pub fn info(message: &str) -> Self {
-        MessageModal::default()
+        Self::default()
             .with_message(message)
             .with_title(format!("ℹ {}", t!("Modal.Title.Info")))
             .with_width(300.0)

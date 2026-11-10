@@ -254,17 +254,13 @@ pub enum AuthFieldError {
 impl AuthFieldError {
     pub fn localize(&self) -> String {
         match self {
-            AuthFieldError::TitleTooShort => {
-                t!("Component.Auth.Error.TitleTooShort").to_string()
-            },
-            AuthFieldError::WrongIpAddress => {
-                t!("Component.Auth.Error.WrongIpAddress").to_string()
-            },
-            AuthFieldError::WrongPort => t!("Component.Auth.Error.WrongPort").to_string(),
-            AuthFieldError::PasswordTooSmall => {
+            Self::TitleTooShort => t!("Component.Auth.Error.TitleTooShort").to_string(),
+            Self::WrongIpAddress => t!("Component.Auth.Error.WrongIpAddress").to_string(),
+            Self::WrongPort => t!("Component.Auth.Error.WrongPort").to_string(),
+            Self::PasswordTooSmall => {
                 t!("Component.Auth.Error.PasswordTooSmall").to_string()
             },
-            AuthFieldError::PasswordTooLarge => {
+            Self::PasswordTooLarge => {
                 t!("Component.Auth.Error.PasswordTooLarge").to_string()
             },
         }

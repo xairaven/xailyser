@@ -87,7 +87,7 @@ impl Config {
             Ok(path) => {
                 let data = fs::read_to_string(path);
                 if data.is_err() {
-                    let config = Config::default();
+                    let config = Self::default();
                     config.save_to_file()?;
                     return Ok(config);
                 }
@@ -181,8 +181,8 @@ pub enum ConfigError {
 impl ConfigError {
     pub fn additional_info(&self) -> Option<String> {
         match self {
-            ConfigError::TomlSerializationError(err) => Some(err.to_string()),
-            ConfigError::TomlDeserializationError(err) => Some(err.to_string()),
+            Self::TomlSerializationError(err) => Some(err.to_string()),
+            Self::TomlDeserializationError(err) => Some(err.to_string()),
             _ => None,
         }
     }
@@ -200,8 +200,8 @@ pub enum Language {
 impl Language {
     pub fn localize(&self) -> String {
         match self {
-            Language::English => t!("Language.English").to_string(),
-            Language::Ukrainian => t!("Language.Ukrainian").to_string(),
+            Self::English => t!("Language.English").to_string(),
+            Self::Ukrainian => t!("Language.Ukrainian").to_string(),
         }
     }
 }

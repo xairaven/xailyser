@@ -17,8 +17,8 @@ pub enum LogError {
 impl LogError {
     pub fn additional_info(&self) -> Option<String> {
         match self {
-            LogError::IOError(err) => Some(err.to_string()),
-            LogError::SetLoggerError(err) => Some(err.to_string()),
+            Self::IOError(err) => Some(err.to_string()),
+            Self::SetLoggerError(err) => Some(err.to_string()),
         }
     }
 }

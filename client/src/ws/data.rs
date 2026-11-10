@@ -296,7 +296,7 @@ impl PortDto {
         Self {
             port_source: value.port_source,
             port_destination: value.port_destination,
-            possible_application: PortDto::find_app(
+            possible_application: Self::find_app(
                 (value.port_source, value.port_destination),
                 lookup,
                 ProtocolId::TCP,
@@ -308,7 +308,7 @@ impl PortDto {
         Self {
             port_source: value.port_source,
             port_destination: value.port_destination,
-            possible_application: PortDto::find_app(
+            possible_application: Self::find_app(
                 (value.port_source, value.port_destination),
                 lookup,
                 ProtocolId::UDP,

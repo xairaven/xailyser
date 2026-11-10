@@ -14,7 +14,7 @@ pub enum UiClientRequest {
 impl UiClientRequest {
     pub fn into_message(self, is_compression_enabled: bool) -> Result<Message, String> {
         match self {
-            UiClientRequest::Request(request) => {
+            Self::Request(request) => {
                 let serialized =
                     serde_json::to_string(&request).map_err(|err| err.to_string())?;
 
@@ -26,14 +26,14 @@ impl UiClientRequest {
                     Ok(Message::text(serialized))
                 }
             },
-            UiClientRequest::CloseConnection => {
+            Self::CloseConnection => {
                 let message = Message::Close(Some(CloseFrame {
                     code: CloseCode::Normal,
                     reason: Default::default(),
                 }));
                 Ok(message)
             },
-            UiClientRequest::Ping => Ok(Message::Ping(Bytes::new())),
+            Self::Ping => Ok(Message::Ping(Bytes::new())),
         }
     }
 }

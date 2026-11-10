@@ -433,17 +433,17 @@ pub enum DnsTypeData {
 impl std::fmt::Display for DnsTypeData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let text = match self {
-            DnsTypeData::AIPv4(address) => address.to_string(),
-            DnsTypeData::AIPv6(address) => address.to_string(),
-            DnsTypeData::AAAA(address) => address.to_string(),
-            DnsTypeData::CNAME(value) => value.to_string(),
-            DnsTypeData::NS(value) => value.to_string(),
-            DnsTypeData::SOA {
+            Self::AIPv4(address) => address.to_string(),
+            Self::AIPv6(address) => address.to_string(),
+            Self::AAAA(address) => address.to_string(),
+            Self::CNAME(value) => value.to_string(),
+            Self::NS(value) => value.to_string(),
+            Self::SOA {
                 primary_name_server,
                 mailbox,
                 ..
             } => format!("{primary_name_server} <{mailbox}>"),
-            DnsTypeData::Unknown => "Unknown".to_string(),
+            Self::Unknown => "Unknown".to_string(),
         };
 
         write!(f, "{text}")
